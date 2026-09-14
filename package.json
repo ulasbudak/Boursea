@@ -1,5 +1,5 @@
 {
-  "name": "borsa-app",
+  "name": "trendus",
   "private": true,
   "packageManager": "pnpm@12.4.1",
   "scripts": {

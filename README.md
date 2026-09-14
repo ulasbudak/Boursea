@@ -1,4 +1,4 @@
-# borsa_app
+# Trendus
 
 Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri temel ve teknik analiz parametreleriyle değerlendiren bir borsa takip uygulaması.
 
@@ -20,14 +20,14 @@ packages/
 - Node.js 24+
 - [pnpm](https://pnpm.io/) 12+ (`npm install -g pnpm`)
 - Python 3.11+
-- Bir [Supabase](https://supabase.com) projesi (PostgreSQL + Auth)
+- Bir [Supabase](https://supabase.com) projesi (PostgreSQL + Auth) — Proje URL'si ve **Publishable Key**'i [API Settings](https://supabase.com/dashboard/project/_/settings/api) sayfasından alın. Google/Apple ile giriş için ilgili sağlayıcıları [Auth Providers](https://supabase.com/dashboard/project/_/auth/providers) altında etkinleştirin (web için; mobilde native Google/Apple girişi henüz desteklenmiyor, bkz. `docs/stories/story-1.2.md`).
 
 ## Web (`apps/web`)
 
 ```bash
 pnpm install
-cp apps/web/.env.example apps/web/.env.local
-pnpm --filter web dev       # http://localhost:3000
+cp apps/web/.env.example apps/web/.env.local  # NEXT_PUBLIC_SUPABASE_* değerlerini doldurun
+pnpm --filter web dev       # http://localhost:3000 — /login sayfasından kayıt/giriş yapılabilir
 pnpm --filter web build     # production build
 pnpm --filter web typecheck
 pnpm --filter web lint
@@ -37,8 +37,8 @@ pnpm --filter web lint
 
 ```bash
 pnpm install
-cp apps/mobile/.env.example apps/mobile/.env
-pnpm --filter mobile start   # Expo geliştirme sunucusu, QR kod ile Expo Go veya simülatörde açılır
+cp apps/mobile/.env.example apps/mobile/.env  # EXPO_PUBLIC_SUPABASE_* değerlerini doldurun
+pnpm --filter mobile start   # Expo geliştirme sunucusu, QR kod ile Expo Go veya simülatörde açılır — e-posta/şifre ile kayıt/giriş ekranı açılır
 pnpm --filter mobile typecheck
 pnpm --filter mobile lint
 ```

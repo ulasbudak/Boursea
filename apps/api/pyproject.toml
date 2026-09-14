@@ -1,13 +1,14 @@
 [project]
-name = "borsa-app-api"
+name = "trendus-api"
 version = "0.1.0"
-description = "borsa_app backend API"
+description = "Trendus backend API"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.141.1",
     "uvicorn[standard]==0.53.0",
     "pydantic-settings==2.15.0",
     "psycopg[binary]==3.3.5",
+    "pyjwt[crypto]==2.14.0",
 ]
 
 [project.optional-dependencies]

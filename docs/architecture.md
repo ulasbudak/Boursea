@@ -1,5 +1,5 @@
 ---
-title: "Borsa Takip Uygulaması (borsa_app) - Sistem Mimarisi"
+title: "Trendus (Borsa Takip Uygulaması) - Sistem Mimarisi"
 status: draft
 created: 2026-09-15
 updated: 2026-09-15
@@ -7,7 +7,7 @@ author: Winston (BMAD System Architect)
 based_on: docs/PRD.md
 ---
 
-# borsa_app — Sistem Mimarisi
+# Trendus — Sistem Mimarisi
 
 ## 1. Mimari Paradigma
 
@@ -276,7 +276,7 @@ flowchart TB
 > Bağlayıcı bir kural değildir — kod yazılmaya başlandığında gerçek yapı burayı geçersiz kılar.
 
 ```
-borsa_app/
+trendus/
 ├── apps/
 │   ├── web/          # Next.js
 │   ├── mobile/        # React Native / Expo

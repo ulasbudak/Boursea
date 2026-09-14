@@ -1,5 +1,5 @@
 ---
-title: "Borsa Takip Uygulaması (borsa_app) - Epic ve Story Backlog"
+title: "Trendus (Borsa Takip Uygulaması) - Epic ve Story Backlog"
 status: draft
 created: 2026-09-15
 updated: 2026-09-15
@@ -7,7 +7,7 @@ author: Bob (BMAD Scrum Master)
 inputDocuments: ["docs/PRD.md", "docs/architecture.md"]
 ---
 
-# borsa_app — Epic & Story Backlog
+# Trendus — Epic & Story Backlog
 
 ## 1. Genel Bakış
 
@@ -100,7 +100,9 @@ Kullanıcı ücretsiz katmanın sınırlarını görebilir ve premium katmana y�
 
 Kısa özet: Monorepo (`apps/web`, `apps/mobile`, `apps/api`), Next.js/FastAPI/Expo iskeletleri, Supabase projesi bağlantısı, temel CI pipeline'ı ve ortam değişkeni yönetimi kurulur.
 
-### Story 1.2: Kullanıcı Kaydı ve Girişi
+### Story 1.2: Kullanıcı Kaydı ve Girişi ✅ Tamamlandı
+
+> Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.2.md`**. Backend (JWKS tabanlı JWT doğrulama + `/me`), web (`@supabase/ssr` ile e-posta/şifre + Google/Apple OAuth, `/dashboard`) ve mobil (e-posta/şifre ile kayıt/giriş) uygulandı ve doğrulandı. Mobilde native Google/Apple OAuth bilinçli olarak kapsam dışı bırakıldı (bkz. story dosyası — EAS dev-client ve gerçek sağlayıcı kimlik bilgileri gerektiriyor).
 
 As a **yeni kullanıcı**,
 I want e-posta veya Google/Apple hesabımla kayıt olup giriş yapabilmek,

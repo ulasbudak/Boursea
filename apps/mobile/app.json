@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "borsa_app",
-    "slug": "borsa-app",
+    "name": "Trendus",
+    "slug": "trendus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
