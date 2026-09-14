@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# turborepo
+.turbo/
+
+# pnpm
+.pnpm-store/
+
+# OS
+.DS_Store
+
+# editors
+.vscode/
+.idea/
+
+# env files
+.env
+.env.local
