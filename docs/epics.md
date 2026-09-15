@@ -276,6 +276,8 @@ So that manuel taramaya gerek kalmadan potansiyel fırsatları fark edebileyim.
 
 ### Story 3.6: Özet Değerlendirme Skoru
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri, puanlama modeli ve görev tanımı için bkz. **`docs/stories/story-3.6.md`**. Yeni backend `app/scoring.py`: temel (F/K, ROE, borç/özsermaye, net marj, EPS büyümesi — 50p) + teknik (trend, RSI, son 90 günün sinyal eğilimi — 50p) kural bazlı puanlama; `GET /symbols/score`. Web ve mobilde "Genel Bakış" sekmesine skor rozeti + faktör dökümü (açılır bilgi paneli) eklendi; veri yetersizse "yeterli veri yok". **Epic 3 ve PRD Faz 1/MVP'nin Epic 1-3 kapsamı bu story ile tamamlandı.**
+
 As a **yeni/amatör yatırımcı**,
 I want karmaşık metriklere girmeden hissenin genel durumunu özetleyen basit bir skor/etiket görmek,
 So that hızlıca "bu hisseye bakmaya değer mi" sorusuna yanıt alabileyim.

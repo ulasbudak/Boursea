@@ -94,6 +94,12 @@ export const tr: Messages = {
     bullish: "Yükseliş",
     bearish: "Düşüş",
   },
+  score: {
+    title: "Özet Değerlendirme Skoru",
+    noData: "Yeterli veri yok",
+    outOf: "/ 100",
+    explanationToggle: "Bu skor neye dayanıyor?",
+  },
   fundamentals: {
     peRatio: "F/K Oranı",
     pbRatio: "PD/DD Oranı",

@@ -11,6 +11,7 @@ import { formatChange, formatMarketCap, formatPrice } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 import { FundamentalsPanel } from "./FundamentalsPanel";
 import { PriceChartWebView } from "./PriceChartWebView";
+import { ScoreBadge } from "./ScoreBadge";
 
 type StockOverview = {
   symbol: string;
@@ -106,6 +107,8 @@ export function StockOverviewScreen({
 
       {tab === "overview" && (
         <>
+          <ScoreBadge symbol={symbol} exchange={exchange} />
+
           {loading && <ActivityIndicator />}
 
           {!loading && fetchFailed && (

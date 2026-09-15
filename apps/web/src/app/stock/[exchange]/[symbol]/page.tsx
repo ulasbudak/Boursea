@@ -4,6 +4,7 @@ import { formatChange, formatMarketCap, formatPrice, messages } from "@trendus/s
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { StockTabs } from "./stock-tabs";
+import { ScoreBadge } from "./score-badge";
 
 type StockOverview = {
   symbol: string;
@@ -61,6 +62,8 @@ export default async function StockDetailPage({
 
   const overviewContent = (
     <div>
+      <ScoreBadge exchange={exchange} symbol={symbol} messages={t} />
+
       {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
       {!fetchFailed &&
         warnings.map((warning) => (

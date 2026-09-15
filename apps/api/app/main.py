@@ -29,6 +29,7 @@ from app.market_data import (
     search_bist_symbols,
     search_us_symbols,
 )
+from app.scoring import StockScore, compute_bist_score, compute_us_score
 from app.technical import SignalRecord, evaluate_signals
 
 app = FastAPI(title="Trendus API")
@@ -222,3 +223,26 @@ async def get_symbol_signals(symbol: str, exchange: str, timeframe: str = "daily
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"signals": signals, "warnings": warnings}
+
+
+ScoreResponse = dict[str, StockScore | list[str] | None]
+
+
+@app.get("/symbols/score")
+async def get_symbol_score(symbol: str, exchange: str) -> ScoreResponse:
+    symbol = symbol.strip()
+    exchange_filter = exchange.strip().upper()
+    warnings: list[str] = []
+    score: StockScore | None = None
+
+    if exchange_filter == "BIST":
+        score = compute_bist_score()
+        warnings.append("BIST hisseleri için özet skor bu sürümde sağlanmıyor.")
+    elif exchange_filter == "US":
+        score = await compute_us_score(symbol)
+        if score is None:
+            warnings.append("Skor hesaplamak için yeterli veri yok.")
+    else:
+        raise HTTPException(status_code=400, detail="exchange must be BIST or US")
+
+    return {"score": score, "warnings": warnings}

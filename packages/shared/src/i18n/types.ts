@@ -92,6 +92,12 @@ export interface Messages {
     bullish: string;
     bearish: string;
   };
+  score: {
+    title: string;
+    noData: string;
+    outOf: string;
+    explanationToggle: string;
+  };
   fundamentals: {
     peRatio: string;
     pbRatio: string;

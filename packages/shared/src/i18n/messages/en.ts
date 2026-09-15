@@ -94,6 +94,12 @@ export const en: Messages = {
     bullish: "Bullish",
     bearish: "Bearish",
   },
+  score: {
+    title: "Summary Score",
+    noData: "Not enough data",
+    outOf: "out of 100",
+    explanationToggle: "What is this score based on?",
+  },
   fundamentals: {
     peRatio: "P/E Ratio",
     pbRatio: "P/B Ratio",
