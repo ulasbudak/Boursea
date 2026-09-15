@@ -207,6 +207,8 @@ So that şirketin zaman içindeki finansal trendini değerlendirebileyim.
 
 ### Story 3.1: İnteraktif Fiyat Grafiği
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri, mimari yaklaşım ve görev tanımı için bkz. **`docs/stories/story-3.1.md`**. AD-9 ilk kez hayata geçirildi: Backend (yeni `GET /symbols/candles`: Finnhub `/stock/candle`, `intraday`/`daily`/`weekly`/`monthly` zaman dilimleri), web (`lightweight-charts` v5, native), mobil (`react-native-webview` köprüsü üzerinden aynı grafik motoru) — hisse detay sayfasına "Teknik Analiz" sekmesi eklendi. Uygulandı ve doğrulandı.
+
 As a **kullanıcı**,
 I want mum/çizgi/bar grafik türleri arasında geçiş yapıp farklı zaman dilimlerinde fiyat grafiğini incelemek,
 So that fiyat hareketini istediğim şekilde analiz edebileyim.

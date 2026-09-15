@@ -3,8 +3,9 @@
 import { useState, type ReactNode } from "react";
 import type { Locale, Messages } from "@trendus/shared";
 import { FundamentalsPanel } from "./fundamentals-panel";
+import { PriceChart } from "./price-chart";
 
-type Tab = "overview" | "fundamentals";
+type Tab = "overview" | "fundamentals" | "technical";
 
 export function StockTabs({
   exchange,
@@ -41,12 +42,21 @@ export function StockTabs({
         >
           {t.fundamentalsTab}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "technical"}
+          onClick={() => setTab("technical")}
+        >
+          {t.technicalTab}
+        </button>
       </div>
 
       {tab === "overview" && overviewContent}
       {tab === "fundamentals" && (
         <FundamentalsPanel exchange={exchange} symbol={symbol} locale={locale} messages={messages} />
       )}
+      {tab === "technical" && <PriceChart exchange={exchange} symbol={symbol} messages={messages} />}
     </div>
   );
 }

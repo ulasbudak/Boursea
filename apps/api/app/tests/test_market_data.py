@@ -8,7 +8,9 @@ from app.market_data import (
     FinnhubError,
     MarketDataUnavailableError,
     SymbolResult,
+    get_bist_candles,
     get_bist_overview,
+    get_us_candles,
     get_us_overview,
     search_bist_symbols,
     search_us_symbols,
@@ -260,5 +262,122 @@ def test_overview_endpoint_surfaces_warning_when_us_provider_unavailable(monkeyp
 
 def test_overview_endpoint_rejects_unknown_exchange():
     response = client.get("/symbols/overview", params={"symbol": "AAPL", "exchange": "XYZ"})
+
+    assert response.status_code == 400
+
+
+def test_get_bist_candles_returns_empty_list():
+    assert get_bist_candles("GARAN", "daily") == []
+
+
+@pytest.mark.anyio
+async def test_get_us_candles_sends_correct_resolution_per_timeframe():
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["resolution"] = request.url.params["resolution"]
+        captured["from"] = int(request.url.params["from"])
+        captured["to"] = int(request.url.params["to"])
+        return httpx.Response(200, json={"s": "ok", "t": [], "o": [], "h": [], "l": [], "c": [], "v": []})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        await get_us_candles("AAPL", "weekly", client=http_client)
+
+    assert captured["resolution"] == "W"
+    assert captured["to"] - captured["from"] == 5 * 365 * 86400
+
+
+@pytest.mark.anyio
+async def test_get_us_candles_parses_successful_response():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "s": "ok",
+                "t": [1000, 2000],
+                "o": [10.0, 11.0],
+                "h": [12.0, 13.0],
+                "l": [9.0, 10.5],
+                "c": [11.5, 12.5],
+                "v": [1000, 1500],
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        candles = await get_us_candles("AAPL", "daily", client=http_client)
+
+    assert len(candles) == 2
+    assert candles[0].time == 1000
+    assert candles[0].open == 10.0
+    assert candles[0].close == 11.5
+    assert candles[0].volume == 1000
+    assert candles[1].close == 12.5
+
+
+@pytest.mark.anyio
+async def test_get_us_candles_raises_when_no_data():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"s": "no_data"})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        with pytest.raises(MarketDataUnavailableError):
+            await get_us_candles("ZZZZ", "daily", client=http_client)
+
+
+@pytest.mark.anyio
+async def test_get_us_candles_raises_on_http_failure():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        with pytest.raises(MarketDataUnavailableError):
+            await get_us_candles("AAPL", "daily", client=http_client)
+
+
+@pytest.mark.anyio
+async def test_get_us_candles_raises_without_api_key(monkeypatch):
+    monkeypatch.setattr(market_data, "get_settings", lambda: Settings(finnhub_api_key=""))
+
+    with pytest.raises(MarketDataUnavailableError):
+        await get_us_candles("AAPL", "daily")
+
+
+def test_candles_endpoint_returns_bist_empty_with_warning():
+    response = client.get("/symbols/candles", params={"symbol": "GARAN", "exchange": "BIST"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["candles"] == []
+    assert len(body["warnings"]) == 1
+
+
+def test_candles_endpoint_surfaces_warning_when_us_provider_unavailable(monkeypatch):
+    async def failing_get_us_candles(symbol: str, timeframe: str) -> list:
+        raise MarketDataUnavailableError("boom")
+
+    monkeypatch.setattr(main, "get_us_candles", failing_get_us_candles)
+
+    response = client.get("/symbols/candles", params={"symbol": "AAPL", "exchange": "US"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["candles"] == []
+    assert len(body["warnings"]) == 1
+
+
+def test_candles_endpoint_rejects_unknown_exchange():
+    response = client.get("/symbols/candles", params={"symbol": "AAPL", "exchange": "XYZ"})
+
+    assert response.status_code == 400
+
+
+def test_candles_endpoint_rejects_unknown_timeframe():
+    response = client.get(
+        "/symbols/candles", params={"symbol": "AAPL", "exchange": "US", "timeframe": "yearly"}
+    )
 
     assert response.status_code == 400

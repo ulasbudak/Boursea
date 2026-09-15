@@ -16,11 +16,15 @@ from app.fundamentals import (
     get_us_sector_comparison,
 )
 from app.market_data import (
+    TIMEFRAMES,
+    CandlePoint,
     FinnhubError,
     MarketDataUnavailableError,
     StockOverview,
     SymbolResult,
+    get_bist_candles,
     get_bist_overview,
+    get_us_candles,
     get_us_overview,
     search_bist_symbols,
     search_us_symbols,
@@ -154,3 +158,34 @@ async def get_fundamentals_history(symbol: str, exchange: str) -> HistoryRespons
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"history": history, "warnings": warnings}
+
+
+CandlesResponse = dict[str, list[CandlePoint] | list[str]]
+
+
+@app.get("/symbols/candles")
+async def get_symbol_candles(symbol: str, exchange: str, timeframe: str = "daily") -> CandlesResponse:
+    symbol = symbol.strip()
+    exchange_filter = exchange.strip().upper()
+    timeframe_filter = timeframe.strip().lower()
+    if timeframe_filter not in TIMEFRAMES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"timeframe must be one of {', '.join(TIMEFRAMES)}",
+        )
+
+    warnings: list[str] = []
+    candles: list[CandlePoint] = []
+
+    if exchange_filter == "BIST":
+        candles = get_bist_candles(symbol, timeframe_filter)
+        warnings.append("BIST hisseleri için grafik verisi bu sürümde sağlanmıyor.")
+    elif exchange_filter == "US":
+        try:
+            candles = await get_us_candles(symbol, timeframe_filter)
+        except MarketDataUnavailableError:
+            warnings.append("ABD hisse grafik verisi şu an güncellenemiyor.")
+    else:
+        raise HTTPException(status_code=400, detail="exchange must be BIST or US")
+
+    return {"candles": candles, "warnings": warnings}

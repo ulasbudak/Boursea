@@ -51,6 +51,18 @@ export interface Messages {
     tabsLabel: string;
     overviewTab: string;
     fundamentalsTab: string;
+    technicalTab: string;
+  };
+  chart: {
+    candlestick: string;
+    line: string;
+    bar: string;
+    intraday: string;
+    daily: string;
+    weekly: string;
+    monthly: string;
+    chartTypeLabel: string;
+    timeframeLabel: string;
   };
   fundamentals: {
     peRatio: string;

@@ -53,6 +53,18 @@ export const en: Messages = {
     tabsLabel: "Stock detail tabs",
     overviewTab: "Overview",
     fundamentalsTab: "Fundamentals",
+    technicalTab: "Technical",
+  },
+  chart: {
+    candlestick: "Candlestick",
+    line: "Line",
+    bar: "Bar",
+    intraday: "Intraday",
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    chartTypeLabel: "Chart type",
+    timeframeLabel: "Timeframe",
   },
   fundamentals: {
     peRatio: "P/E Ratio",

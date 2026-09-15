@@ -1,6 +1,7 @@
 import asyncio
 import difflib
 import json
+import time
 from functools import lru_cache
 from pathlib import Path
 
@@ -13,9 +14,19 @@ BIST_SYMBOLS_PATH = Path(__file__).parent / "data" / "bist_symbols.json"
 FINNHUB_SEARCH_URL = "https://finnhub.io/api/v1/search"
 FINNHUB_QUOTE_URL = "https://finnhub.io/api/v1/quote"
 FINNHUB_PROFILE_URL = "https://finnhub.io/api/v1/stock/profile2"
+FINNHUB_CANDLE_URL = "https://finnhub.io/api/v1/stock/candle"
 FINNHUB_TIMEOUT_SECONDS = 3.0
 MAX_RESULTS = 20
 FUZZY_MATCH_CUTOFF = 0.6
+
+ONE_DAY_SECONDS = 86400
+
+TIMEFRAMES: dict[str, dict[str, object]] = {
+    "intraday": {"resolution": "60", "lookback_seconds": 5 * ONE_DAY_SECONDS},
+    "daily": {"resolution": "D", "lookback_seconds": 365 * ONE_DAY_SECONDS},
+    "weekly": {"resolution": "W", "lookback_seconds": 5 * 365 * ONE_DAY_SECONDS},
+    "monthly": {"resolution": "M", "lookback_seconds": 20 * 365 * ONE_DAY_SECONDS},
+}
 
 
 class SymbolResult(BaseModel):
@@ -35,6 +46,15 @@ class StockOverview(BaseModel):
     currency: str | None = None
     sector: str | None = None
     industry: str | None = None
+
+
+class CandlePoint(BaseModel):
+    time: int
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float | None = None
 
 
 class FinnhubError(Exception):
@@ -187,3 +207,62 @@ async def get_us_overview(
         sector=profile.get("finnhubIndustry"),
         industry=None,
     )
+
+
+def get_bist_candles(symbol: str, timeframe: str) -> list[CandlePoint]:
+    return []
+
+
+async def get_us_candles(
+    symbol: str, timeframe: str, *, client: httpx.AsyncClient | None = None
+) -> list[CandlePoint]:
+    settings = get_settings()
+    if not settings.finnhub_api_key:
+        raise MarketDataUnavailableError("FINNHUB_API_KEY is not configured")
+
+    config = TIMEFRAMES[timeframe]
+    now = int(time.time())
+    from_ts = now - int(config["lookback_seconds"])
+
+    owns_client = client is None
+    http_client = client or httpx.AsyncClient(timeout=FINNHUB_TIMEOUT_SECONDS)
+    try:
+        response = await http_client.get(
+            FINNHUB_CANDLE_URL,
+            params={
+                "symbol": symbol,
+                "resolution": config["resolution"],
+                "from": from_ts,
+                "to": now,
+                "token": settings.finnhub_api_key,
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except httpx.HTTPError as exc:
+        raise MarketDataUnavailableError(f"Finnhub request failed: {exc}") from exc
+    finally:
+        if owns_client:
+            await http_client.aclose()
+
+    if payload.get("s") != "ok":
+        raise MarketDataUnavailableError(f"No candle data for symbol {symbol}")
+
+    times = payload.get("t") or []
+    opens = payload.get("o") or []
+    highs = payload.get("h") or []
+    lows = payload.get("l") or []
+    closes = payload.get("c") or []
+    volumes = payload.get("v") or []
+
+    return [
+        CandlePoint(
+            time=t,
+            open=o,
+            high=h,
+            low=low,
+            close=c,
+            volume=volumes[i] if i < len(volumes) else None,
+        )
+        for i, (t, o, h, low, c) in enumerate(zip(times, opens, highs, lows, closes))
+    ]

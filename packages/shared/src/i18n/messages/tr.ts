@@ -53,6 +53,18 @@ export const tr: Messages = {
     tabsLabel: "Hisse detay sekmeleri",
     overviewTab: "Genel Bakış",
     fundamentalsTab: "Temel Analiz",
+    technicalTab: "Teknik Analiz",
+  },
+  chart: {
+    candlestick: "Mum",
+    line: "Çizgi",
+    bar: "Bar",
+    intraday: "Gün İçi",
+    daily: "Günlük",
+    weekly: "Haftalık",
+    monthly: "Aylık",
+    chartTypeLabel: "Grafik türü",
+    timeframeLabel: "Zaman dilimi",
   },
   fundamentals: {
     peRatio: "F/K Oranı",

@@ -10,6 +10,7 @@ import {
 import { formatChange, formatMarketCap, formatPrice } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 import { FundamentalsPanel } from "./FundamentalsPanel";
+import { PriceChartWebView } from "./PriceChartWebView";
 
 type StockOverview = {
   symbol: string;
@@ -43,7 +44,7 @@ export function StockOverviewScreen({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
-  const [tab, setTab] = useState<"overview" | "fundamentals">("overview");
+  const [tab, setTab] = useState<"overview" | "fundamentals" | "technical">("overview");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,6 +95,11 @@ export function StockOverviewScreen({
         <TouchableOpacity onPress={() => setTab("fundamentals")}>
           <Text style={[styles.tabLabel, tab === "fundamentals" && styles.tabLabelActive]}>
             {messages.stock.fundamentalsTab}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setTab("technical")}>
+          <Text style={[styles.tabLabel, tab === "technical" && styles.tabLabelActive]}>
+            {messages.stock.technicalTab}
           </Text>
         </TouchableOpacity>
       </View>
@@ -154,6 +160,7 @@ export function StockOverviewScreen({
       )}
 
       {tab === "fundamentals" && <FundamentalsPanel symbol={symbol} exchange={exchange} />}
+      {tab === "technical" && <PriceChartWebView symbol={symbol} exchange={exchange} />}
 
       <Text style={styles.disclaimer}>{messages.common.disclaimer}</Text>
     </ScrollView>
