@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { WebView } from "react-native-webview";
-import { ALL_INDICATORS, findIndicator } from "@trendus/shared";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { ALL_INDICATORS, drawingsStorageKey, findIndicator, type Drawing } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 
 type Candle = {
@@ -28,8 +29,13 @@ type CandlesResponse = {
 type ChartType = "candlestick" | "line" | "bar";
 type Timeframe = "intraday" | "daily" | "weekly" | "monthly";
 type ActiveIndicator = { id: string; params: Record<string, number> };
+type DrawingTool = "none" | "trendLine" | "horizontalLine";
 
 const CORE_INDICATOR_IDS = ["sma", "ema", "bollinger", "volume", "rsi", "macd", "stochastic"];
+
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 const CHART_HTML = `<!doctype html>
 <html>
@@ -53,6 +59,9 @@ const CHART_HTML = `<!doctype html>
     var indicatorSeries = [];
     var indicatorPanes = [];
     var priceLines = [];
+    var drawingSeries = [];
+    var drawingPriceLines = [];
+    var activeTool = "none";
 
     function seriesTypeFor(chartType) {
       if (chartType === "candlestick") return LightweightCharts.CandlestickSeries;
@@ -115,6 +124,50 @@ const CHART_HTML = `<!doctype html>
       });
     };
 
+    window.__setActiveTool = function (tool) {
+      activeTool = tool;
+    };
+
+    window.__setDrawings = function (drawings) {
+      drawingSeries.forEach(function (s) { chart.removeSeries(s); });
+      drawingSeries = [];
+      if (series) {
+        drawingPriceLines.forEach(function (l) { series.removePriceLine(l); });
+      }
+      drawingPriceLines = [];
+
+      drawings.forEach(function (d) {
+        if (d.type === "horizontalLine") {
+          if (!series) return;
+          drawingPriceLines.push(
+            series.createPriceLine({ price: d.price, title: d.title || "", color: "#F23645", lineWidth: 2 })
+          );
+          return;
+        }
+        var points = d.point1.time <= d.point2.time ? [d.point1, d.point2] : [d.point2, d.point1];
+        if (points[0].time === points[1].time) return;
+        var lineSeries = chart.addSeries(LightweightCharts.LineSeries, {
+          color: "#F23645",
+          lineWidth: 2,
+          title: d.title || "",
+        });
+        lineSeries.setData([
+          { time: points[0].time, value: points[0].price },
+          { time: points[1].time, value: points[1].price },
+        ]);
+        drawingSeries.push(lineSeries);
+      });
+    };
+
+    chart.subscribeClick(function (param) {
+      if (activeTool === "none" || !param.point || param.time === undefined || !series) return;
+      var price = series.coordinateToPrice(param.point.y);
+      if (price === null || price === undefined) return;
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: "chartClick", time: param.time, price: price }));
+      }
+    });
+
     window.addEventListener("resize", function () {
       chart.resize(window.innerWidth, window.innerHeight);
     });
@@ -159,6 +212,9 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
   const [fetchFailed, setFetchFailed] = useState(false);
   const [webviewReady, setWebviewReady] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [activeTool, setActiveTool] = useState<DrawingTool>("none");
+  const [pendingPoint, setPendingPoint] = useState<{ time: number; price: number } | null>(null);
 
   const coreIndicatorLabels: Record<string, string> = {
     sma: messages.chart.smaLabel,
@@ -208,6 +264,35 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
   }, [symbol, exchange, timeframe]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadDrawings() {
+      let loaded: Drawing[] = [];
+      try {
+        const raw = await AsyncStorage.getItem(drawingsStorageKey(exchange, symbol));
+        loaded = raw ? (JSON.parse(raw) as Drawing[]) : [];
+      } catch {
+        loaded = [];
+      }
+      if (cancelled) return;
+      setDrawings(loaded);
+      setActiveTool("none");
+      setPendingPoint(null);
+    }
+
+    loadDrawings();
+    return () => {
+      cancelled = true;
+    };
+  }, [exchange, symbol]);
+
+  useEffect(() => {
+    AsyncStorage.setItem(drawingsStorageKey(exchange, symbol), JSON.stringify(drawings)).catch(() => {
+      // AsyncStorage unavailable; drawings just won't persist this session.
+    });
+  }, [drawings, exchange, symbol]);
+
+  useEffect(() => {
     if (!webviewReady) return;
     const script = `window.__setChartData(${JSON.stringify(candles)}, ${JSON.stringify(chartType)}); true;`;
     webviewRef.current?.injectJavaScript(script);
@@ -219,6 +304,66 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
     const script = `window.__setIndicators(${JSON.stringify(results)}); true;`;
     webviewRef.current?.injectJavaScript(script);
   }, [webviewReady, activeIndicators, candles]);
+
+  useEffect(() => {
+    if (!webviewReady) return;
+    webviewRef.current?.injectJavaScript(`window.__setActiveTool(${JSON.stringify(activeTool)}); true;`);
+  }, [webviewReady, activeTool]);
+
+  useEffect(() => {
+    if (!webviewReady) return;
+    const t = messages.chart;
+    const payload = drawings.map((d) => ({
+      ...d,
+      title: d.type === "trendLine" ? t.trendLineName : t.horizontalLineName,
+    }));
+    webviewRef.current?.injectJavaScript(`window.__setDrawings(${JSON.stringify(payload)}); true;`);
+  }, [webviewReady, drawings, messages.chart]);
+
+  function handleWebViewMessage(event: WebViewMessageEvent) {
+    let data: { type?: string; time?: number; price?: number };
+    try {
+      data = JSON.parse(event.nativeEvent.data);
+    } catch {
+      return;
+    }
+    if (data.type !== "chartClick" || data.time == null || data.price == null) return;
+    const { time, price } = data;
+
+    if (activeTool === "horizontalLine") {
+      setDrawings((prev) => [...prev, { id: generateId(), type: "horizontalLine", price }]);
+      setActiveTool("none");
+      return;
+    }
+
+    if (activeTool === "trendLine") {
+      if (!pendingPoint) {
+        setPendingPoint({ time, price });
+        return;
+      }
+      if (pendingPoint.time !== time) {
+        setDrawings((prev) => [
+          ...prev,
+          { id: generateId(), type: "trendLine", point1: pendingPoint, point2: { time, price } },
+        ]);
+      }
+      setPendingPoint(null);
+      setActiveTool("none");
+    }
+  }
+
+  function selectTool(tool: DrawingTool) {
+    setPendingPoint(null);
+    setActiveTool((prev) => (prev === tool ? "none" : tool));
+  }
+
+  function deleteDrawing(id: string) {
+    setDrawings((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  function drawingName(drawing: Drawing): string {
+    return drawing.type === "trendLine" ? messages.chart.trendLineName : messages.chart.horizontalLineName;
+  }
 
   function isActive(id: string): boolean {
     return activeIndicators.some((a) => a.id === id);
@@ -316,6 +461,36 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
         </View>
       )}
 
+      <View style={styles.toggleRow}>
+        <TouchableOpacity onPress={() => selectTool("trendLine")}>
+          <Text style={[styles.toggleLabel, activeTool === "trendLine" && styles.toggleLabelActive]}>
+            {messages.chart.trendLineTool}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => selectTool("horizontalLine")}>
+          <Text style={[styles.toggleLabel, activeTool === "horizontalLine" && styles.toggleLabelActive]}>
+            {messages.chart.horizontalLineTool}
+          </Text>
+        </TouchableOpacity>
+        {activeTool === "trendLine" && pendingPoint && (
+          <Text style={styles.hint}>{messages.chart.selectSecondPoint}</Text>
+        )}
+      </View>
+
+      {drawings.length > 0 && (
+        <View style={styles.activeList}>
+          <Text style={styles.activeListTitle}>{messages.chart.drawingsLabel}</Text>
+          {drawings.map((drawing) => (
+            <View key={drawing.id} style={styles.activeRow}>
+              <Text>{drawingName(drawing)}</Text>
+              <TouchableOpacity onPress={() => deleteDrawing(drawing.id)}>
+                <Text style={styles.removeLink}>{messages.chart.removeButton}</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
       {loading && <ActivityIndicator />}
       {fetchFailed && <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>}
       {!fetchFailed &&
@@ -331,6 +506,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
           originWhitelist={["*"]}
           source={{ html: CHART_HTML }}
           onLoadEnd={() => setWebviewReady(true)}
+          onMessage={handleWebViewMessage}
           style={styles.webview}
         />
       </View>
@@ -397,6 +573,10 @@ const styles = StyleSheet.create({
   },
   toggleLabelActive: {
     color: "#111",
+  },
+  hint: {
+    color: "#2962FF",
+    fontStyle: "italic",
   },
   advancedToggle: {
     color: "#111",

@@ -80,6 +80,13 @@ export const tr: Messages = {
     periodLabel: "Periyot",
     noSearchResults: "Eşleşen indikatör yok",
     activeIndicatorsLabel: "Aktif indikatörler",
+    trendLineTool: "Trend Çizgisi",
+    horizontalLineTool: "Yatay Çizgi",
+    drawingToolsLabel: "Çizim araçları",
+    drawingsLabel: "Çizimler",
+    selectSecondPoint: "İkinci noktayı seçin",
+    trendLineName: "Trend Çizgisi",
+    horizontalLineName: "Yatay Çizgi",
   },
   fundamentals: {
     peRatio: "F/K Oranı",

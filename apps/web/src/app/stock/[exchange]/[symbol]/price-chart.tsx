@@ -10,10 +10,18 @@ import {
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
+  type MouseEventParams,
   type SeriesType,
+  type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { ALL_INDICATORS, findIndicator, type Messages } from "@trendus/shared";
+import {
+  ALL_INDICATORS,
+  drawingsStorageKey,
+  findIndicator,
+  type Drawing,
+  type Messages,
+} from "@trendus/shared";
 
 type Candle = {
   time: number;
@@ -32,6 +40,7 @@ type CandlesResponse = {
 type ChartType = "candlestick" | "line" | "bar";
 type Timeframe = "intraday" | "daily" | "weekly" | "monthly";
 type ActiveIndicator = { id: string; params: Record<string, number> };
+type DrawingTool = "none" | "trendLine" | "horizontalLine";
 
 const CHART_HEIGHT = 320;
 const CORE_INDICATOR_IDS = ["sma", "ema", "bollinger", "volume", "rsi", "macd", "stochastic"];
@@ -55,6 +64,8 @@ export function PriceChart({
   const indicatorSeriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
   const indicatorPanesRef = useRef<number[]>([]);
   const priceLinesRef = useRef<IPriceLine[]>([]);
+  const drawingSeriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
+  const drawingPriceLinesRef = useRef<IPriceLine[]>([]);
 
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [timeframe, setTimeframe] = useState<Timeframe>("daily");
@@ -64,6 +75,9 @@ export function PriceChart({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [activeTool, setActiveTool] = useState<DrawingTool>("none");
+  const [pendingPoint, setPendingPoint] = useState<{ time: number; price: number } | null>(null);
 
   const t = messages;
   const coreIndicatorLabels: Record<string, string> = {
@@ -114,6 +128,37 @@ export function PriceChart({
   }, [exchange, symbol, timeframe]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      let loaded: Drawing[] = [];
+      try {
+        const raw = localStorage.getItem(drawingsStorageKey(exchange, symbol));
+        loaded = raw ? (JSON.parse(raw) as Drawing[]) : [];
+      } catch {
+        loaded = [];
+      }
+      if (cancelled) return;
+      setDrawings(loaded);
+      setActiveTool("none");
+      setPendingPoint(null);
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [exchange, symbol]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(drawingsStorageKey(exchange, symbol), JSON.stringify(drawings));
+    } catch {
+      // localStorage unavailable (private browsing, quota); drawings just won't persist this session.
+    }
+  }, [drawings, exchange, symbol]);
+
+  useEffect(() => {
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
       height: CHART_HEIGHT,
@@ -136,6 +181,8 @@ export function PriceChart({
       indicatorSeriesRef.current = [];
       indicatorPanesRef.current = [];
       priceLinesRef.current = [];
+      drawingSeriesRef.current = [];
+      drawingPriceLinesRef.current = [];
     };
   }, []);
 
@@ -224,6 +271,77 @@ export function PriceChart({
     }
   }, [activeIndicators, candles]);
 
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || activeTool === "none") return;
+
+    function handleClick(param: MouseEventParams<Time>) {
+      if (!param.point || param.time == null || !priceSeriesRef.current) return;
+      const price = priceSeriesRef.current.coordinateToPrice(param.point.y);
+      if (price == null) return;
+      const time = param.time as unknown as number;
+
+      if (activeTool === "horizontalLine") {
+        setDrawings((prev) => [...prev, { id: crypto.randomUUID(), type: "horizontalLine", price }]);
+        setActiveTool("none");
+        return;
+      }
+
+      if (!pendingPoint) {
+        setPendingPoint({ time, price });
+        return;
+      }
+
+      if (pendingPoint.time !== time) {
+        setDrawings((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), type: "trendLine", point1: pendingPoint, point2: { time, price } },
+        ]);
+      }
+      setPendingPoint(null);
+      setActiveTool("none");
+    }
+
+    chart.subscribeClick(handleClick);
+    return () => chart.unsubscribeClick(handleClick);
+  }, [activeTool, pendingPoint]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const priceSeries = priceSeriesRef.current;
+    if (!chart || !priceSeries) return;
+
+    for (const series of drawingSeriesRef.current) {
+      chart.removeSeries(series);
+    }
+    drawingSeriesRef.current = [];
+    for (const line of drawingPriceLinesRef.current) {
+      priceSeries.removePriceLine(line);
+    }
+    drawingPriceLinesRef.current = [];
+
+    for (const drawing of drawings) {
+      if (drawing.type === "horizontalLine") {
+        const line = priceSeries.createPriceLine({
+          price: drawing.price,
+          title: t.chart.horizontalLineName,
+          color: "#F23645",
+          lineWidth: 2,
+        });
+        drawingPriceLinesRef.current.push(line);
+      } else {
+        const points = [drawing.point1, drawing.point2].sort((a, b) => a.time - b.time);
+        if (points[0].time === points[1].time) continue;
+        const series = chart.addSeries(LineSeries, { color: "#F23645", lineWidth: 2, title: t.chart.trendLineName });
+        series.setData([
+          { time: toTime(points[0].time), value: points[0].price },
+          { time: toTime(points[1].time), value: points[1].price },
+        ]);
+        drawingSeriesRef.current.push(series);
+      }
+    }
+  }, [drawings, chartType, candles, t.chart.horizontalLineName, t.chart.trendLineName]);
+
   function isActive(id: string): boolean {
     return activeIndicators.some((a) => a.id === id);
   }
@@ -242,6 +360,19 @@ export function PriceChart({
 
   function addAdvancedIndicator(id: string, params: Record<string, number>) {
     setActiveIndicators((prev) => (prev.some((a) => a.id === id) ? prev : [...prev, { id, params }]));
+  }
+
+  function selectTool(tool: DrawingTool) {
+    setPendingPoint(null);
+    setActiveTool((prev) => (prev === tool ? "none" : tool));
+  }
+
+  function deleteDrawing(id: string) {
+    setDrawings((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  function drawingName(drawing: Drawing): string {
+    return drawing.type === "trendLine" ? t.chart.trendLineName : t.chart.horizontalLineName;
   }
 
   return (
@@ -322,6 +453,32 @@ export function PriceChart({
                 </li>
               );
             })}
+          </ul>
+        </div>
+      )}
+
+      <div role="group" aria-label={t.chart.drawingToolsLabel}>
+        <button type="button" aria-pressed={activeTool === "trendLine"} onClick={() => selectTool("trendLine")}>
+          {t.chart.trendLineTool}
+        </button>
+        <button type="button" aria-pressed={activeTool === "horizontalLine"} onClick={() => selectTool("horizontalLine")}>
+          {t.chart.horizontalLineTool}
+        </button>
+        {activeTool === "trendLine" && pendingPoint && <span> {t.chart.selectSecondPoint}</span>}
+      </div>
+
+      {drawings.length > 0 && (
+        <div>
+          <p>{t.chart.drawingsLabel}</p>
+          <ul>
+            {drawings.map((drawing) => (
+              <li key={drawing.id}>
+                {drawingName(drawing)}{" "}
+                <button type="button" onClick={() => deleteDrawing(drawing.id)}>
+                  {t.chart.removeButton}
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       )}

@@ -248,6 +248,8 @@ So that daha derinlemesine teknik analiz yapabileyim.
 
 ### Story 3.4: Manuel Çizim Araçları
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-3.4.md`**. Trend çizgisi (2 nokta) ve yatay destek/direnç çizgisi, grafik tıklamalarıyla eklenip sembol+borsa bazlı istemci tarafı depolamada (web: `localStorage`, mobil: `AsyncStorage`) kalıcı saklanıyor; aktif çizimler listeden seçilip silinebiliyor. Uygulandı ve doğrulandı.
+
 As a **aktif trader**,
 I want grafik üzerine trend çizgisi ve yatay destek/direnç çizgisi çizebilmek,
 So that kendi analizimi grafik üzerinde işaretleyebileyim.

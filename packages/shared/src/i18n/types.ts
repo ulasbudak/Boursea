@@ -78,6 +78,13 @@ export interface Messages {
     periodLabel: string;
     noSearchResults: string;
     activeIndicatorsLabel: string;
+    trendLineTool: string;
+    horizontalLineTool: string;
+    drawingToolsLabel: string;
+    drawingsLabel: string;
+    selectSecondPoint: string;
+    trendLineName: string;
+    horizontalLineName: string;
   };
   fundamentals: {
     peRatio: string;

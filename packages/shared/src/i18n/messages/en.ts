@@ -80,6 +80,13 @@ export const en: Messages = {
     periodLabel: "Period",
     noSearchResults: "No matching indicators",
     activeIndicatorsLabel: "Active indicators",
+    trendLineTool: "Trend Line",
+    horizontalLineTool: "Horizontal Line",
+    drawingToolsLabel: "Drawing tools",
+    drawingsLabel: "Drawings",
+    selectSecondPoint: "Pick the second point",
+    trendLineName: "Trend Line",
+    horizontalLineName: "Horizontal Line",
   },
   fundamentals: {
     peRatio: "P/E Ratio",
