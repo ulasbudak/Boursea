@@ -2,7 +2,7 @@
 title: "Trendus (Borsa Takip Uygulaması) - Epic ve Story Backlog"
 status: draft
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-09-16
 author: Bob (BMAD Scrum Master)
 inputDocuments: ["docs/PRD.md", "docs/architecture.md"]
 ---
@@ -23,7 +23,9 @@ FR-001, FR-002, FR-003, FR-010, FR-011, FR-013, FR-020, FR-021, FR-022, FR-023, 
 
 ### 2.2 Faz 2 — Bu Backlog Kapsamı Dışında
 
-FR-012 (özelleştirilebilir metrik ağırlıklandırma), FR-025 (ML tabanlı sinyal), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS bildirim). Bu gereksinimler PRD Bölüm 8'e göre Faz 2'ye ertelenmiştir; aşağıdaki epiklerde ele alınmamıştır.
+FR-012 (özelleştirilebilir metrik ağırlıklandırma), FR-025/FR-102 (ML tabanlı sinyal/örüntü tanıma), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS bildirim). Bu gereksinimler PRD Bölüm 8'e göre Faz 2'ye ertelenmiştir; aşağıdaki Epic 1-8'de ele alınmamıştır.
+
+**İstisna — Epic 9:** FR-100 (AI hisse yorumu) ve FR-101 (deterministik grafik örüntü tanıma), teknik olarak Faz 2 kapsamında olsa da kullanıcı tarafından MVP (Epic 1-8) sonrası **ilk öncelik** olarak işaretlendiği için bu backlog'a Epic 9 olarak dahil edildi (bkz. §13 ve `docs/product-brief-epic9-ai.md`).
 
 ### 2.3 Fonksiyonel Olmayan Gereksinimler (ilgili story'lerin kabul kriterlerine yansıtılmıştır)
 
@@ -87,6 +89,10 @@ Kullanıcı ilgi alanına göre öne çıkan hisseleri görebilir ve izlediği h
 ### Epic 8: Abonelik ve Monetizasyon (Freemium)
 Kullanıcı ücretsiz katmanın sınırlarını görebilir ve premium katmana yükseltip gerçek zamanlı veri/geniş özellik setine erişebilir.
 **FRs covered:** FR-080, FR-081, FR-082, FR-083
+
+### Epic 9: AI Destekli Yorum ve Örüntü Tanıma (Faz 2 — MVP Sonrası İlk Öncelik)
+Kullanıcı, hisse detay sayfasında güncel haberlere dayanan serbest formatlı bir AI yorumu okuyabilir ve fiyat grafiğinde otomatik tespit edilmiş trend/destek-direnç/formasyon bulgularını görebilir. Epic 1-8 (Faz 1 MVP) tamamlanmadan başlanmaz.
+**FRs covered:** FR-100, FR-101 (FR-102/FR-025 bu epic'in ilerleyen bir alt-fazı, ayrı ele alınacak)
 
 **Epic bağımsızlığı notu:** Her epic bir öncekinin çıktısını kullanabilir (örn. Epic 3, Epic 2'nin ürettiği temel veri modelini kullanır) ama hiçbir epic sonraki bir epiğin tamamlanmasını beklemez. Epic 8 (Abonelik), Epic 1-7'de üretilen özellik sınırlarını freemium kapıları arkasına yerleştirir ama bu epiklerin fonksiyonelliğini değiştirmez.
 
@@ -489,9 +495,42 @@ So that gerçek zamanlı veri ve gelişmiş özelliklere erişebileyim.
 
 ---
 
-## 13. Sonraki Adımlar
+## 13. Epic 9: AI Destekli Yorum ve Örüntü Tanıma
+
+> **Ön koşul:** Epic 1-8 (Faz 1 MVP) tamamlanmış olmalı. Karar gerekçesi, değerlendirilip elenen alternatifler ve açık risk için bkz. `docs/product-brief-epic9-ai.md`.
+
+### Story 9.1: Serbest Formatlı AI Hisse Yorumu
+
+As a **kullanıcı (premium)**,
+I want hisse detay sayfasında, o hisseyle ilgili güncel haberlere dayanan bir AI yorumu okumak,
+So that sadece sayılara bakmadan hissenin güncel bağlamını hızlıca anlayabileyim.
+
+**Acceptance Criteria:**
+
+- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "AI Yorumu" bölümüne gelirse, **Then** Finnhub `company-news` verisi ve uygulamanın kendi temel/teknik verileri zemine alınarak (RAG) üretilmiş serbest formatlı bir yorum gösterilir (FR-100).
+- **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı bölüme gelirse, **Then** özellik kilitli gösterilir ve premium yükseltme teklifiyle karşılaşır (FR-080).
+- **Given** ilgili hisse için güncel haber bulunamazsa, **When** yorum üretilmeye çalışılırsa, **Then** "yeterli güncel veri yok" durumu gösterilir; haber olmadan genel/halüsinasyon riski taşıyan bir yorum üretilmez.
+- **And** yorumun altında sabit olarak "yatırım tavsiyesi değildir" ibaresi ve haber kaynağı/tarih bilgisi (şeffaflık için) yer alır (NFR-3, NFR-7).
+
+### Story 9.2: Deterministik Grafik Örüntü Tespiti
+
+As a **aktif trader**,
+I want fiyat grafiğinde trend çizgisi, destek/direnç seviyeleri ve klasik formasyonların otomatik tespit edildiğini görmek,
+So that manuel çizim yapmadan grafikteki önemli seviyeleri/örüntüleri hızlıca fark edebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bir hissenin teknik verisi, **When** kural bazlı örüntü tanıma algoritması çalıştırılırsa, **Then** tespit edilen trend çizgisi/destek-direnç seviyeleri ve klasik formasyonlar (üçgen, omuz-baş-omuz vb.) grafik üzerinde işaretlenir (FR-101).
+- **Given** bir bulgu listelenir, **When** kullanıcı bulguya bakarsa, **Then** bulgu "örüntü/sinyal bulgusu" olarak, mevcut sinyal motoruyla (FR-024) tutarlı bir dille sunulur; "AI trading stratejisi" veya "öneri" ifadesi kullanılmaz.
+- **Given** yeterli veri/net bir örüntü yoksa, **When** tespit çalıştırılırsa, **Then** "belirgin bir örüntü tespit edilmedi" durumu gösterilir, hatalı/zorlama bir bulgu üretilmez.
+- **And** bu story'nin çıktısı kural bazlı/deterministiktir; geçmiş veriyle eğitilmiş bir ML modeli (FR-102/FR-025) bu epic'in kapsamında değildir, ayrı bir gelecek fazda ele alınacaktır.
+
+---
+
+## 14. Sonraki Adımlar
 
 1. Bu backlog kullanıcı tarafından gözden geçirilip epik sıralaması/story kapsamı onaylanmalı.
 2. `docs/stories/story-1.md` (Epic 1, Story 1.1) ilk geliştirme adımı olarak hazır — geliştirme buradan başlayabilir.
 3. Her story tamamlandıkça bu dokümandaki durum güncellenmeli veya `bmad-sprint-planning` ile bir `sprint-status.yaml` takip dosyası oluşturulmalı.
 4. UX tasarımı (`bmad-ux`) yapıldığında ilgili epiklere UX-DR satırları eklenmeli.
+5. Epic 9 (AI Yorum) için: Finnhub `company-news` endpoint'inin mevcut abonelik planında dahil olup olmadığı doğrulanmalı; LLM sağlayıcı/maliyet seçimi ve regülasyon açık sorusu (PRD §9) Epic 9 geliştirmesi başlamadan önce netleştirilmeli.

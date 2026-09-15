@@ -2,7 +2,7 @@
 title: "Trendus (Borsa Takip Uygulaması) - Ürün Gereksinim Dokümanı"
 status: draft
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-09-16
 author: Mary (BMAD Business Analyst) — Serdar Ulaş Budak ile birlikte
 ---
 
@@ -111,6 +111,14 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 - **FR-090** [MVP] Uygulama arayüzü Türkçe ve İngilizce olarak sunulmalı, kullanıcı dil tercihini değiştirebilmelidir.
 - **FR-091** [MVP] Sayı/para birimi biçimleri (binlik ayraç, ondalık, TL/USD gösterimi) seçilen dile ve piyasaya göre otomatik uyarlanmalıdır.
 
+### 5.11 AI Destekli Yorum ve Örüntü Tanıma
+
+> **Analist notu (2026-09-16):** Bu bölüm, MVP (Faz 1, Epic 1-8) tamamlandıktan sonra kullanıcı tarafından **ilk öncelik** olarak işaretlenen bir genişleme kapsar (bkz. `docs/product-brief-epic9-ai.md` — karar gerekçesi ve değerlendirilip elenen alternatifler için). FR-025'in kapsamı bu bölümle kesişir; FR-102 onun somutlaştırılmış/genişletilmiş halidir.
+
+- **FR-100** [F2 — MVP sonrası ilk öncelik] Sistem, hisse detay sayfasında, seçilen hisse için **serbest formatlı bir AI yorumu** üretmelidir. Yorum, Finnhub şirket haberleri (`company-news`) ve uygulamanın kendi temel/teknik verileriyle (RAG) zemine oturtulmalı; salt LLM eğitim verisine dayanmamalıdır. Bu özellik premium katmana bağlıdır (bkz. FR-080-083).
+- **FR-101** [F2 — MVP sonrası ilk öncelik] Sistem, fiyat grafiği üzerinde **deterministik (kural bazlı) grafik örüntü tanıma** yapmalıdır: trend çizgisi, destek/direnç seviyeleri ve klasik formasyonlar (üçgen, omuz-baş-omuz vb.) otomatik tespit edilip grafik üzerinde işaretlenmelidir. Çıktı, mevcut sinyal motoruyla (FR-024) aynı hukuki çerçevede **"örüntü/sinyal bulgusu"** olarak sunulmalı; "AI trading stratejisi" gibi tavsiye niteliğinde bir dille konumlandırılmamalıdır (bkz. Bölüm 9, yatırım danışmanlığı sınırı).
+- **FR-102** [F2 — FR-025'in genişletilmiş hali] FR-101'in kural bazlı temeli üzerine, geçmiş piyasa verisiyle eğitilmiş bir **ML modeli** ile örüntü tanıma/olasılıksal sinyal skorlaması yapılmalıdır. Bu, FR-025'te tanımlanan işin somut bir uygulamasıdır; ayrı bir veri/ML altyapısı (eğitim, değerlendirme, yeniden eğitim döngüsü) gerektirdiğinden Faz 2'nin ilerleyen bir alt-fazında, FR-100/FR-101 üretime alındıktan sonra ele alınmalıdır.
+
 ## 6. Fonksiyonel Olmayan Gereksinimler (NFR)
 
 | Kategori | Gereksinim |
@@ -137,7 +145,9 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 **⚠️ Kapsam Riski (analist notu):** Kullanıcı tarafında MVP kapsamına "her şeyin dahil olması" yönünde net bir tercih belirtildi (temel analiz + sektör kıyaslaması + geniş teknik indikatör kütüphanesi + otomatik sinyal + gelişmiş çoklu kriter tarama + izleme listesi + portföy + kullanıcı hesabı + kişiselleştirme, iki dilli, freemium ödeme altyapısıyla birlikte). Bu, **solo geliştirici + birkaç aylık hedef** ile birlikte değerlendirildiğinde yüksek risklidir. Aşağıdaki faz ayrımı, kullanıcının önceliklerine (özellikle sektör kıyaslaması ve gelişmiş tarama) sadık kalarak, göreceli olarak daha düşük karmaşıklıklı olan unsurları (ML tabanlı kişiselleştirme, özelleştirilebilir skor ağırlıklandırma, portföy risk analizi, otomatik tarama bildirimleri, SMS) Faz 2'ye ertelemeyi önerir. Bu öneri kullanıcı onayına açıktır (bkz. Bölüm 9).
 
 - **Faz 1 (MVP):** FR-001, 002, 003, 010, 011, 013, 020-024, 030-032, 040-043, 050-052, 060-062, 070, 080-083, 090-091.
-- **Faz 2:** FR-012 (özelleştirilebilir skor ağırlıklandırma), FR-025 (ML tabanlı sinyal), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS).
+- **Faz 2 (öncelik sırasına göre):**
+  1. **FR-100, FR-101** (AI destekli hisse yorumu + deterministik grafik örüntü tanıma) — kullanıcı tarafından MVP sonrası **ilk öncelik** olarak belirlendi (bkz. `docs/product-brief-epic9-ai.md`), Epic 9 olarak backlog'a eklendi.
+  2. **FR-102** (ML tabanlı örüntü tanıma — FR-025'in genişletilmiş hali), FR-012 (özelleştirilebilir skor ağırlıklandırma), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS) — sıralama arasında henüz kesin öncelik belirlenmedi.
 - **Kapsam dışı (şimdilik):** Kripto/döviz varlık sınıfları, sosyal/topluluk özellikleri, gerçek alım-satım emri iletimi (brokerage entegrasyonu).
 
 ## 9. Açık Sorular ve Varsayımlar
@@ -148,6 +158,7 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 - **[OPEN QUESTION]** Bölüm 8'deki faz ayrımı önerisi kullanıcı tarafından onaylanmalı; onaylanmazsa zaman çizelgesinin uzatılması veya ek geliştirici kaynağı gerekebilir.
 - **[ASSUMPTION]** Kullanıcı senaryoları (UJ-1, UJ-2) taslak olarak yazılmıştır, gerçek kullanıcı anlatımıyla doğrulanmamıştır.
 - **[OPEN QUESTION]** Özet skor/derecelendirme (FR-003) algoritmasının kesin formülü (hangi metriklerin ne ağırlıkla birleştirileceği) tanımlanmalıdır.
+- **[OPEN QUESTION — yatırımcı sunumundan önce netleştirilmeli]** ABD/Türkiye'deki yatırım danışmanlığı düzenlemelerine tabi olmama sınırı, FR-100/FR-101/FR-102 (AI yorum + örüntü tanıma/strateji) ile birlikte daha somut hale geldi: "örüntü/sinyal bulgusu" dilinin ("tavsiye" değil) hukuki olarak yeterli bir konumlandırma olup olmadığı bir hukuk danışmanıyla teyit edilmelidir. Bkz. `docs/product-brief-epic9-ai.md`.
 
 ## 10. Kapsam Dışı (Explicit Out of Scope)
 
