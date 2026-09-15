@@ -1,8 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { RotateCcw, Search } from "lucide-react";
 import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@trendus/shared";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, Input, Label, Select } from "@/components/ui/input";
+import { Badge } from "@/components/ui/change-value";
 
 type ScreenerResult = {
   symbol: string;
@@ -49,8 +54,34 @@ const EMPTY_CRITERIA: Criteria = {
   volume_min: "",
 };
 
+// Skorlama motorunun kalite eşikleriyle hizalı öneri değerleri (bkz. apps/api/app/scoring.py):
+// F/K<25 ve ROE>15 "iyi" puan alıyor, Borç/Özsermaye<2 "kabul edilebilir" sayılıyor,
+// RSI 30-70 aralığı aşırı alım/satım bölgelerinin (0 puan) dışında kalıyor.
+const SUGGESTED_CRITERIA: Criteria = {
+  ...EMPTY_CRITERIA,
+  pe_max: "25",
+  roe_min: "15",
+  debt_to_equity_max: "2",
+  rsi_min: "30",
+  rsi_max: "70",
+};
+
+/** Mirrors scoring.py's RSI tiers: 40-60 neutral/healthy, 30-40 & 60-70 caution, else extreme. */
+function rsiTone(rsi: number): "positive" | "warning" | "negative" | "neutral" {
+  if (rsi < 30 || rsi > 70) return "negative";
+  if (rsi < 40 || rsi > 60) return "warning";
+  return "positive";
+}
+
+const rsiToneClass: Record<ReturnType<typeof rsiTone>, string> = {
+  positive: "text-positive",
+  warning: "text-warning",
+  negative: "text-negative",
+  neutral: "text-text-primary",
+};
+
 export function ScreenerForm({ messages, locale }: { messages: Messages["screener"]; locale: Locale }) {
-  const [criteria, setCriteria] = useState<Criteria>(EMPTY_CRITERIA);
+  const [criteria, setCriteria] = useState<Criteria>(SUGGESTED_CRITERIA);
   const [results, setResults] = useState<ScreenerResult[] | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +90,7 @@ export function ScreenerForm({ messages, locale }: { messages: Messages["screene
     setCriteria((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function runScreen(e: React.FormEvent) {
+  async function runScreen(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
@@ -80,124 +111,203 @@ export function ScreenerForm({ messages, locale }: { messages: Messages["screene
   }
 
   return (
-    <div>
-      <form onSubmit={runScreen}>
-        <label>
-          {messages.exchangeLabel}
-          <select value={criteria.exchange} onChange={(e) => update("exchange", e.target.value)}>
-            <option value="ALL">{messages.exchangeAll}</option>
-            <option value="US">{messages.exchangeUs}</option>
-            <option value="BIST">{messages.exchangeBist}</option>
-          </select>
-        </label>
-        <label>
-          {messages.marketCapMinLabel}
-          <input
-            type="number"
-            value={criteria.market_cap_min}
-            onChange={(e) => update("market_cap_min", e.target.value)}
-          />
-        </label>
-        <label>
-          {messages.marketCapMaxLabel}
-          <input
-            type="number"
-            value={criteria.market_cap_max}
-            onChange={(e) => update("market_cap_max", e.target.value)}
-          />
-        </label>
-        <label>
-          {messages.peMinLabel}
-          <input type="number" value={criteria.pe_min} onChange={(e) => update("pe_min", e.target.value)} />
-        </label>
-        <label>
-          {messages.peMaxLabel}
-          <input type="number" value={criteria.pe_max} onChange={(e) => update("pe_max", e.target.value)} />
-        </label>
-        <label>
-          {messages.roeMinLabel}
-          <input type="number" value={criteria.roe_min} onChange={(e) => update("roe_min", e.target.value)} />
-        </label>
-        <label>
-          {messages.debtToEquityMaxLabel}
-          <input
-            type="number"
-            value={criteria.debt_to_equity_max}
-            onChange={(e) => update("debt_to_equity_max", e.target.value)}
-          />
-        </label>
-        <label>
-          {messages.sectorLabel}
-          <input
-            type="text"
-            placeholder={messages.sectorPlaceholder}
-            value={criteria.sector}
-            onChange={(e) => update("sector", e.target.value)}
-          />
-        </label>
-        <label>
-          {messages.rsiMinLabel}
-          <input type="number" value={criteria.rsi_min} onChange={(e) => update("rsi_min", e.target.value)} />
-        </label>
-        <label>
-          {messages.rsiMaxLabel}
-          <input type="number" value={criteria.rsi_max} onChange={(e) => update("rsi_max", e.target.value)} />
-        </label>
-        <label>
-          {messages.volumeMinLabel}
-          <input
-            type="number"
-            value={criteria.volume_min}
-            onChange={(e) => update("volume_min", e.target.value)}
-          />
-        </label>
-        <button type="submit" disabled={loading}>
-          {loading ? messages.running : messages.runButton}
-        </button>
-      </form>
+    <div className="flex flex-col gap-6">
+      <Card>
+        <p className="mb-4 text-xs text-text-tertiary">{messages.defaultsNote}</p>
+        <form onSubmit={runScreen} className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <Field>
+              <Label htmlFor="exchange">{messages.exchangeLabel}</Label>
+              <Select
+                id="exchange"
+                value={criteria.exchange}
+                onChange={(e) => update("exchange", e.target.value)}
+              >
+                <option value="ALL">{messages.exchangeAll}</option>
+                <option value="US">{messages.exchangeUs}</option>
+                <option value="BIST">{messages.exchangeBist}</option>
+              </Select>
+            </Field>
+            <Field>
+              <Label htmlFor="sector">{messages.sectorLabel}</Label>
+              <Input
+                id="sector"
+                type="text"
+                placeholder={messages.sectorPlaceholder}
+                value={criteria.sector}
+                onChange={(e) => update("sector", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="market_cap_min">{messages.marketCapMinLabel}</Label>
+              <Input
+                id="market_cap_min"
+                type="number"
+                value={criteria.market_cap_min}
+                onChange={(e) => update("market_cap_min", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="market_cap_max">{messages.marketCapMaxLabel}</Label>
+              <Input
+                id="market_cap_max"
+                type="number"
+                value={criteria.market_cap_max}
+                onChange={(e) => update("market_cap_max", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="pe_min">{messages.peMinLabel}</Label>
+              <Input
+                id="pe_min"
+                type="number"
+                value={criteria.pe_min}
+                onChange={(e) => update("pe_min", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="pe_max">{messages.peMaxLabel}</Label>
+              <Input
+                id="pe_max"
+                type="number"
+                value={criteria.pe_max}
+                onChange={(e) => update("pe_max", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="roe_min">{messages.roeMinLabel}</Label>
+              <Input
+                id="roe_min"
+                type="number"
+                value={criteria.roe_min}
+                onChange={(e) => update("roe_min", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="debt_to_equity_max">{messages.debtToEquityMaxLabel}</Label>
+              <Input
+                id="debt_to_equity_max"
+                type="number"
+                value={criteria.debt_to_equity_max}
+                onChange={(e) => update("debt_to_equity_max", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="rsi_min">{messages.rsiMinLabel}</Label>
+              <Input
+                id="rsi_min"
+                type="number"
+                value={criteria.rsi_min}
+                onChange={(e) => update("rsi_min", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="rsi_max">{messages.rsiMaxLabel}</Label>
+              <Input
+                id="rsi_max"
+                type="number"
+                value={criteria.rsi_max}
+                onChange={(e) => update("rsi_max", e.target.value)}
+              />
+            </Field>
+            <Field>
+              <Label htmlFor="volume_min">{messages.volumeMinLabel}</Label>
+              <Input
+                id="volume_min"
+                type="number"
+                value={criteria.volume_min}
+                onChange={(e) => update("volume_min", e.target.value)}
+              />
+            </Field>
+          </div>
+
+          <div className="flex gap-2 border-t border-border-subtle pt-4">
+            <Button type="submit" disabled={loading} className="gap-2">
+              <Search size={16} />
+              {loading ? messages.running : messages.runButton}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="gap-2"
+              onClick={() => setCriteria(SUGGESTED_CRITERIA)}
+            >
+              <RotateCcw size={14} />
+              {messages.resetDefaults}
+            </Button>
+          </div>
+        </form>
+      </Card>
 
       {warnings.map((warning) => (
-        <p key={warning}>{warning}</p>
+        <p key={warning} className="text-sm text-warning">
+          {warning}
+        </p>
       ))}
 
       {results !== null && (
         <div>
-          <h2>{messages.resultsTitle}</h2>
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+            {messages.resultsTitle} {results.length > 0 && `(${results.length})`}
+          </h2>
           {results.length === 0 ? (
-            <p>{messages.noResults}</p>
+            <Card className="text-center text-sm text-text-tertiary">{messages.noResults}</Card>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>{messages.columnSymbol}</th>
-                  <th>{messages.columnName}</th>
-                  <th>{messages.columnExchange}</th>
-                  <th>{messages.columnSector}</th>
-                  <th>{messages.columnPeRatio}</th>
-                  <th>{messages.columnMarketCap}</th>
-                  <th>{messages.columnRoe}</th>
-                  <th>{messages.columnRsi}</th>
-                  <th>{messages.columnVolume}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((result) => (
-                  <tr key={`${result.exchange}-${result.symbol}`}>
-                    <td>
-                      <Link href={`/stock/${result.exchange}/${result.symbol}`}>{result.symbol}</Link>
-                    </td>
-                    <td>{result.name}</td>
-                    <td>{result.exchange}</td>
-                    <td>{result.sector ?? "—"}</td>
-                    <td>{result.pe_ratio !== null ? formatRatio(result.pe_ratio, locale) : "—"}</td>
-                    <td>{result.market_cap !== null ? formatCompactNumber(result.market_cap, locale) : "—"}</td>
-                    <td>{result.roe !== null ? formatRatio(result.roe, locale) : "—"}</td>
-                    <td>{result.rsi !== null ? formatRatio(result.rsi, locale) : "—"}</td>
-                    <td>{result.volume !== null ? formatCompactNumber(result.volume, locale) : "—"}</td>
+            <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-text-tertiary">
+                    <th className="px-4 py-3 font-medium">{messages.columnSymbol}</th>
+                    <th className="px-4 py-3 font-medium">{messages.columnName}</th>
+                    <th className="px-4 py-3 font-medium">{messages.columnExchange}</th>
+                    <th className="px-4 py-3 font-medium">{messages.columnSector}</th>
+                    <th className="px-4 py-3 text-right font-medium">{messages.columnPeRatio}</th>
+                    <th className="px-4 py-3 text-right font-medium">{messages.columnMarketCap}</th>
+                    <th className="px-4 py-3 text-right font-medium">{messages.columnRoe}</th>
+                    <th className="px-4 py-3 text-right font-medium">{messages.columnRsi}</th>
+                    <th className="px-4 py-3 text-right font-medium">{messages.columnVolume}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {results.map((result) => (
+                    <tr key={`${result.exchange}-${result.symbol}`} className="transition-colors hover:bg-surface-hover">
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/stock/${result.exchange}/${result.symbol}`}
+                          className="font-semibold text-text-primary hover:text-accent"
+                        >
+                          {result.symbol}
+                        </Link>
+                      </td>
+                      <td className="max-w-[160px] truncate px-4 py-3 text-text-secondary">{result.name}</td>
+                      <td className="px-4 py-3">
+                        <Badge>{result.exchange}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">{result.sector ?? "—"}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-text-primary">
+                        {result.pe_ratio !== null ? formatRatio(result.pe_ratio, locale) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-text-primary">
+                        {result.market_cap !== null ? formatCompactNumber(result.market_cap, locale) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-text-primary">
+                        {result.roe !== null ? formatRatio(result.roe, locale) : "—"}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right tabular-nums font-medium ${
+                          result.rsi !== null ? rsiToneClass[rsiTone(result.rsi)] : "text-text-primary"
+                        }`}
+                      >
+                        {result.rsi !== null ? formatRatio(result.rsi, locale) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-text-primary">
+                        {result.volume !== null ? formatCompactNumber(result.volume, locale) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}

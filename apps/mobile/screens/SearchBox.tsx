@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 
 type SymbolResult = {
   symbol: string;
@@ -29,6 +30,8 @@ export function SearchBox({
   onSelectResult: (result: SymbolResult) => void;
 }) {
   const { messages } = useLocale();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SymbolResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -88,11 +91,12 @@ export function SearchBox({
       <TextInput
         style={styles.input}
         placeholder={messages.search.placeholder}
+        placeholderTextColor={colors.textTertiary}
         value={query}
         onChangeText={handleChange}
         autoCapitalize="characters"
       />
-      {loading && <ActivityIndicator />}
+      {loading && <ActivityIndicator color={colors.accent} />}
       {error && <Text style={styles.error}>{error}</Text>}
       {warnings.map((warning) => (
         <Text key={warning} style={styles.warning}>
@@ -100,7 +104,7 @@ export function SearchBox({
         </Text>
       ))}
       {searched && !loading && results.length === 0 && (
-        <Text>{messages.search.noResults}</Text>
+        <Text style={styles.noResults}>{messages.search.noResults}</Text>
       )}
       <FlatList
         data={results}
@@ -117,46 +121,58 @@ export function SearchBox({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    gap: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  error: {
-    color: "#c0392b",
-  },
-  warning: {
-    color: "#8a6d3b",
-  },
-  resultRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  exchangeBadge: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#555",
-    backgroundColor: "#eee",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  symbol: {
-    fontWeight: "700",
-  },
-  name: {
-    flexShrink: 1,
-    color: "#333",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      width: "100%",
+      gap: spacing[2],
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[3],
+      color: colors.textPrimary,
+    },
+    error: {
+      color: colors.negative,
+      fontSize: 13,
+    },
+    warning: {
+      color: colors.warning,
+      fontSize: 13,
+    },
+    noResults: {
+      color: colors.textTertiary,
+      fontSize: 13,
+    },
+    resultRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[2],
+      paddingVertical: spacing[2],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+    },
+    exchangeBadge: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: colors.textTertiary,
+      backgroundColor: colors.surfaceHover,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    symbol: {
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    name: {
+      flexShrink: 1,
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+  });
+}

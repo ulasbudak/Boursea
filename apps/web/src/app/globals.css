@@ -1,13 +1,100 @@
+@import "tailwindcss";
+
+/*
+ * Runtime design tokens. Dark is the default surface (primary mode for a chart-heavy
+ * trading app); light overrides via `prefers-color-scheme` or an explicit `[data-theme]`.
+ * Values must stay numerically in sync with packages/shared/src/theme/tokens.ts (colorTokens).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tk-canvas: #0a0b0d;
+  --tk-surface: #121417;
+  --tk-surface-hover: #1a1d21;
+  --tk-surface-elevated: #1e2126;
+  --tk-border-subtle: #23262b;
+  --tk-border-default: #2e3239;
+  --tk-text-primary: #f4f5f7;
+  --tk-text-secondary: #9ca3af;
+  --tk-text-tertiary: #6b7280;
+  --tk-text-disabled: #4b5563;
+  --tk-accent: #3b82f6;
+  --tk-accent-text: #eff6ff;
+  --tk-positive: #34d399;
+  --tk-negative: #f87171;
+  --tk-warning: #f59e0b;
+  --tk-info: #38bdf8;
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --tk-canvas: #f8fafc;
+    --tk-surface: #ffffff;
+    --tk-surface-hover: #f1f5f9;
+    --tk-surface-elevated: #ffffff;
+    --tk-border-subtle: #e5e7eb;
+    --tk-border-default: #d1d5db;
+    --tk-text-primary: #0f172a;
+    --tk-text-secondary: #475569;
+    --tk-text-tertiary: #94a3b8;
+    --tk-text-disabled: #cbd5e1;
+    --tk-accent: #2563eb;
+    --tk-accent-text: #ffffff;
+    --tk-positive: #16a34a;
+    --tk-negative: #dc2626;
+    --tk-warning: #d97706;
+    --tk-info: #0284c7;
+    color-scheme: light;
   }
+}
+
+/* Manual overrides (future theme toggle) take priority over the media query. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --tk-canvas: #f8fafc;
+  --tk-surface: #ffffff;
+  --tk-surface-hover: #f1f5f9;
+  --tk-surface-elevated: #ffffff;
+  --tk-border-subtle: #e5e7eb;
+  --tk-border-default: #d1d5db;
+  --tk-text-primary: #0f172a;
+  --tk-text-secondary: #475569;
+  --tk-text-tertiary: #94a3b8;
+  --tk-text-disabled: #cbd5e1;
+  --tk-accent: #2563eb;
+  --tk-accent-text: #ffffff;
+  --tk-positive: #16a34a;
+  --tk-negative: #dc2626;
+  --tk-warning: #d97706;
+  --tk-info: #0284c7;
+  color-scheme: light;
+}
+
+@theme {
+  --color-canvas: var(--tk-canvas);
+  --color-surface: var(--tk-surface);
+  --color-surface-hover: var(--tk-surface-hover);
+  --color-surface-elevated: var(--tk-surface-elevated);
+  --color-border-subtle: var(--tk-border-subtle);
+  --color-border-default: var(--tk-border-default);
+  --color-text-primary: var(--tk-text-primary);
+  --color-text-secondary: var(--tk-text-secondary);
+  --color-text-tertiary: var(--tk-text-tertiary);
+  --color-text-disabled: var(--tk-text-disabled);
+  --color-accent: var(--tk-accent);
+  --color-accent-text: var(--tk-accent-text);
+  --color-positive: var(--tk-positive);
+  --color-negative: var(--tk-negative);
+  --color-warning: var(--tk-warning);
+  --color-info: var(--tk-info);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 html {
@@ -24,9 +111,9 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-text-primary);
+  background: var(--color-canvas);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -40,10 +127,4 @@ body {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }

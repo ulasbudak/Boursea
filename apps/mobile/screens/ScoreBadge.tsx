@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 
 type ScoreFactor = {
   name: string;
@@ -28,8 +29,25 @@ type ScoreResponse = {
   warnings: string[];
 };
 
+function ProgressBar({ value, max, colors }: { value: number; max: number; colors: ThemeColors }) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+  const tone = pct >= 70 ? colors.positive : pct >= 40 ? colors.warning : colors.negative;
+  return (
+    <View style={{ height: 6, borderRadius: radius.full, backgroundColor: colors.surfaceHover, overflow: "hidden" }}>
+      <View style={{ height: "100%", width: `${pct}%`, borderRadius: radius.full, backgroundColor: tone }} />
+    </View>
+  );
+}
+
 export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: string }) {
   const { messages } = useLocale();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const labelTone: Record<string, { bg: string; fg: string }> = {
+    Al: { bg: colors.positive + "26", fg: colors.positive },
+    Sat: { bg: colors.negative + "26", fg: colors.negative },
+    Nötr: { bg: colors.warning + "26", fg: colors.warning },
+  };
   const [data, setData] = useState<ScoreResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -68,20 +86,24 @@ export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: str
   }
 
   const score = data?.score ?? null;
+  const tone = score ? labelTone[score.label] : undefined;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.card}>
       <Text style={styles.title}>{messages.score.title}</Text>
       {fetchFailed || !score ? (
         <Text style={styles.noData}>{messages.score.noData}</Text>
       ) : (
         <>
-          <Text style={styles.scoreLine}>
+          <View style={styles.scoreRow}>
             <Text style={styles.scoreValue}>
-              {score.value} {messages.score.outOf}
-            </Text>{" "}
-            — <Text style={styles.scoreLabel}>{score.label}</Text>
-          </Text>
+              {score.value}
+              <Text style={styles.scoreOutOf}> {messages.score.outOf}</Text>
+            </Text>
+            <View style={[styles.badge, tone && { backgroundColor: tone.bg }]}>
+              <Text style={[styles.badgeText, tone && { color: tone.fg }]}>{score.label}</Text>
+            </View>
+          </View>
           <Text style={styles.rationale}>{score.rationale}</Text>
           <Text style={styles.consensus}>
             {messages.score.consensusLabel}: {score.consensus.bullish}/{score.consensus.total}{" "}
@@ -93,9 +115,15 @@ export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: str
           {showExplanation && (
             <View style={styles.factors}>
               {score.factors.map((factor) => (
-                <Text key={factor.name} style={styles.factorRow}>
-                  {factor.name}: {factor.points} / {factor.max_points}
-                </Text>
+                <View key={factor.name} style={styles.factorRow}>
+                  <View style={styles.factorHeader}>
+                    <Text style={styles.factorName}>{factor.name}</Text>
+                    <Text style={styles.factorPoints}>
+                      {factor.points} / {factor.max_points}
+                    </Text>
+                  </View>
+                  <ProgressBar value={factor.points} max={factor.max_points} colors={colors} />
+                </View>
               ))}
             </View>
           )}
@@ -105,43 +133,88 @@ export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: str
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-    gap: 4,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  scoreLine: {
-    fontSize: 16,
-  },
-  scoreValue: {
-    fontWeight: "700",
-  },
-  scoreLabel: {
-    fontWeight: "700",
-  },
-  rationale: {
-    color: "#333",
-  },
-  consensus: {
-    color: "#555",
-    fontSize: 13,
-  },
-  toggle: {
-    color: "#2962FF",
-  },
-  factors: {
-    gap: 2,
-    marginTop: 4,
-  },
-  factorRow: {
-    color: "#555",
-    fontSize: 13,
-  },
-  noData: {
-    color: "#888",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      borderRadius: radius.lg,
+      padding: spacing[4],
+      marginBottom: spacing[3],
+      gap: spacing[1],
+    },
+    title: {
+      fontSize: 11,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      color: colors.textTertiary,
+      marginBottom: spacing[1],
+    },
+    scoreRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[3],
+    },
+    scoreValue: {
+      fontSize: 30,
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    scoreOutOf: {
+      fontSize: 15,
+      fontWeight: "400",
+      color: colors.textTertiary,
+    },
+    badge: {
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[1],
+      borderRadius: radius.full,
+      backgroundColor: colors.surfaceHover,
+    },
+    badgeText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.textSecondary,
+    },
+    rationale: {
+      color: colors.textSecondary,
+      marginTop: spacing[2],
+      fontSize: 13,
+    },
+    consensus: {
+      color: colors.textTertiary,
+      fontSize: 12,
+      marginTop: spacing[2],
+    },
+    toggle: {
+      color: colors.accent,
+      fontSize: 12,
+      fontWeight: "600",
+      marginTop: spacing[3],
+    },
+    factors: {
+      gap: spacing[2],
+      marginTop: spacing[3],
+    },
+    factorRow: {
+      gap: spacing[1],
+    },
+    factorHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    factorName: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    factorPoints: {
+      fontSize: 12,
+      color: colors.textPrimary,
+    },
+    noData: {
+      color: colors.textTertiary,
+    },
+  });
+}

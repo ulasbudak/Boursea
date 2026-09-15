@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { formatCompactNumber, formatRatio } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 
 type ScreenerResult = {
   symbol: string;
@@ -42,6 +43,12 @@ const EMPTY_CRITERIA: Criteria = {
   sector: "",
 };
 
+// F/K<25, skorlama motorunda "iyi" puan alan üst sınır (bkz. apps/api/app/scoring.py::_score_pe).
+const SUGGESTED_CRITERIA: Criteria = {
+  ...EMPTY_CRITERIA,
+  pe_max: "25",
+};
+
 type SymbolResult = { symbol: string; name: string; exchange: string };
 
 export function ScreenerScreen({
@@ -53,7 +60,9 @@ export function ScreenerScreen({
 }) {
   const { locale, messages } = useLocale();
   const t = messages.screener;
-  const [criteria, setCriteria] = useState<Criteria>(EMPTY_CRITERIA);
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const [criteria, setCriteria] = useState<Criteria>(SUGGESTED_CRITERIA);
   const [results, setResults] = useState<ScreenerResult[] | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -107,43 +116,52 @@ export function ScreenerScreen({
         <Text style={styles.backLink}>{t.backToDashboard}</Text>
       </TouchableOpacity>
       <Text style={styles.title}>{t.title}</Text>
+      <Text style={styles.note}>{t.defaultsNote}</Text>
 
-      <Text style={styles.label}>{t.exchangeLabel}</Text>
-      <View style={styles.optionRow}>
-        {renderExchangeOption("ALL", t.exchangeAll)}
-        {renderExchangeOption("US", t.exchangeUs)}
-        {renderExchangeOption("BIST", t.exchangeBist)}
+      <View style={styles.card}>
+        <Text style={styles.label}>{t.exchangeLabel}</Text>
+        <View style={styles.optionRow}>
+          {renderExchangeOption("ALL", t.exchangeAll)}
+          {renderExchangeOption("US", t.exchangeUs)}
+          {renderExchangeOption("BIST", t.exchangeBist)}
+        </View>
+
+        <Text style={styles.label}>{t.marketCapMinLabel}</Text>
+        <TextInput
+          style={styles.input}
+          placeholderTextColor={colors.textTertiary}
+          keyboardType="numeric"
+          value={criteria.market_cap_min}
+          onChangeText={(v) => update("market_cap_min", v)}
+        />
+
+        <Text style={styles.label}>{t.peMaxLabel}</Text>
+        <TextInput
+          style={styles.input}
+          placeholderTextColor={colors.textTertiary}
+          keyboardType="numeric"
+          value={criteria.pe_max}
+          onChangeText={(v) => update("pe_max", v)}
+        />
+
+        <Text style={styles.label}>{t.sectorLabel}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.sectorPlaceholder}
+          placeholderTextColor={colors.textTertiary}
+          value={criteria.sector}
+          onChangeText={(v) => update("sector", v)}
+        />
+
+        <TouchableOpacity style={styles.button} onPress={runScreen} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? t.running : t.runButton}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setCriteria(SUGGESTED_CRITERIA)}>
+          <Text style={styles.resetLink}>{t.resetDefaults}</Text>
+        </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>{t.marketCapMinLabel}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        value={criteria.market_cap_min}
-        onChangeText={(v) => update("market_cap_min", v)}
-      />
-
-      <Text style={styles.label}>{t.peMaxLabel}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        value={criteria.pe_max}
-        onChangeText={(v) => update("pe_max", v)}
-      />
-
-      <Text style={styles.label}>{t.sectorLabel}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={t.sectorPlaceholder}
-        value={criteria.sector}
-        onChangeText={(v) => update("sector", v)}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={runScreen} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? t.running : t.runButton}</Text>
-      </TouchableOpacity>
-
-      {loading && <ActivityIndicator />}
+      {loading && <ActivityIndicator color={colors.accent} />}
 
       {warnings.map((warning) => (
         <Text key={warning} style={styles.warning}>
@@ -155,7 +173,7 @@ export function ScreenerScreen({
         <View style={styles.results}>
           <Text style={styles.resultsTitle}>{t.resultsTitle}</Text>
           {results.length === 0 ? (
-            <Text>{t.noResults}</Text>
+            <Text style={styles.noResults}>{t.noResults}</Text>
           ) : (
             <FlatList
               data={results}
@@ -186,101 +204,135 @@ export function ScreenerScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    gap: 8,
-  },
-  backLink: {
-    color: "#111",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  label: {
-    color: "#555",
-    marginTop: 8,
-  },
-  optionRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  option: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-  },
-  optionActive: {
-    backgroundColor: "#111",
-    borderColor: "#111",
-  },
-  optionText: {
-    fontWeight: "600",
-    color: "#111",
-  },
-  optionTextActive: {
-    color: "#fff",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  button: {
-    backgroundColor: "#111",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 12,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  warning: {
-    color: "#8a6d3b",
-  },
-  results: {
-    flex: 1,
-    marginTop: 12,
-    gap: 8,
-  },
-  resultsTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  resultRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  exchangeBadge: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#555",
-    backgroundColor: "#eee",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  resultInfo: {
-    flexShrink: 1,
-    gap: 2,
-  },
-  symbol: {
-    fontWeight: "700",
-  },
-  resultMeta: {
-    fontSize: 12,
-    color: "#888",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      gap: spacing[2],
+      backgroundColor: colors.canvas,
+    },
+    backLink: {
+      color: colors.accent,
+      fontWeight: "600",
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      borderRadius: radius.lg,
+      padding: spacing[4],
+      gap: spacing[2],
+      marginTop: spacing[2],
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginTop: spacing[2],
+    },
+    note: {
+      fontSize: 12,
+      color: colors.textTertiary,
+    },
+    resetLink: {
+      color: colors.textSecondary,
+      textAlign: "center",
+      marginTop: spacing[2],
+    },
+    optionRow: {
+      flexDirection: "row",
+      gap: spacing[2],
+    },
+    option: {
+      flex: 1,
+      paddingVertical: spacing[3],
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+      alignItems: "center",
+    },
+    optionActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    optionText: {
+      fontWeight: "600",
+      color: colors.textPrimary,
+    },
+    optionTextActive: {
+      color: colors.accentText,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[3],
+      color: colors.textPrimary,
+    },
+    button: {
+      backgroundColor: colors.accent,
+      paddingVertical: spacing[3],
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginTop: spacing[3],
+    },
+    buttonText: {
+      color: colors.accentText,
+      fontWeight: "600",
+    },
+    warning: {
+      color: colors.warning,
+      fontSize: 13,
+    },
+    noResults: {
+      color: colors.textTertiary,
+      fontSize: 13,
+    },
+    results: {
+      flex: 1,
+      marginTop: spacing[3],
+      gap: spacing[2],
+    },
+    resultsTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    resultRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[2],
+      paddingVertical: spacing[2],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+    },
+    exchangeBadge: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: colors.textTertiary,
+      backgroundColor: colors.surfaceHover,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    resultInfo: {
+      flexShrink: 1,
+      gap: 2,
+    },
+    symbol: {
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    resultMeta: {
+      fontSize: 12,
+      color: colors.textTertiary,
+    },
+  });
+}

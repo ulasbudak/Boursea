@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { formatCompactNumber, formatRatio, formatSignedPercent } from "@trendus/shared";
+import { formatCompactNumber, formatRatio, formatSignedPercent, signColor } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { HistoricalPerformanceChart } from "./HistoricalPerformanceChart";
 
 type FundamentalsSnapshot = {
@@ -40,6 +41,8 @@ type FundamentalsResponse = {
 
 export function FundamentalsPanel({ symbol, exchange }: { symbol: string; exchange: string }) {
   const { locale, messages } = useLocale();
+  const { mode, colors } = useTheme();
+  const styles = makeStyles(colors);
   const [data, setData] = useState<FundamentalsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -73,7 +76,7 @@ export function FundamentalsPanel({ symbol, exchange }: { symbol: string; exchan
   }, [symbol, exchange]);
 
   if (loading) {
-    return <ActivityIndicator />;
+    return <ActivityIndicator color={colors.accent} />;
   }
 
   if (fetchFailed) {
@@ -131,58 +134,79 @@ export function FundamentalsPanel({ symbol, exchange }: { symbol: string; exchan
           {warning}
         </Text>
       ))}
-      {rows.map((row) => {
-        const value = snapshot?.[row.key] ?? null;
-        const comparison = sectorComparison?.[row.key] ?? null;
-        return (
-          <View key={row.key} style={styles.row}>
-            <View style={styles.rowHeader}>
-              <Text style={styles.label}>{row.label}</Text>
-              <Text style={styles.value}>
-                {value != null ? row.format(value) : messages.common.noData}
-              </Text>
+      <View style={styles.card}>
+        {rows.map((row, i) => {
+          const value = snapshot?.[row.key] ?? null;
+          const comparison = sectorComparison?.[row.key] ?? null;
+          return (
+            <View key={row.key} style={[styles.row, i === rows.length - 1 && styles.rowLast]}>
+              <View style={styles.rowHeader}>
+                <Text style={styles.label}>{row.label}</Text>
+                <Text style={styles.value}>
+                  {value != null ? row.format(value) : messages.common.noData}
+                </Text>
+              </View>
+              {comparison?.sector_average != null ? (
+                <Text style={styles.comparison}>
+                  {messages.fundamentals.sectorAverage}: {row.format(comparison.sector_average)}
+                  {comparison.diff_pct != null && (
+                    <Text style={{ color: signColor(comparison.diff_pct, mode) }}>
+                      {" "}
+                      ({formatSignedPercent(comparison.diff_pct, locale)})
+                    </Text>
+                  )}
+                </Text>
+              ) : (
+                <Text style={styles.comparison}>{messages.fundamentals.noSectorData}</Text>
+              )}
             </View>
-            <Text style={styles.comparison}>
-              {comparison?.sector_average != null
-                ? `${messages.fundamentals.sectorAverage}: ${row.format(comparison.sector_average)}${
-                    comparison.diff_pct != null ? ` (${formatSignedPercent(comparison.diff_pct, locale)})` : ""
-                  }`
-                : messages.fundamentals.noSectorData}
-            </Text>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
       <HistoricalPerformanceChart symbol={symbol} exchange={exchange} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  metrics: {
-    gap: 8,
-  },
-  row: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    gap: 2,
-  },
-  rowHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  label: {
-    color: "#555",
-  },
-  value: {
-    fontWeight: "600",
-  },
-  comparison: {
-    fontSize: 12,
-    color: "#888",
-  },
-  warning: {
-    color: "#8a6d3b",
-    marginBottom: 8,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    metrics: {
+      gap: spacing[3],
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing[4],
+    },
+    row: {
+      paddingVertical: spacing[3],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+      gap: 2,
+    },
+    rowLast: {
+      borderBottomWidth: 0,
+    },
+    rowHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    label: {
+      color: colors.textSecondary,
+    },
+    value: {
+      fontWeight: "600",
+      color: colors.textPrimary,
+    },
+    comparison: {
+      fontSize: 12,
+      color: colors.textTertiary,
+    },
+    warning: {
+      color: colors.warning,
+      marginBottom: spacing[2],
+    },
+  });
+}

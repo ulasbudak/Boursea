@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { getLocale } from "@/lib/i18n/locale";
 import "./globals.css";
+
+// Applies a stored manual theme choice before hydration so there is no flash of the wrong theme.
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('trendus-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,8 +26,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }

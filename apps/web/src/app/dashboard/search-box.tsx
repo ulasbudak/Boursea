@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ChevronRight, Search } from "lucide-react";
 import type { Messages } from "@trendus/shared";
+import { IconInput } from "@/components/ui/input";
 
 type SymbolResult = {
   symbol: string;
@@ -74,29 +76,50 @@ export function SearchBox({ messages }: { messages: Messages["search"] }) {
 
   return (
     <div>
-      <input
+      <IconInput
+        icon={<Search size={16} />}
         type="text"
         placeholder={messages.placeholder}
         value={query}
         onChange={(e) => handleChange(e.target.value)}
         aria-label={messages.label}
       />
-      {loading && <p>{messages.searching}</p>}
-      {error && <p role="alert">{error}</p>}
+      {loading && <p className="mt-2 text-xs text-text-tertiary">{messages.searching}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-negative">
+          {error}
+        </p>
+      )}
       {warnings.map((warning) => (
-        <p key={warning}>{warning}</p>
+        <p key={warning} className="mt-2 text-xs text-warning">
+          {warning}
+        </p>
       ))}
-      {searched && !loading && results.length === 0 && <p>{messages.noResults}</p>}
-      <ul>
-        {results.map((result) => (
-          <li key={`${result.exchange}-${result.symbol}`}>
-            <Link href={`/stock/${result.exchange}/${result.symbol}`}>
-              <span>{result.exchange}</span> <strong>{result.symbol}</strong> —{" "}
-              {result.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {searched && !loading && results.length === 0 && (
+        <p className="mt-2 text-xs text-text-tertiary">{messages.noResults}</p>
+      )}
+      {results.length > 0 && (
+        <ul className="mt-2 flex flex-col divide-y divide-border-subtle overflow-hidden rounded-md border border-border-subtle">
+          {results.map((result) => (
+            <li key={`${result.exchange}-${result.symbol}`}>
+              <Link
+                href={`/stock/${result.exchange}/${result.symbol}`}
+                className="group flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-surface-hover"
+              >
+                <span className="rounded bg-surface-hover px-1.5 py-0.5 text-[10px] font-semibold text-text-tertiary">
+                  {result.exchange}
+                </span>
+                <strong className="font-semibold text-text-primary">{result.symbol}</strong>
+                <span className="truncate text-text-secondary">{result.name}</span>
+                <ChevronRight
+                  size={16}
+                  className="ml-auto text-text-tertiary opacity-0 transition-opacity group-hover:opacity-100"
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

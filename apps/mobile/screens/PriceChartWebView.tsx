@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { ALL_INDICATORS, drawingsStorageKey, findIndicator, type Drawing } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { SignalList } from "./SignalList";
 
 type Candle = {
@@ -38,13 +39,15 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-const CHART_HTML = `<!doctype html>
+/** Colors the embedded lightweight-charts instance from the current theme — see docs/stories/story-ui-ux.md §2. */
+function buildChartHtml(colors: ThemeColors): string {
+  return `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <style>
-    html, body, #chart { margin: 0; padding: 0; width: 100%; height: 100%; }
+    html, body, #chart { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; }
   </style>
 </head>
 <body>
@@ -54,7 +57,13 @@ const CHART_HTML = `<!doctype html>
     var chart = LightweightCharts.createChart(document.getElementById("chart"), {
       width: window.innerWidth,
       height: window.innerHeight,
-      layout: { textColor: "#333", background: { color: "transparent" } }
+      layout: { textColor: "${colors.textSecondary}", background: { color: "transparent" } },
+      grid: {
+        vertLines: { color: "${colors.borderSubtle}" },
+        horzLines: { color: "${colors.borderSubtle}" }
+      },
+      timeScale: { borderColor: "${colors.borderDefault}" },
+      rightPriceScale: { borderColor: "${colors.borderDefault}" }
     });
     var series = null;
     var indicatorSeries = [];
@@ -63,6 +72,10 @@ const CHART_HTML = `<!doctype html>
     var drawingSeries = [];
     var drawingPriceLines = [];
     var activeTool = "none";
+    var upColor = "${colors.positive}";
+    var downColor = "${colors.negative}";
+    var accentColor = "${colors.accent}";
+    var drawingColor = "${colors.warning}";
 
     function seriesTypeFor(chartType) {
       if (chartType === "candlestick") return LightweightCharts.CandlestickSeries;
@@ -76,13 +89,23 @@ const CHART_HTML = `<!doctype html>
         series = null;
       }
       if (!candles || candles.length === 0) return;
-      series = chart.addSeries(seriesTypeFor(chartType));
-      if (chartType === "line") {
-        series.setData(candles.map(function (c) { return { time: c.time, value: c.close }; }));
-      } else {
+      if (chartType === "candlestick") {
+        series = chart.addSeries(LightweightCharts.CandlestickSeries, {
+          upColor: upColor, downColor: downColor,
+          borderUpColor: upColor, borderDownColor: downColor,
+          wickUpColor: upColor, wickDownColor: downColor
+        });
         series.setData(candles.map(function (c) {
           return { time: c.time, open: c.open, high: c.high, low: c.low, close: c.close };
         }));
+      } else if (chartType === "bar") {
+        series = chart.addSeries(LightweightCharts.BarSeries, { upColor: upColor, downColor: downColor });
+        series.setData(candles.map(function (c) {
+          return { time: c.time, open: c.open, high: c.high, low: c.low, close: c.close };
+        }));
+      } else {
+        series = chart.addSeries(LightweightCharts.LineSeries, { color: accentColor, lineWidth: 2 });
+        series.setData(candles.map(function (c) { return { time: c.time, value: c.close }; }));
       }
       chart.timeScale().fitContent();
     };
@@ -141,14 +164,14 @@ const CHART_HTML = `<!doctype html>
         if (d.type === "horizontalLine") {
           if (!series) return;
           drawingPriceLines.push(
-            series.createPriceLine({ price: d.price, title: d.title || "", color: "#F23645", lineWidth: 2 })
+            series.createPriceLine({ price: d.price, title: d.title || "", color: drawingColor, lineWidth: 2 })
           );
           return;
         }
         var points = d.point1.time <= d.point2.time ? [d.point1, d.point2] : [d.point2, d.point1];
         if (points[0].time === points[1].time) return;
         var lineSeries = chart.addSeries(LightweightCharts.LineSeries, {
-          color: "#F23645",
+          color: drawingColor,
           lineWidth: 2,
           title: d.title || "",
         });
@@ -175,6 +198,7 @@ const CHART_HTML = `<!doctype html>
   </script>
 </body>
 </html>`;
+}
 
 function buildIndicatorResults(activeIndicators: ActiveIndicator[], candles: Candle[]) {
   return activeIndicators
@@ -202,6 +226,9 @@ function buildIndicatorResults(activeIndicators: ActiveIndicator[], candles: Can
 
 export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchange: string }) {
   const { messages } = useLocale();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const chartHtml = useMemo(() => buildChartHtml(colors), [colors]);
   const webviewRef = useRef<WebView>(null);
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [timeframe, setTimeframe] = useState<Timeframe>("daily");
@@ -233,6 +260,14 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
     if (!normalized) return advanced;
     return advanced.filter((d) => d.name.toLowerCase().includes(normalized));
   }, [search]);
+
+  useEffect(() => {
+    function resetReadyState() {
+      setWebviewReady(false);
+    }
+
+    resetReadyState();
+  }, [chartHtml]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -386,31 +421,40 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
     setActiveIndicators((prev) => (prev.some((a) => a.id === id) ? prev : [...prev, { id, params }]));
   }
 
-  function renderToggle<T extends string>(value: T, current: T, label: string, onPress: (v: T) => void) {
+  function renderChip<T extends string>(value: T, current: T, label: string, onPress: (v: T) => void) {
+    const active = current === value;
     return (
-      <TouchableOpacity onPress={() => onPress(value)}>
-        <Text style={[styles.toggleLabel, current === value && styles.toggleLabelActive]}>{label}</Text>
+      <TouchableOpacity
+        key={value}
+        style={[styles.chip, active && styles.chipActive]}
+        onPress={() => onPress(value)}
+      >
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
       </TouchableOpacity>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.toggleRow}>
-        {renderToggle("candlestick", chartType, messages.chart.candlestick, setChartType)}
-        {renderToggle("line", chartType, messages.chart.line, setChartType)}
-        {renderToggle("bar", chartType, messages.chart.bar, setChartType)}
+      <View style={styles.chipRow}>
+        {renderChip("candlestick", chartType, messages.chart.candlestick, setChartType)}
+        {renderChip("line", chartType, messages.chart.line, setChartType)}
+        {renderChip("bar", chartType, messages.chart.bar, setChartType)}
       </View>
-      <View style={styles.toggleRow}>
-        {renderToggle("intraday", timeframe, messages.chart.intraday, setTimeframe)}
-        {renderToggle("daily", timeframe, messages.chart.daily, setTimeframe)}
-        {renderToggle("weekly", timeframe, messages.chart.weekly, setTimeframe)}
-        {renderToggle("monthly", timeframe, messages.chart.monthly, setTimeframe)}
+      <View style={styles.chipRow}>
+        {renderChip("intraday", timeframe, messages.chart.intraday, setTimeframe)}
+        {renderChip("daily", timeframe, messages.chart.daily, setTimeframe)}
+        {renderChip("weekly", timeframe, messages.chart.weekly, setTimeframe)}
+        {renderChip("monthly", timeframe, messages.chart.monthly, setTimeframe)}
       </View>
-      <View style={styles.toggleRow}>
+      <View style={styles.chipRow}>
         {CORE_INDICATOR_IDS.map((id) => (
-          <TouchableOpacity key={id} onPress={() => toggleCoreIndicator(id)}>
-            <Text style={[styles.toggleLabel, isActive(id) && styles.toggleLabelActive]}>
+          <TouchableOpacity
+            key={id}
+            style={[styles.chip, isActive(id) && styles.chipActive]}
+            onPress={() => toggleCoreIndicator(id)}
+          >
+            <Text style={[styles.chipText, isActive(id) && styles.chipTextActive]}>
               {coreIndicatorLabels[id]}
             </Text>
           </TouchableOpacity>
@@ -426,6 +470,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
           <TextInput
             style={styles.searchInput}
             placeholder={messages.chart.searchPlaceholder}
+            placeholderTextColor={colors.textTertiary}
             value={search}
             onChangeText={setSearch}
           />
@@ -440,6 +485,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
               periodLabel={messages.chart.periodLabel}
               addLabel={messages.chart.addButton}
               onAdd={addAdvancedIndicator}
+              colors={colors}
             />
           ))}
         </View>
@@ -452,7 +498,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
             const def = findIndicator(active.id);
             return (
               <View key={active.id} style={styles.activeRow}>
-                <Text>{def?.name ?? active.id}</Text>
+                <Text style={styles.activeRowText}>{def?.name ?? active.id}</Text>
                 <TouchableOpacity onPress={() => removeIndicator(active.id)}>
                   <Text style={styles.removeLink}>{messages.chart.removeButton}</Text>
                 </TouchableOpacity>
@@ -462,14 +508,20 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
         </View>
       )}
 
-      <View style={styles.toggleRow}>
-        <TouchableOpacity onPress={() => selectTool("trendLine")}>
-          <Text style={[styles.toggleLabel, activeTool === "trendLine" && styles.toggleLabelActive]}>
+      <View style={styles.chipRow}>
+        <TouchableOpacity
+          style={[styles.chip, activeTool === "trendLine" && styles.chipActive]}
+          onPress={() => selectTool("trendLine")}
+        >
+          <Text style={[styles.chipText, activeTool === "trendLine" && styles.chipTextActive]}>
             {messages.chart.trendLineTool}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => selectTool("horizontalLine")}>
-          <Text style={[styles.toggleLabel, activeTool === "horizontalLine" && styles.toggleLabelActive]}>
+        <TouchableOpacity
+          style={[styles.chip, activeTool === "horizontalLine" && styles.chipActive]}
+          onPress={() => selectTool("horizontalLine")}
+        >
+          <Text style={[styles.chipText, activeTool === "horizontalLine" && styles.chipTextActive]}>
             {messages.chart.horizontalLineTool}
           </Text>
         </TouchableOpacity>
@@ -483,7 +535,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
           <Text style={styles.activeListTitle}>{messages.chart.drawingsLabel}</Text>
           {drawings.map((drawing) => (
             <View key={drawing.id} style={styles.activeRow}>
-              <Text>{drawingName(drawing)}</Text>
+              <Text style={styles.activeRowText}>{drawingName(drawing)}</Text>
               <TouchableOpacity onPress={() => deleteDrawing(drawing.id)}>
                 <Text style={styles.removeLink}>{messages.chart.removeButton}</Text>
               </TouchableOpacity>
@@ -492,7 +544,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
         </View>
       )}
 
-      {loading && <ActivityIndicator />}
+      {loading && <ActivityIndicator color={colors.accent} />}
       {fetchFailed && <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>}
       {!fetchFailed &&
         warnings.map((warning) => (
@@ -505,7 +557,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
         <WebView
           ref={webviewRef}
           originWhitelist={["*"]}
-          source={{ html: CHART_HTML }}
+          source={{ html: chartHtml }}
           onLoadEnd={() => setWebviewReady(true)}
           onMessage={handleWebViewMessage}
           style={styles.webview}
@@ -525,6 +577,7 @@ function AdvancedIndicatorRow({
   periodLabel,
   addLabel,
   onAdd,
+  colors,
 }: {
   id: string;
   name: string;
@@ -533,7 +586,9 @@ function AdvancedIndicatorRow({
   periodLabel: string;
   addLabel: string;
   onAdd: (id: string, params: Record<string, number>) => void;
+  colors: ThemeColors;
 }) {
+  const styles = makeStyles(colors);
   const hasPeriod = "period" in defaultParams;
   const [period, setPeriod] = useState(String(defaultParams.period ?? ""));
 
@@ -542,7 +597,7 @@ function AdvancedIndicatorRow({
       <Text style={styles.advancedRowName}>{name}</Text>
       {hasPeriod && (
         <View style={styles.periodField}>
-          <Text style={styles.periodLabel}>{periodLabel}:</Text>
+          <Text style={styles.periodFieldLabel}>{periodLabel}:</Text>
           <TextInput
             style={styles.periodInput}
             keyboardType="numeric"
@@ -561,101 +616,141 @@ function AdvancedIndicatorRow({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: 8,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  toggleLabel: {
-    color: "#888",
-    fontWeight: "600",
-  },
-  toggleLabelActive: {
-    color: "#111",
-  },
-  hint: {
-    color: "#2962FF",
-    fontStyle: "italic",
-  },
-  advancedToggle: {
-    color: "#111",
-    fontWeight: "700",
-  },
-  advancedPanel: {
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 8,
-    padding: 8,
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  advancedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    paddingVertical: 4,
-  },
-  advancedRowName: {
-    flex: 1,
-  },
-  periodField: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  periodLabel: {
-    color: "#555",
-    fontSize: 12,
-  },
-  periodInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    width: 48,
-  },
-  addLink: {
-    color: "#2962FF",
-    fontWeight: "600",
-  },
-  addLinkDisabled: {
-    color: "#ccc",
-  },
-  activeList: {
-    gap: 4,
-  },
-  activeListTitle: {
-    fontWeight: "600",
-    color: "#555",
-  },
-  activeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  removeLink: {
-    color: "#c0392b",
-  },
-  noData: {
-    color: "#888",
-  },
-  warning: {
-    color: "#8a6d3b",
-  },
-  chartContainer: {
-    height: 320,
-  },
-  webview: {
-    backgroundColor: "transparent",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      gap: spacing[3],
+    },
+    chipRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: spacing[2],
+      alignItems: "center",
+    },
+    chip: {
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[1] + 2,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+    },
+    chipActive: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accent + "26",
+    },
+    chipText: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: colors.textSecondary,
+    },
+    chipTextActive: {
+      color: colors.accent,
+      fontWeight: "700",
+    },
+    hint: {
+      color: colors.accent,
+      fontSize: 12,
+      fontStyle: "italic",
+    },
+    advancedToggle: {
+      color: colors.accent,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    advancedPanel: {
+      gap: spacing[2],
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing[3],
+    },
+    searchInput: {
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[2],
+      color: colors.textPrimary,
+    },
+    advancedRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing[2],
+      paddingVertical: spacing[1],
+    },
+    advancedRowName: {
+      flex: 1,
+      color: colors.textPrimary,
+      fontSize: 13,
+    },
+    periodField: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[1],
+    },
+    periodFieldLabel: {
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    periodInput: {
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: radius.sm,
+      paddingHorizontal: spacing[2],
+      width: 48,
+      color: colors.textPrimary,
+    },
+    addLink: {
+      color: colors.accent,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    addLinkDisabled: {
+      color: colors.textDisabled,
+    },
+    activeList: {
+      gap: spacing[1],
+    },
+    activeListTitle: {
+      fontWeight: "600",
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    activeRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 2,
+    },
+    activeRowText: {
+      color: colors.textPrimary,
+      fontSize: 13,
+    },
+    removeLink: {
+      color: colors.negative,
+      fontSize: 13,
+    },
+    noData: {
+      color: colors.textTertiary,
+      fontSize: 13,
+    },
+    warning: {
+      color: colors.warning,
+      fontSize: 13,
+    },
+    chartContainer: {
+      height: 320,
+      borderRadius: radius.lg,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+    },
+    webview: {
+      backgroundColor: "transparent",
+    },
+  });
+}

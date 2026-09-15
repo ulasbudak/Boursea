@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 
 type HistoricalDataPoint = {
   period: string;
@@ -30,12 +31,15 @@ function MiniBarChart({
   points,
   metricKey,
   noData,
+  colors,
 }: {
   label: string;
   points: HistoricalDataPoint[];
   metricKey: MetricKey;
   noData: string;
+  colors: ThemeColors;
 }) {
+  const styles = makeStyles(colors);
   const values = points.map((p) => p[metricKey]).filter((v): v is number => v != null);
   if (values.length === 0) {
     return (
@@ -64,7 +68,7 @@ function MiniBarChart({
                   styles.bar,
                   {
                     height: Math.max((heightPct / 100) * CHART_HEIGHT, value != null ? 2 : 0),
-                    backgroundColor: value != null ? "#111" : "transparent",
+                    backgroundColor: value != null ? colors.accent : "transparent",
                   },
                 ]}
               />
@@ -78,6 +82,8 @@ function MiniBarChart({
 
 export function HistoricalPerformanceChart({ symbol, exchange }: { symbol: string; exchange: string }) {
   const { messages } = useLocale();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -112,7 +118,7 @@ export function HistoricalPerformanceChart({ symbol, exchange }: { symbol: strin
   }, [symbol, exchange]);
 
   if (loading) {
-    return <ActivityIndicator />;
+    return <ActivityIndicator color={colors.accent} />;
   }
 
   if (fetchFailed) {
@@ -124,7 +130,7 @@ export function HistoricalPerformanceChart({ symbol, exchange }: { symbol: strin
   const points = period === "annual" ? (history?.annual ?? []) : (history?.quarterly ?? []);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.card}>
       <Text style={styles.title}>{messages.history.title}</Text>
       {warnings.map((warning) => (
         <Text key={warning} style={styles.warning}>
@@ -133,12 +139,18 @@ export function HistoricalPerformanceChart({ symbol, exchange }: { symbol: strin
       ))}
 
       <View style={styles.periodRow}>
-        <TouchableOpacity onPress={() => setPeriod("annual")}>
+        <TouchableOpacity
+          style={[styles.periodChip, period === "annual" && styles.periodChipActive]}
+          onPress={() => setPeriod("annual")}
+        >
           <Text style={[styles.periodLabel, period === "annual" && styles.periodLabelActive]}>
             {messages.history.annual}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setPeriod("quarterly")}>
+        <TouchableOpacity
+          style={[styles.periodChip, period === "quarterly" && styles.periodChipActive]}
+          onPress={() => setPeriod("quarterly")}
+        >
           <Text style={[styles.periodLabel, period === "quarterly" && styles.periodLabelActive]}>
             {messages.history.quarterly}
           </Text>
@@ -148,76 +160,110 @@ export function HistoricalPerformanceChart({ symbol, exchange }: { symbol: strin
       {points.length === 0 ? (
         <Text style={styles.noData}>{messages.common.dataUnavailable}</Text>
       ) : (
-        <>
+        <View style={styles.charts}>
           <MiniBarChart
             label={messages.history.revenuePerShare}
             points={points}
             metricKey="revenue_per_share"
             noData={messages.common.noData}
+            colors={colors}
           />
           <MiniBarChart
             label={messages.history.netIncomePerShare}
             points={points}
             metricKey="net_income_per_share"
             noData={messages.common.noData}
+            colors={colors}
           />
           <MiniBarChart
             label={messages.history.eps}
             points={points}
             metricKey="eps"
             noData={messages.common.noData}
+            colors={colors}
           />
-        </>
+        </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 16,
-    gap: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  periodRow: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  periodLabel: {
-    color: "#888",
-    fontWeight: "600",
-  },
-  periodLabelActive: {
-    color: "#111",
-  },
-  chartBlock: {
-    gap: 4,
-  },
-  chartLabel: {
-    color: "#555",
-  },
-  barRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 2,
-    height: CHART_HEIGHT,
-  },
-  barColumn: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    height: CHART_HEIGHT,
-  },
-  bar: {
-    width: "100%",
-  },
-  noData: {
-    color: "#888",
-  },
-  warning: {
-    color: "#8a6d3b",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      borderRadius: radius.lg,
+      padding: spacing[4],
+      marginTop: spacing[4],
+      gap: spacing[3],
+    },
+    title: {
+      fontSize: 11,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      color: colors.textTertiary,
+    },
+    periodRow: {
+      flexDirection: "row",
+      gap: spacing[2],
+    },
+    periodChip: {
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[1],
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.surfaceElevated,
+    },
+    periodChipActive: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accent + "26",
+    },
+    periodLabel: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: colors.textSecondary,
+    },
+    periodLabelActive: {
+      color: colors.accent,
+      fontWeight: "600",
+    },
+    charts: {
+      gap: spacing[3],
+    },
+    chartBlock: {
+      gap: spacing[1],
+    },
+    chartLabel: {
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    barRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 2,
+      height: CHART_HEIGHT,
+    },
+    barColumn: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "flex-end",
+      height: CHART_HEIGHT,
+    },
+    bar: {
+      width: "100%",
+      borderRadius: 2,
+    },
+    noData: {
+      color: colors.textTertiary,
+      fontSize: 13,
+    },
+    warning: {
+      color: colors.warning,
+      fontSize: 13,
+    },
+  });
+}

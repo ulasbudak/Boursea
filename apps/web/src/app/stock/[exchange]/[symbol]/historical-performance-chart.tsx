@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { formatRatio, type Locale, type Messages } from "@trendus/shared";
+import { Card } from "@/components/ui/card";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 
 type HistoricalDataPoint = {
   period: string;
@@ -44,11 +46,11 @@ function MiniBarChart({
 
   return (
     <div>
-      <p>{label}</p>
+      <p className="mb-2 text-xs font-medium text-text-secondary">{label}</p>
       {values.length === 0 ? (
-        <p>{noData}</p>
+        <p className="text-xs text-text-tertiary">{noData}</p>
       ) : (
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120 }}>
+        <div className="flex h-28 items-end gap-1">
           {points.map((point) => {
             const value = point[metricKey];
             const heightPct = value != null ? ((value - minValue) / range) * 100 : 0;
@@ -56,14 +58,11 @@ function MiniBarChart({
               <div
                 key={point.period}
                 title={value != null ? `${point.period}: ${formatRatio(value, locale)}` : point.period}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}
+                className="flex flex-1 flex-col items-center justify-end"
               >
                 <div
-                  style={{
-                    width: "100%",
-                    height: `${Math.max(heightPct, value != null ? 2 : 0)}%`,
-                    backgroundColor: value != null ? "#111" : "transparent",
-                  }}
+                  className={`w-full rounded-sm transition-all ${value != null ? "bg-accent" : "bg-transparent"}`}
+                  style={{ height: `${Math.max(heightPct, value != null ? 3 : 0)}%` }}
                 />
               </div>
             );
@@ -121,11 +120,19 @@ export function HistoricalPerformanceChart({
   const t = messages;
 
   if (loading) {
-    return <p>{t.common.loading}</p>;
+    return (
+      <Card>
+        <p className="text-sm text-text-tertiary">{t.common.loading}</p>
+      </Card>
+    );
   }
 
   if (fetchFailed) {
-    return <p role="alert">{t.common.dataUnavailable}</p>;
+    return (
+      <Card>
+        <p className="text-sm text-negative">{t.common.dataUnavailable}</p>
+      </Card>
+    );
   }
 
   const history = data?.history ?? null;
@@ -134,37 +141,29 @@ export function HistoricalPerformanceChart({
   const hasAnyData = points.length > 0;
 
   return (
-    <div>
-      <h2>{t.history.title}</h2>
+    <Card>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">{t.history.title}</p>
+        <div role="tablist" aria-label={t.history.title} className="flex gap-1.5">
+          <ToggleChip active={period === "annual"} onClick={() => setPeriod("annual")}>
+            {t.history.annual}
+          </ToggleChip>
+          <ToggleChip active={period === "quarterly"} onClick={() => setPeriod("quarterly")}>
+            {t.history.quarterly}
+          </ToggleChip>
+        </div>
+      </div>
+
       {warnings.map((warning) => (
-        <p key={warning} role="status">
+        <p key={warning} className="mb-2 text-xs text-warning">
           {warning}
         </p>
       ))}
 
-      <div role="tablist" aria-label={t.history.title}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={period === "annual"}
-          onClick={() => setPeriod("annual")}
-        >
-          {t.history.annual}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={period === "quarterly"}
-          onClick={() => setPeriod("quarterly")}
-        >
-          {t.history.quarterly}
-        </button>
-      </div>
-
       {!hasAnyData ? (
-        <p>{t.common.dataUnavailable}</p>
+        <p className="text-sm text-text-tertiary">{t.common.dataUnavailable}</p>
       ) : (
-        <>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <MiniBarChart
             label={t.history.revenuePerShare}
             points={points}
@@ -186,8 +185,8 @@ export function HistoricalPerformanceChart({
             locale={locale}
             noData={t.common.noData}
           />
-        </>
+        </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
+import { PageHeader } from "@/components/ui/page-header";
 import { ScreenerForm } from "./screener-form";
 
 export default async function ScreenerPage() {
@@ -17,11 +17,8 @@ export default async function ScreenerPage() {
   const t = messages[locale];
 
   return (
-    <div>
-      <p>
-        <Link href="/dashboard">{t.screener.backToDashboard}</Link>
-      </p>
-      <h1>{t.screener.title}</h1>
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <PageHeader backHref="/dashboard" backLabel={t.screener.backToDashboard} title={t.screener.title} />
       <ScreenerForm messages={t.screener} locale={locale} />
     </div>
   );

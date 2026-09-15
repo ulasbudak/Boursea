@@ -15,6 +15,7 @@ import {
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
+import { Minus, Search, TrendingUp as TrendLineIcon, X } from "lucide-react";
 import {
   ALL_INDICATORS,
   drawingsStorageKey,
@@ -22,6 +23,9 @@ import {
   type Drawing,
   type Messages,
 } from "@trendus/shared";
+import { Card } from "@/components/ui/card";
+import { IconInput, Input } from "@/components/ui/input";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import { SignalList } from "./signal-list";
 
 type Candle = {
@@ -48,6 +52,13 @@ const CORE_INDICATOR_IDS = ["sma", "ema", "bollinger", "volume", "rsi", "macd", 
 
 function toTime(time: number): UTCTimestamp {
   return time as UTCTimestamp;
+}
+
+/** Reads the active theme's runtime CSS variable (see globals.css) so the chart matches dark/light mode. */
+function cssVar(name: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
 }
 
 export function PriceChart({
@@ -163,7 +174,17 @@ export function PriceChart({
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
       height: CHART_HEIGHT,
-      layout: { textColor: "#333", background: { color: "transparent" } },
+      layout: {
+        textColor: cssVar("--tk-text-secondary", "#9CA3AF"),
+        background: { color: "transparent" },
+        panes: { separatorColor: cssVar("--tk-border-subtle", "#23262B") },
+      },
+      grid: {
+        vertLines: { color: cssVar("--tk-border-subtle", "#23262B") },
+        horzLines: { color: cssVar("--tk-border-subtle", "#23262B") },
+      },
+      timeScale: { borderColor: cssVar("--tk-border-default", "#2E3239") },
+      rightPriceScale: { borderColor: cssVar("--tk-border-default", "#2E3239") },
     });
     chartRef.current = chart;
 
@@ -198,16 +219,27 @@ export function PriceChart({
 
     if (candles.length === 0) return;
 
+    const upColor = cssVar("--tk-positive", "#34D399");
+    const downColor = cssVar("--tk-negative", "#F87171");
+    const accentColor = cssVar("--tk-accent", "#3B82F6");
+
     if (chartType === "candlestick") {
-      const series = chart.addSeries(CandlestickSeries);
+      const series = chart.addSeries(CandlestickSeries, {
+        upColor,
+        downColor,
+        borderUpColor: upColor,
+        borderDownColor: downColor,
+        wickUpColor: upColor,
+        wickDownColor: downColor,
+      });
       series.setData(candles.map((c) => ({ time: toTime(c.time), open: c.open, high: c.high, low: c.low, close: c.close })));
       priceSeriesRef.current = series;
     } else if (chartType === "bar") {
-      const series = chart.addSeries(BarSeries);
+      const series = chart.addSeries(BarSeries, { upColor, downColor });
       series.setData(candles.map((c) => ({ time: toTime(c.time), open: c.open, high: c.high, low: c.low, close: c.close })));
       priceSeriesRef.current = series;
     } else {
-      const series = chart.addSeries(LineSeries);
+      const series = chart.addSeries(LineSeries, { color: accentColor, lineWidth: 2 });
       series.setData(candles.map((c) => ({ time: toTime(c.time), value: c.close })));
       priceSeriesRef.current = series;
     }
@@ -321,19 +353,21 @@ export function PriceChart({
     }
     drawingPriceLinesRef.current = [];
 
+    const drawingColor = cssVar("--tk-warning", "#F59E0B");
+
     for (const drawing of drawings) {
       if (drawing.type === "horizontalLine") {
         const line = priceSeries.createPriceLine({
           price: drawing.price,
           title: t.chart.horizontalLineName,
-          color: "#F23645",
+          color: drawingColor,
           lineWidth: 2,
         });
         drawingPriceLinesRef.current.push(line);
       } else {
         const points = [drawing.point1, drawing.point2].sort((a, b) => a.time - b.time);
         if (points[0].time === points[1].time) continue;
-        const series = chart.addSeries(LineSeries, { color: "#F23645", lineWidth: 2, title: t.chart.trendLineName });
+        const series = chart.addSeries(LineSeries, { color: drawingColor, lineWidth: 2, title: t.chart.trendLineName });
         series.setData([
           { time: toTime(points[0].time), value: points[0].price },
           { time: toTime(points[1].time), value: points[1].price },
@@ -377,123 +411,162 @@ export function PriceChart({
   }
 
   return (
-    <div>
-      <div role="group" aria-label={t.chart.chartTypeLabel}>
-        <button type="button" aria-pressed={chartType === "candlestick"} onClick={() => setChartType("candlestick")}>
-          {t.chart.candlestick}
-        </button>
-        <button type="button" aria-pressed={chartType === "line"} onClick={() => setChartType("line")}>
-          {t.chart.line}
-        </button>
-        <button type="button" aria-pressed={chartType === "bar"} onClick={() => setChartType("bar")}>
-          {t.chart.bar}
-        </button>
-      </div>
+    <div className="flex flex-col gap-4">
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div role="group" aria-label={t.chart.chartTypeLabel} className="flex gap-1.5">
+            <ToggleChip active={chartType === "candlestick"} onClick={() => setChartType("candlestick")}>
+              {t.chart.candlestick}
+            </ToggleChip>
+            <ToggleChip active={chartType === "line"} onClick={() => setChartType("line")}>
+              {t.chart.line}
+            </ToggleChip>
+            <ToggleChip active={chartType === "bar"} onClick={() => setChartType("bar")}>
+              {t.chart.bar}
+            </ToggleChip>
+          </div>
 
-      <div role="group" aria-label={t.chart.timeframeLabel}>
-        <button type="button" aria-pressed={timeframe === "intraday"} onClick={() => setTimeframe("intraday")}>
-          {t.chart.intraday}
-        </button>
-        <button type="button" aria-pressed={timeframe === "daily"} onClick={() => setTimeframe("daily")}>
-          {t.chart.daily}
-        </button>
-        <button type="button" aria-pressed={timeframe === "weekly"} onClick={() => setTimeframe("weekly")}>
-          {t.chart.weekly}
-        </button>
-        <button type="button" aria-pressed={timeframe === "monthly"} onClick={() => setTimeframe("monthly")}>
-          {t.chart.monthly}
-        </button>
-      </div>
+          <div role="group" aria-label={t.chart.timeframeLabel} className="flex gap-1.5">
+            <ToggleChip active={timeframe === "intraday"} onClick={() => setTimeframe("intraday")}>
+              {t.chart.intraday}
+            </ToggleChip>
+            <ToggleChip active={timeframe === "daily"} onClick={() => setTimeframe("daily")}>
+              {t.chart.daily}
+            </ToggleChip>
+            <ToggleChip active={timeframe === "weekly"} onClick={() => setTimeframe("weekly")}>
+              {t.chart.weekly}
+            </ToggleChip>
+            <ToggleChip active={timeframe === "monthly"} onClick={() => setTimeframe("monthly")}>
+              {t.chart.monthly}
+            </ToggleChip>
+          </div>
+        </div>
 
-      <div role="group" aria-label={t.chart.indicatorsLabel}>
-        {CORE_INDICATOR_IDS.map((id) => (
-          <button key={id} type="button" aria-pressed={isActive(id)} onClick={() => toggleCoreIndicator(id)}>
-            {coreIndicatorLabels[id]}
-          </button>
-        ))}
-      </div>
+        <div className="my-4 h-px bg-border-subtle" />
 
-      <details>
-        <summary>{t.chart.advancedLabel}</summary>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t.chart.searchPlaceholder}
-          aria-label={t.chart.advancedLabel}
-        />
-        {advancedResults.length === 0 && <p>{t.chart.noSearchResults}</p>}
-        <ul>
-          {advancedResults.map((def) => (
-            <AdvancedIndicatorRow
-              key={def.id}
-              id={def.id}
-              name={def.name}
-              defaultParams={def.defaultParams}
-              disabled={isActive(def.id)}
-              periodLabel={t.chart.periodLabel}
-              addLabel={t.chart.addButton}
-              onAdd={addAdvancedIndicator}
-            />
+        <div role="group" aria-label={t.chart.indicatorsLabel} className="flex flex-wrap gap-1.5">
+          {CORE_INDICATOR_IDS.map((id) => (
+            <ToggleChip key={id} active={isActive(id)} onClick={() => toggleCoreIndicator(id)}>
+              {coreIndicatorLabels[id]}
+            </ToggleChip>
           ))}
-        </ul>
-      </details>
+        </div>
 
-      {activeIndicators.length > 0 && (
-        <div>
-          <p>{t.chart.activeIndicatorsLabel}</p>
-          <ul>
-            {activeIndicators.map((active) => {
-              const def = findIndicator(active.id);
-              return (
-                <li key={active.id}>
-                  {def?.name ?? active.id}{" "}
-                  <button type="button" onClick={() => removeIndicator(active.id)}>
-                    {t.chart.removeButton}
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs font-medium text-accent">{t.chart.advancedLabel}</summary>
+          <div className="mt-3">
+            <IconInput
+              icon={<Search size={16} />}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.chart.searchPlaceholder}
+              aria-label={t.chart.advancedLabel}
+            />
+            {advancedResults.length === 0 && (
+              <p className="mt-2 text-xs text-text-tertiary">{t.chart.noSearchResults}</p>
+            )}
+            <ul className="mt-2 flex flex-col divide-y divide-border-subtle">
+              {advancedResults.map((def) => (
+                <AdvancedIndicatorRow
+                  key={def.id}
+                  id={def.id}
+                  name={def.name}
+                  defaultParams={def.defaultParams}
+                  disabled={isActive(def.id)}
+                  periodLabel={t.chart.periodLabel}
+                  addLabel={t.chart.addButton}
+                  onAdd={addAdvancedIndicator}
+                />
+              ))}
+            </ul>
+          </div>
+        </details>
+
+        {activeIndicators.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1.5 text-xs text-text-tertiary">{t.chart.activeIndicatorsLabel}</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {activeIndicators.map((active) => {
+                const def = findIndicator(active.id);
+                return (
+                  <li
+                    key={active.id}
+                    className="flex items-center gap-1.5 rounded-full bg-surface-hover py-1 pl-3 pr-1.5 text-xs text-text-secondary"
+                  >
+                    {def?.name ?? active.id}
+                    <button
+                      type="button"
+                      aria-label={t.chart.removeButton}
+                      onClick={() => removeIndicator(active.id)}
+                      className="rounded-full p-0.5 text-text-tertiary transition-colors hover:bg-surface hover:text-negative"
+                    >
+                      <X size={12} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        <div className="my-4 h-px bg-border-subtle" />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div role="group" aria-label={t.chart.drawingToolsLabel} className="flex gap-1.5">
+            <ToggleChip active={activeTool === "trendLine"} onClick={() => selectTool("trendLine")} className="gap-1.5">
+              <TrendLineIcon size={13} className="inline -mt-0.5" /> {t.chart.trendLineTool}
+            </ToggleChip>
+            <ToggleChip active={activeTool === "horizontalLine"} onClick={() => selectTool("horizontalLine")} className="gap-1.5">
+              <Minus size={13} className="inline -mt-0.5" /> {t.chart.horizontalLineTool}
+            </ToggleChip>
+          </div>
+          {activeTool === "trendLine" && pendingPoint && (
+            <span className="text-xs text-accent">{t.chart.selectSecondPoint}</span>
+          )}
+        </div>
+
+        {drawings.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1.5 text-xs text-text-tertiary">{t.chart.drawingsLabel}</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {drawings.map((drawing) => (
+                <li
+                  key={drawing.id}
+                  className="flex items-center gap-1.5 rounded-full bg-surface-hover py-1 pl-3 pr-1.5 text-xs text-text-secondary"
+                >
+                  {drawingName(drawing)}
+                  <button
+                    type="button"
+                    aria-label={t.chart.removeButton}
+                    onClick={() => deleteDrawing(drawing.id)}
+                    className="rounded-full p-0.5 text-text-tertiary transition-colors hover:bg-surface hover:text-negative"
+                  >
+                    <X size={12} />
                   </button>
                 </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+              ))}
+            </ul>
+          </div>
+        )}
+      </Card>
 
-      <div role="group" aria-label={t.chart.drawingToolsLabel}>
-        <button type="button" aria-pressed={activeTool === "trendLine"} onClick={() => selectTool("trendLine")}>
-          {t.chart.trendLineTool}
-        </button>
-        <button type="button" aria-pressed={activeTool === "horizontalLine"} onClick={() => selectTool("horizontalLine")}>
-          {t.chart.horizontalLineTool}
-        </button>
-        {activeTool === "trendLine" && pendingPoint && <span> {t.chart.selectSecondPoint}</span>}
-      </div>
-
-      {drawings.length > 0 && (
-        <div>
-          <p>{t.chart.drawingsLabel}</p>
-          <ul>
-            {drawings.map((drawing) => (
-              <li key={drawing.id}>
-                {drawingName(drawing)}{" "}
-                <button type="button" onClick={() => deleteDrawing(drawing.id)}>
-                  {t.chart.removeButton}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {loading && <p>{t.common.loading}</p>}
-      {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
-      {!fetchFailed &&
-        warnings.map((warning) => (
-          <p key={warning} role="status">
-            {warning}
+      <Card>
+        {loading && <p className="mb-2 text-xs text-text-tertiary">{t.common.loading}</p>}
+        {fetchFailed && (
+          <p role="alert" className="mb-2 text-xs text-negative">
+            {t.common.dataUnavailable}
           </p>
-        ))}
+        )}
+        {!fetchFailed &&
+          warnings.map((warning) => (
+            <p key={warning} role="status" className="mb-2 text-xs text-warning">
+              {warning}
+            </p>
+          ))}
 
-      <div ref={containerRef} style={{ width: "100%" }} />
+        <div ref={containerRef} style={{ width: "100%" }} />
+      </Card>
 
       <SignalList exchange={exchange} symbol={symbol} messages={t} />
     </div>
@@ -521,17 +594,17 @@ function AdvancedIndicatorRow({
   const [period, setPeriod] = useState(defaultParams.period ?? 0);
 
   return (
-    <li>
-      <span>{name}</span>
+    <li className="flex items-center gap-3 py-2 text-sm">
+      <span className="flex-1 text-text-primary">{name}</span>
       {hasPeriod && (
-        <label>
-          {periodLabel}:{" "}
-          <input
+        <label className="flex items-center gap-1.5 text-xs text-text-tertiary">
+          {periodLabel}
+          <Input
             type="number"
             min={1}
             value={period}
             onChange={(e) => setPeriod(Number(e.target.value))}
-            style={{ width: 60 }}
+            className="w-16 px-2 py-1"
           />
         </label>
       )}
@@ -539,6 +612,7 @@ function AdvancedIndicatorRow({
         type="button"
         disabled={disabled}
         onClick={() => onAdd(id, hasPeriod ? { ...defaultParams, period } : defaultParams)}
+        className="rounded-md border border-border-default px-2.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary disabled:opacity-40"
       >
         {addLabel}
       </button>

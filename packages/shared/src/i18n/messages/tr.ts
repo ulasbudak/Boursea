@@ -14,6 +14,7 @@ export const tr: Messages = {
   },
   auth: {
     title: "Giriş Yap / Kayıt Ol",
+    subtitle: "Piyasaları takip et, sinyalleri yakala, bir adım önde ol.",
     email: "E-posta",
     password: "Şifre",
     login: "Giriş Yap",
@@ -23,6 +24,7 @@ export const tr: Messages = {
     continueWithGoogle: "Google ile devam et",
     continueWithApple: "Apple ile devam et",
     redirecting: "Yönlendiriliyor...",
+    orDivider: "veya",
   },
   error: {
     title: "Bir şeyler yanlış gitti",
@@ -34,6 +36,7 @@ export const tr: Messages = {
     loggedInAs: "Giriş yapıldı",
     signOut: "Çıkış Yap",
     settingsLink: "Ayarlar",
+    quickAccess: "Hızlı erişim",
   },
   search: {
     label: "Hisse ara",
@@ -132,6 +135,10 @@ export const tr: Messages = {
     language: "Dil",
     turkish: "Türkçe",
     english: "English",
+    theme: "Görünüm",
+    themeLight: "Açık",
+    themeDark: "Koyu",
+    themeSystem: "Sistem",
     backToDashboard: "← Panele dön",
   },
   screener: {
@@ -152,6 +159,9 @@ export const tr: Messages = {
     rsiMinLabel: "Min. RSI",
     rsiMaxLabel: "Maks. RSI",
     volumeMinLabel: "Min. hacim",
+    defaultsNote:
+      "Alanlar önerilen bir kalite taraması (F/K, ROE, Borç/Özsermaye, RSI) ile önceden dolduruldu — istediğini değiştirebilir veya boşaltabilirsin.",
+    resetDefaults: "Önerilen değerlere dön",
     runButton: "Taramayı çalıştır",
     running: "Çalışıyor...",
     noResults: "Kriterlere uyan hisse bulunamadı.",

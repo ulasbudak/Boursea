@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
 
 export default async function SettingsPage() {
@@ -17,13 +19,22 @@ export default async function SettingsPage() {
   const t = messages[locale];
 
   return (
-    <div>
-      <p>
-        <Link href="/dashboard">{t.settings.backToDashboard}</Link>
-      </p>
-      <h1>{t.settings.title}</h1>
-      <p>{t.settings.language}</p>
-      <LanguageSwitcher currentLocale={locale} messages={t.settings} />
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
+      <PageHeader backHref="/dashboard" backLabel={t.settings.backToDashboard} title={t.settings.title} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.language}</CardTitle>
+        </CardHeader>
+        <LanguageSwitcher currentLocale={locale} messages={t.settings} />
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.theme}</CardTitle>
+        </CardHeader>
+        <ThemeToggle messages={t.settings} />
+      </Card>
     </div>
   );
 }

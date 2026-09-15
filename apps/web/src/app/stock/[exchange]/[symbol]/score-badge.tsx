@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { Messages } from "@trendus/shared";
+import { Card } from "@/components/ui/card";
+import { ProgressBar } from "@/components/ui/progress-bar";
 
 type ScoreFactor = {
   name: string;
@@ -27,6 +29,12 @@ type StockScore = {
 type ScoreResponse = {
   score: StockScore | null;
   warnings: string[];
+};
+
+const labelTone: Record<string, string> = {
+  Al: "bg-positive/15 text-positive",
+  Sat: "bg-negative/15 text-negative",
+  Nötr: "bg-warning/15 text-warning",
 };
 
 export function ScoreBadge({
@@ -73,40 +81,60 @@ export function ScoreBadge({
   }, [exchange, symbol]);
 
   if (loading) {
-    return <p>{t.common.loading}</p>;
+    return (
+      <Card>
+        <p className="text-sm text-text-tertiary">{t.common.loading}</p>
+      </Card>
+    );
   }
 
   const score = data?.score ?? null;
 
   return (
-    <div>
-      <h2>{t.score.title}</h2>
+    <Card>
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+        {t.score.title}
+      </p>
       {fetchFailed || !score ? (
-        <p>{t.score.noData}</p>
+        <p className="text-sm text-text-tertiary">{t.score.noData}</p>
       ) : (
         <>
-          <p>
-            <strong>
-              {score.value} {t.score.outOf}
-            </strong>{" "}
-            — <strong>{score.label}</strong>
-          </p>
-          <p>{score.rationale}</p>
-          <p>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-semibold tabular-nums text-text-primary">
+              {score.value}
+              <span className="text-base font-normal text-text-tertiary"> / 100</span>
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${labelTone[score.label] ?? "bg-surface-hover text-text-secondary"}`}
+            >
+              {score.label}
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-text-secondary">{score.rationale}</p>
+          <p className="mt-3 text-xs text-text-tertiary">
             {t.score.consensusLabel}: {score.consensus.bullish}/{score.consensus.total} {t.score.consensusOutOf}
           </p>
-          <details>
-            <summary>{t.score.explanationToggle}</summary>
-            <ul>
+
+          <details className="mt-4 group">
+            <summary className="cursor-pointer text-xs font-medium text-accent">
+              {t.score.explanationToggle}
+            </summary>
+            <ul className="mt-3 flex flex-col gap-2.5">
               {score.factors.map((factor) => (
-                <li key={factor.name}>
-                  {factor.name}: {factor.points} / {factor.max_points}
+                <li key={factor.name} className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-secondary">{factor.name}</span>
+                    <span className="tabular-nums text-text-primary">
+                      {factor.points} / {factor.max_points}
+                    </span>
+                  </div>
+                  <ProgressBar value={factor.points} max={factor.max_points} />
                 </li>
               ))}
             </ul>
           </details>
         </>
       )}
-    </div>
+    </Card>
   );
 }

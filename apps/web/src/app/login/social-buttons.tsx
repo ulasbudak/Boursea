@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export function SocialButtons({ messages }: { messages: Messages["auth"] }) {
   const [error, setError] = useState<string | null>(null);
@@ -31,22 +32,36 @@ export function SocialButtons({ messages }: { messages: Messages["auth"] }) {
   }
 
   return (
-    <div>
-      <button
+    <div className="flex flex-col gap-2">
+      <Button
         type="button"
+        variant="secondary"
+        className="w-full"
         onClick={() => handleOAuthSignIn("google")}
         disabled={loadingProvider !== null}
       >
+        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#4285F4] text-[10px] font-bold text-white">
+          G
+        </span>
         {loadingProvider === "google" ? messages.redirecting : messages.continueWithGoogle}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="secondary"
+        className="w-full"
         onClick={() => handleOAuthSignIn("apple")}
         disabled={loadingProvider !== null}
       >
+        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-text-primary text-[10px] font-bold text-canvas">
+
+        </span>
         {loadingProvider === "apple" ? messages.redirecting : messages.continueWithApple}
-      </button>
-      {error && <p role="alert">{error}</p>}
+      </Button>
+      {error && (
+        <p role="alert" className="text-xs text-negative">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

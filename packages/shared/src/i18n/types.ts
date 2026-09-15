@@ -12,6 +12,7 @@ export interface Messages {
   };
   auth: {
     title: string;
+    subtitle: string;
     email: string;
     password: string;
     login: string;
@@ -21,6 +22,7 @@ export interface Messages {
     continueWithGoogle: string;
     continueWithApple: string;
     redirecting: string;
+    orDivider: string;
   };
   error: {
     title: string;
@@ -32,6 +34,7 @@ export interface Messages {
     loggedInAs: string;
     signOut: string;
     settingsLink: string;
+    quickAccess: string;
   };
   search: {
     label: string;
@@ -130,6 +133,10 @@ export interface Messages {
     language: string;
     turkish: string;
     english: string;
+    theme: string;
+    themeLight: string;
+    themeDark: string;
+    themeSystem: string;
     backToDashboard: string;
   };
   screener: {
@@ -150,6 +157,8 @@ export interface Messages {
     rsiMinLabel: string;
     rsiMaxLabel: string;
     volumeMinLabel: string;
+    defaultsNote: string;
+    resetDefaults: string;
     runButton: string;
     running: string;
     noResults: string;

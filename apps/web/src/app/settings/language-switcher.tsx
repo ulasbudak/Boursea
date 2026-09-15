@@ -1,6 +1,7 @@
 "use client";
 
 import type { Locale, Messages } from "@trendus/shared";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import { setLocale } from "./actions";
 
 export function LanguageSwitcher({
@@ -11,25 +12,21 @@ export function LanguageSwitcher({
   messages: Messages["settings"];
 }) {
   return (
-    <div role="radiogroup" aria-label={messages.language}>
-      <button
-        type="button"
-        role="radio"
-        aria-checked={currentLocale === "tr"}
+    <div className="flex gap-2" role="group" aria-label={messages.language}>
+      <ToggleChip
+        active={currentLocale === "tr"}
         disabled={currentLocale === "tr"}
         onClick={() => setLocale("tr")}
       >
         {messages.turkish}
-      </button>
-      <button
-        type="button"
-        role="radio"
-        aria-checked={currentLocale === "en"}
+      </ToggleChip>
+      <ToggleChip
+        active={currentLocale === "en"}
         disabled={currentLocale === "en"}
         onClick={() => setLocale("en")}
       >
         {messages.english}
-      </button>
+      </ToggleChip>
     </div>
   );
 }

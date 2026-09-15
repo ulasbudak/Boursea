@@ -14,6 +14,7 @@ export const en: Messages = {
   },
   auth: {
     title: "Log in / Sign up",
+    subtitle: "Track markets, spot signals, and stay ahead.",
     email: "Email",
     password: "Password",
     login: "Log in",
@@ -23,6 +24,7 @@ export const en: Messages = {
     continueWithGoogle: "Continue with Google",
     continueWithApple: "Continue with Apple",
     redirecting: "Redirecting...",
+    orDivider: "or",
   },
   error: {
     title: "Something went wrong",
@@ -34,6 +36,7 @@ export const en: Messages = {
     loggedInAs: "Logged in as",
     signOut: "Sign out",
     settingsLink: "Settings",
+    quickAccess: "Quick access",
   },
   search: {
     label: "Search stocks",
@@ -132,6 +135,10 @@ export const en: Messages = {
     language: "Language",
     turkish: "Türkçe",
     english: "English",
+    theme: "Appearance",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
     backToDashboard: "← Back to dashboard",
   },
   screener: {
@@ -152,6 +159,9 @@ export const en: Messages = {
     rsiMinLabel: "Min RSI",
     rsiMaxLabel: "Max RSI",
     volumeMinLabel: "Min volume",
+    defaultsNote:
+      "Fields are pre-filled with a suggested quality screen (P/E, ROE, Debt/Equity, RSI) — edit or clear any of them.",
+    resetDefaults: "Reset to suggested defaults",
     runButton: "Run screen",
     running: "Running...",
     noResults: "No stocks matched your criteria.",

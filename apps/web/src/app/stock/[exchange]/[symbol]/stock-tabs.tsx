@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import type { Locale, Messages } from "@trendus/shared";
+import { ToggleChip } from "@/components/ui/toggle-chip";
 import { FundamentalsPanel } from "./fundamentals-panel";
 import { PriceChart } from "./price-chart";
 
@@ -23,33 +24,26 @@ export function StockTabs({
   const [tab, setTab] = useState<Tab>("overview");
   const t = messages.stock;
 
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "overview", label: t.overviewTab },
+    { id: "fundamentals", label: t.fundamentalsTab },
+    { id: "technical", label: t.technicalTab },
+  ];
+
   return (
     <div>
-      <div role="tablist" aria-label={t.tabsLabel}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "overview"}
-          onClick={() => setTab("overview")}
-        >
-          {t.overviewTab}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "fundamentals"}
-          onClick={() => setTab("fundamentals")}
-        >
-          {t.fundamentalsTab}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "technical"}
-          onClick={() => setTab("technical")}
-        >
-          {t.technicalTab}
-        </button>
+      <div role="tablist" aria-label={t.tabsLabel} className="mb-5 flex gap-2">
+        {tabs.map((item) => (
+          <ToggleChip
+            key={item.id}
+            role="tab"
+            aria-selected={tab === item.id}
+            active={tab === item.id}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </ToggleChip>
+        ))}
       </div>
 
       {tab === "overview" && overviewContent}

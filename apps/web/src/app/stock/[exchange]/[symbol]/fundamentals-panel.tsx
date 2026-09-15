@@ -8,6 +8,8 @@ import {
   type Locale,
   type Messages,
 } from "@trendus/shared";
+import { Card } from "@/components/ui/card";
+import { ChangeValue } from "@/components/ui/change-value";
 import { HistoricalPerformanceChart } from "./historical-performance-chart";
 
 type FundamentalsSnapshot = {
@@ -109,46 +111,70 @@ export function FundamentalsPanel({
   ];
 
   if (loading) {
-    return <p>{t.common.loading}</p>;
+    return (
+      <Card>
+        <p className="text-sm text-text-tertiary">{t.common.loading}</p>
+      </Card>
+    );
   }
 
   return (
     <div>
-      {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
+      {fetchFailed && (
+        <Card>
+          <p className="text-sm text-negative">{t.common.dataUnavailable}</p>
+        </Card>
+      )}
       {!fetchFailed &&
         warnings.map((warning) => (
-          <p key={warning} role="status">
+          <p key={warning} className="mb-2 text-xs text-warning">
             {warning}
           </p>
         ))}
       {!fetchFailed && (
-        <dl>
-          {rows.map((row) => {
-            const value = snapshot?.[row.key] ?? null;
-            const comparison = sectorComparison?.[row.key] ?? null;
-            return (
-              <div key={row.key}>
-                <dt>{row.label}</dt>
-                <dd>{value != null ? row.format(value) : t.common.noData}</dd>
-                <dd>
-                  {comparison?.sector_average != null ? (
-                    <>
-                      {t.fundamentals.sectorAverage}: {row.format(comparison.sector_average)}
-                      {comparison.diff_pct != null && (
-                        <> ({formatSignedPercent(comparison.diff_pct, locale)})</>
-                      )}
-                    </>
-                  ) : (
-                    t.fundamentals.noSectorData
-                  )}
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
+        <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
+          <dl className="grid grid-cols-1 divide-y divide-border-subtle sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+            {rows.map((row, i) => {
+              const value = snapshot?.[row.key] ?? null;
+              const comparison = sectorComparison?.[row.key] ?? null;
+              return (
+                <div
+                  key={row.key}
+                  className={`flex items-center justify-between gap-3 px-4 py-3 ${
+                    i % 2 === 1 ? "sm:border-l-0" : ""
+                  }`}
+                >
+                  <dt className="text-sm text-text-secondary">{row.label}</dt>
+                  <dd className="flex flex-col items-end gap-0.5 text-right">
+                    <span className="tabular-nums font-medium text-text-primary">
+                      {value != null ? row.format(value) : t.common.noData}
+                    </span>
+                    {comparison?.sector_average != null ? (
+                      <span className="text-xs text-text-tertiary">
+                        {t.fundamentals.sectorAverage}: {row.format(comparison.sector_average)}
+                        {comparison.diff_pct != null && (
+                          <>
+                            {" "}
+                            <ChangeValue value={comparison.diff_pct}>
+                              ({formatSignedPercent(comparison.diff_pct, locale)})
+                            </ChangeValue>
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-text-tertiary">{t.fundamentals.noSectorData}</span>
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
       )}
 
-      <HistoricalPerformanceChart exchange={exchange} symbol={symbol} locale={locale} messages={t} />
+      <div className="mt-4">
+        <HistoricalPerformanceChart exchange={exchange} symbol={symbol} locale={locale} messages={t} />
+      </div>
     </div>
   );
 }
