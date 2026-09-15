@@ -235,6 +235,8 @@ So that temel teknik analiz yapabileyim.
 
 ### Story 3.3: Geniş İndikatör Kütüphanesi
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-3.3.md`**. 32 gelişmiş indikatör (`packages/shared/src/indicators/advanced`) + Story 3.2'nin 7 çekirdek indikatörü tek bir `ALL_INDICATORS` kaydında birleştirildi; web ve mobilde aranabilir "Gelişmiş" listesi + periyot özelleştirme + tek tıkla ekleme/kaldırma. Uygulandı ve doğrulandı.
+
 As a **aktif trader**,
 I want ADX, Fibonacci Retracement, Ichimoku, ATR, OBV, Parabolic SAR, Williams %R gibi ileri seviye indikatörlere erişmek,
 So that daha derinlemesine teknik analiz yapabileyim.

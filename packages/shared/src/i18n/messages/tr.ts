@@ -73,6 +73,13 @@ export const tr: Messages = {
     bollingerLabel: "Bollinger Bantları",
     volumeLabel: "Hacim",
     stochasticLabel: "Stokastik",
+    advancedLabel: "Gelişmiş",
+    searchPlaceholder: "İndikatör ara (örn. ADX, ATR, OBV)",
+    addButton: "Ekle",
+    removeButton: "Kaldır",
+    periodLabel: "Periyot",
+    noSearchResults: "Eşleşen indikatör yok",
+    activeIndicatorsLabel: "Aktif indikatörler",
   },
   fundamentals: {
     peRatio: "F/K Oranı",

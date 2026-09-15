@@ -73,6 +73,13 @@ export const en: Messages = {
     bollingerLabel: "Bollinger Bands",
     volumeLabel: "Volume",
     stochasticLabel: "Stochastic",
+    advancedLabel: "Advanced",
+    searchPlaceholder: "Search indicators (e.g. ADX, ATR, OBV)",
+    addButton: "Add",
+    removeButton: "Remove",
+    periodLabel: "Period",
+    noSearchResults: "No matching indicators",
+    activeIndicatorsLabel: "Active indicators",
   },
   fundamentals: {
     peRatio: "P/E Ratio",

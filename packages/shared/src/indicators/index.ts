@@ -5,3 +5,7 @@ export * from "./rsi";
 export * from "./macd";
 export * from "./bollinger-bands";
 export * from "./stochastic";
+export * from "./registry-types";
+export * from "./core-registry";
+export * from "./advanced";
+export * from "./registry";

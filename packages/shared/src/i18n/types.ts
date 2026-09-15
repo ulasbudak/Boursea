@@ -71,6 +71,13 @@ export interface Messages {
     bollingerLabel: string;
     volumeLabel: string;
     stochasticLabel: string;
+    advancedLabel: string;
+    searchPlaceholder: string;
+    addButton: string;
+    removeButton: string;
+    periodLabel: string;
+    noSearchResults: string;
+    activeIndicatorsLabel: string;
   };
   fundamentals: {
     peRatio: string;

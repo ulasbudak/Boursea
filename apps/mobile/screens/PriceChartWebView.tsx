@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { WebView } from "react-native-webview";
-import { bollingerBands, ema, macd, rsi, sma, stochastic } from "@trendus/shared";
+import { ALL_INDICATORS, findIndicator } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 
 type Candle = {
@@ -20,22 +27,9 @@ type CandlesResponse = {
 
 type ChartType = "candlestick" | "line" | "bar";
 type Timeframe = "intraday" | "daily" | "weekly" | "monthly";
-type IndicatorId = "sma" | "ema" | "bollinger" | "volume" | "rsi" | "macd" | "stochastic";
+type ActiveIndicator = { id: string; params: Record<string, number> };
 
-type IndicatorSeriesSpec = {
-  seriesType: "Line" | "Histogram";
-  color: string;
-  lineStyle?: number;
-  title?: string;
-  data: { time: number; value: number }[];
-};
-
-type IndicatorSpec = {
-  overlay: boolean;
-  series: IndicatorSeriesSpec[];
-};
-
-const INDICATOR_IDS: IndicatorId[] = ["sma", "ema", "bollinger", "volume", "rsi", "macd", "stochastic"];
+const CORE_INDICATOR_IDS = ["sma", "ema", "bollinger", "volume", "rsi", "macd", "stochastic"];
 
 const CHART_HTML = `<!doctype html>
 <html>
@@ -58,6 +52,7 @@ const CHART_HTML = `<!doctype html>
     var series = null;
     var indicatorSeries = [];
     var indicatorPanes = [];
+    var priceLines = [];
 
     function seriesTypeFor(chartType) {
       if (chartType === "candlestick") return LightweightCharts.CandlestickSeries;
@@ -82,27 +77,39 @@ const CHART_HTML = `<!doctype html>
       chart.timeScale().fitContent();
     };
 
-    window.__setIndicators = function (specs) {
+    window.__setIndicators = function (results) {
       indicatorSeries.forEach(function (s) { chart.removeSeries(s); });
       indicatorSeries = [];
       indicatorPanes.slice().sort(function (a, b) { return b - a; }).forEach(function (p) {
         chart.removePane(p);
       });
       indicatorPanes = [];
+      if (series) {
+        priceLines.forEach(function (l) { series.removePriceLine(l); });
+      }
+      priceLines = [];
 
-      specs.forEach(function (spec) {
+      results.forEach(function (result) {
+        if (result.kind === "priceLines") {
+          if (!series) return;
+          result.lines.forEach(function (l) {
+            priceLines.push(series.createPriceLine({ price: l.price, title: l.title, lineWidth: 1 }));
+          });
+          return;
+        }
+
         var paneIndex = 0;
-        if (!spec.overlay) {
+        if (!result.overlay) {
           var pane = chart.addPane();
           paneIndex = pane.paneIndex();
           indicatorPanes.push(paneIndex);
         }
-        spec.series.forEach(function (s) {
-          var seriesType = s.seriesType === "Histogram" ? LightweightCharts.HistogramSeries : LightweightCharts.LineSeries;
-          var options = { color: s.color, title: s.title || "" };
-          if (s.lineStyle !== undefined && s.lineStyle !== null) options.lineStyle = s.lineStyle;
+        result.lines.forEach(function (l) {
+          var seriesType = l.seriesType === "Histogram" ? LightweightCharts.HistogramSeries : LightweightCharts.LineSeries;
+          var options = { color: l.color, title: l.title || "" };
+          if (l.lineStyle !== undefined && l.lineStyle !== null) options.lineStyle = l.lineStyle;
           var newSeries = chart.addSeries(seriesType, options, paneIndex);
-          newSeries.setData(s.data);
+          newSeries.setData(l.points);
           indicatorSeries.push(newSeries);
         });
       });
@@ -115,104 +122,28 @@ const CHART_HTML = `<!doctype html>
 </body>
 </html>`;
 
-function buildIndicatorSpecs(activeIndicators: Set<IndicatorId>, candles: Candle[]): IndicatorSpec[] {
-  const specs: IndicatorSpec[] = [];
-
-  if (activeIndicators.has("sma")) {
-    const values = sma(candles, 20);
-    specs.push({
-      overlay: true,
-      series: [
-        {
-          seriesType: "Line",
-          color: "#2962FF",
-          title: "SMA 20",
-          data: values.filter((v) => v.value != null).map((v) => ({ time: v.time, value: v.value as number })),
-        },
-      ],
-    });
-  }
-
-  if (activeIndicators.has("ema")) {
-    const values = ema(candles, 20);
-    specs.push({
-      overlay: true,
-      series: [
-        {
-          seriesType: "Line",
-          color: "#FF6D00",
-          title: "EMA 20",
-          data: values.filter((v) => v.value != null).map((v) => ({ time: v.time, value: v.value as number })),
-        },
-      ],
-    });
-  }
-
-  if (activeIndicators.has("bollinger")) {
-    const values = bollingerBands(candles, 20, 2).filter((v) => v.upper != null);
-    specs.push({
-      overlay: true,
-      series: [
-        { seriesType: "Line", color: "#9C27B0", title: "BB Upper", data: values.map((v) => ({ time: v.time, value: v.upper as number })) },
-        { seriesType: "Line", color: "#9C27B0", lineStyle: 2, title: "BB Middle", data: values.map((v) => ({ time: v.time, value: v.middle as number })) },
-        { seriesType: "Line", color: "#9C27B0", title: "BB Lower", data: values.map((v) => ({ time: v.time, value: v.lower as number })) },
-      ],
-    });
-  }
-
-  if (activeIndicators.has("volume")) {
-    specs.push({
-      overlay: false,
-      series: [
-        {
-          seriesType: "Histogram",
-          color: "#90A4AE",
-          title: "Volume",
-          data: candles.map((c) => ({ time: c.time, value: c.volume ?? 0 })),
-        },
-      ],
-    });
-  }
-
-  if (activeIndicators.has("rsi")) {
-    const values = rsi(candles, 14);
-    specs.push({
-      overlay: false,
-      series: [
-        {
-          seriesType: "Line",
-          color: "#2962FF",
-          title: "RSI 14",
-          data: values.filter((v) => v.value != null).map((v) => ({ time: v.time, value: v.value as number })),
-        },
-      ],
-    });
-  }
-
-  if (activeIndicators.has("macd")) {
-    const values = macd(candles);
-    specs.push({
-      overlay: false,
-      series: [
-        { seriesType: "Line", color: "#2962FF", title: "MACD", data: values.filter((v) => v.macd != null).map((v) => ({ time: v.time, value: v.macd as number })) },
-        { seriesType: "Line", color: "#FF6D00", title: "Signal", data: values.filter((v) => v.signal != null).map((v) => ({ time: v.time, value: v.signal as number })) },
-        { seriesType: "Histogram", color: "#90A4AE", title: "Histogram", data: values.filter((v) => v.histogram != null).map((v) => ({ time: v.time, value: v.histogram as number })) },
-      ],
-    });
-  }
-
-  if (activeIndicators.has("stochastic")) {
-    const values = stochastic(candles, 14, 3);
-    specs.push({
-      overlay: false,
-      series: [
-        { seriesType: "Line", color: "#2962FF", title: "%K", data: values.filter((v) => v.k != null).map((v) => ({ time: v.time, value: v.k as number })) },
-        { seriesType: "Line", color: "#FF6D00", title: "%D", data: values.filter((v) => v.d != null).map((v) => ({ time: v.time, value: v.d as number })) },
-      ],
-    });
-  }
-
-  return specs;
+function buildIndicatorResults(activeIndicators: ActiveIndicator[], candles: Candle[]) {
+  return activeIndicators
+    .map((active) => {
+      const definition = findIndicator(active.id);
+      if (!definition) return null;
+      const result = definition.compute(candles, active.params);
+      if (result.kind === "priceLines") {
+        return { kind: "priceLines", lines: result.lines };
+      }
+      return {
+        kind: "series",
+        overlay: result.overlay,
+        lines: result.lines.map((l) => ({
+          color: l.color,
+          lineStyle: l.lineStyle,
+          seriesType: l.seriesType,
+          title: `${definition.name} ${l.key}`,
+          points: l.points,
+        })),
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r != null);
 }
 
 export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchange: string }) {
@@ -220,14 +151,16 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
   const webviewRef = useRef<WebView>(null);
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [timeframe, setTimeframe] = useState<Timeframe>("daily");
-  const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorId>>(new Set());
+  const [activeIndicators, setActiveIndicators] = useState<ActiveIndicator[]>([]);
+  const [search, setSearch] = useState("");
   const [candles, setCandles] = useState<Candle[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [webviewReady, setWebviewReady] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const indicatorLabels: Record<IndicatorId, string> = {
+  const coreIndicatorLabels: Record<string, string> = {
     sma: messages.chart.smaLabel,
     ema: messages.chart.emaLabel,
     bollinger: messages.chart.bollingerLabel,
@@ -236,6 +169,13 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
     macd: messages.chart.macdLabel,
     stochastic: messages.chart.stochasticLabel,
   };
+
+  const advancedResults = useMemo(() => {
+    const normalized = search.trim().toLowerCase();
+    const advanced = ALL_INDICATORS.filter((d) => d.tier === "advanced");
+    if (!normalized) return advanced;
+    return advanced.filter((d) => d.name.toLowerCase().includes(normalized));
+  }, [search]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -275,21 +215,29 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
 
   useEffect(() => {
     if (!webviewReady || candles.length === 0) return;
-    const specs = buildIndicatorSpecs(activeIndicators, candles);
-    const script = `window.__setIndicators(${JSON.stringify(specs)}); true;`;
+    const results = buildIndicatorResults(activeIndicators, candles);
+    const script = `window.__setIndicators(${JSON.stringify(results)}); true;`;
     webviewRef.current?.injectJavaScript(script);
   }, [webviewReady, activeIndicators, candles]);
 
-  function toggleIndicator(id: IndicatorId) {
+  function isActive(id: string): boolean {
+    return activeIndicators.some((a) => a.id === id);
+  }
+
+  function toggleCoreIndicator(id: string) {
     setActiveIndicators((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
+      if (prev.some((a) => a.id === id)) return prev.filter((a) => a.id !== id);
+      const definition = findIndicator(id);
+      return [...prev, { id, params: { ...(definition?.defaultParams ?? {}) } }];
     });
+  }
+
+  function removeIndicator(id: string) {
+    setActiveIndicators((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  function addAdvancedIndicator(id: string, params: Record<string, number>) {
+    setActiveIndicators((prev) => (prev.some((a) => a.id === id) ? prev : [...prev, { id, params }]));
   }
 
   function renderToggle<T extends string>(value: T, current: T, label: string, onPress: (v: T) => void) {
@@ -314,14 +262,59 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
         {renderToggle("monthly", timeframe, messages.chart.monthly, setTimeframe)}
       </View>
       <View style={styles.toggleRow}>
-        {INDICATOR_IDS.map((id) => (
-          <TouchableOpacity key={id} onPress={() => toggleIndicator(id)}>
-            <Text style={[styles.toggleLabel, activeIndicators.has(id) && styles.toggleLabelActive]}>
-              {indicatorLabels[id]}
+        {CORE_INDICATOR_IDS.map((id) => (
+          <TouchableOpacity key={id} onPress={() => toggleCoreIndicator(id)}>
+            <Text style={[styles.toggleLabel, isActive(id) && styles.toggleLabelActive]}>
+              {coreIndicatorLabels[id]}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
+
+      <TouchableOpacity onPress={() => setShowAdvanced((v) => !v)}>
+        <Text style={styles.advancedToggle}>{messages.chart.advancedLabel}</Text>
+      </TouchableOpacity>
+
+      {showAdvanced && (
+        <View style={styles.advancedPanel}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={messages.chart.searchPlaceholder}
+            value={search}
+            onChangeText={setSearch}
+          />
+          {advancedResults.length === 0 && <Text style={styles.noData}>{messages.chart.noSearchResults}</Text>}
+          {advancedResults.map((def) => (
+            <AdvancedIndicatorRow
+              key={def.id}
+              id={def.id}
+              name={def.name}
+              defaultParams={def.defaultParams}
+              disabled={isActive(def.id)}
+              periodLabel={messages.chart.periodLabel}
+              addLabel={messages.chart.addButton}
+              onAdd={addAdvancedIndicator}
+            />
+          ))}
+        </View>
+      )}
+
+      {activeIndicators.length > 0 && (
+        <View style={styles.activeList}>
+          <Text style={styles.activeListTitle}>{messages.chart.activeIndicatorsLabel}</Text>
+          {activeIndicators.map((active) => {
+            const def = findIndicator(active.id);
+            return (
+              <View key={active.id} style={styles.activeRow}>
+                <Text>{def?.name ?? active.id}</Text>
+                <TouchableOpacity onPress={() => removeIndicator(active.id)}>
+                  <Text style={styles.removeLink}>{messages.chart.removeButton}</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      )}
 
       {loading && <ActivityIndicator />}
       {fetchFailed && <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>}
@@ -345,6 +338,50 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
   );
 }
 
+function AdvancedIndicatorRow({
+  id,
+  name,
+  defaultParams,
+  disabled,
+  periodLabel,
+  addLabel,
+  onAdd,
+}: {
+  id: string;
+  name: string;
+  defaultParams: Record<string, number>;
+  disabled: boolean;
+  periodLabel: string;
+  addLabel: string;
+  onAdd: (id: string, params: Record<string, number>) => void;
+}) {
+  const hasPeriod = "period" in defaultParams;
+  const [period, setPeriod] = useState(String(defaultParams.period ?? ""));
+
+  return (
+    <View style={styles.advancedRow}>
+      <Text style={styles.advancedRowName}>{name}</Text>
+      {hasPeriod && (
+        <View style={styles.periodField}>
+          <Text style={styles.periodLabel}>{periodLabel}:</Text>
+          <TextInput
+            style={styles.periodInput}
+            keyboardType="numeric"
+            value={period}
+            onChangeText={setPeriod}
+          />
+        </View>
+      )}
+      <TouchableOpacity
+        disabled={disabled}
+        onPress={() => onAdd(id, hasPeriod ? { ...defaultParams, period: Number(period) || defaultParams.period } : defaultParams)}
+      >
+        <Text style={[styles.addLink, disabled && styles.addLinkDisabled]}>{addLabel}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     gap: 8,
@@ -360,6 +397,74 @@ const styles = StyleSheet.create({
   },
   toggleLabelActive: {
     color: "#111",
+  },
+  advancedToggle: {
+    color: "#111",
+    fontWeight: "700",
+  },
+  advancedPanel: {
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 8,
+    padding: 8,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  advancedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  advancedRowName: {
+    flex: 1,
+  },
+  periodField: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  periodLabel: {
+    color: "#555",
+    fontSize: 12,
+  },
+  periodInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    width: 48,
+  },
+  addLink: {
+    color: "#2962FF",
+    fontWeight: "600",
+  },
+  addLinkDisabled: {
+    color: "#ccc",
+  },
+  activeList: {
+    gap: 4,
+  },
+  activeListTitle: {
+    fontWeight: "600",
+    color: "#555",
+  },
+  activeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  removeLink: {
+    color: "#c0392b",
+  },
+  noData: {
+    color: "#888",
   },
   warning: {
     color: "#8a6d3b",

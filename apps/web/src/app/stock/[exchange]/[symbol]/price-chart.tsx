@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarSeries,
   CandlestickSeries,
@@ -8,11 +8,12 @@ import {
   LineSeries,
   createChart,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type SeriesType,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { bollingerBands, ema, macd, rsi, sma, stochastic, type Messages } from "@trendus/shared";
+import { ALL_INDICATORS, findIndicator, type Messages } from "@trendus/shared";
 
 type Candle = {
   time: number;
@@ -30,10 +31,10 @@ type CandlesResponse = {
 
 type ChartType = "candlestick" | "line" | "bar";
 type Timeframe = "intraday" | "daily" | "weekly" | "monthly";
-type IndicatorId = "sma" | "ema" | "bollinger" | "volume" | "rsi" | "macd" | "stochastic";
+type ActiveIndicator = { id: string; params: Record<string, number> };
 
 const CHART_HEIGHT = 320;
-const INDICATOR_IDS: IndicatorId[] = ["sma", "ema", "bollinger", "volume", "rsi", "macd", "stochastic"];
+const CORE_INDICATOR_IDS = ["sma", "ema", "bollinger", "volume", "rsi", "macd", "stochastic"];
 
 function toTime(time: number): UTCTimestamp {
   return time as UTCTimestamp;
@@ -53,18 +54,19 @@ export function PriceChart({
   const priceSeriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
   const indicatorSeriesRef = useRef<ISeriesApi<SeriesType>[]>([]);
   const indicatorPanesRef = useRef<number[]>([]);
+  const priceLinesRef = useRef<IPriceLine[]>([]);
 
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [timeframe, setTimeframe] = useState<Timeframe>("daily");
-  const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorId>>(new Set());
+  const [activeIndicators, setActiveIndicators] = useState<ActiveIndicator[]>([]);
+  const [search, setSearch] = useState("");
   const [candles, setCandles] = useState<Candle[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
 
   const t = messages;
-
-  const indicatorLabels: Record<IndicatorId, string> = {
+  const coreIndicatorLabels: Record<string, string> = {
     sma: t.chart.smaLabel,
     ema: t.chart.emaLabel,
     bollinger: t.chart.bollingerLabel,
@@ -73,6 +75,13 @@ export function PriceChart({
     macd: t.chart.macdLabel,
     stochastic: t.chart.stochasticLabel,
   };
+
+  const advancedResults = useMemo(() => {
+    const normalized = search.trim().toLowerCase();
+    const advanced = ALL_INDICATORS.filter((d) => d.tier === "advanced");
+    if (!normalized) return advanced;
+    return advanced.filter((d) => d.name.toLowerCase().includes(normalized));
+  }, [search]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -126,6 +135,7 @@ export function PriceChart({
       priceSeriesRef.current = null;
       indicatorSeriesRef.current = [];
       indicatorPanesRef.current = [];
+      priceLinesRef.current = [];
     };
   }, []);
 
@@ -169,104 +179,69 @@ export function PriceChart({
       chart.removePane(paneIndex);
     }
     indicatorPanesRef.current = [];
+    if (priceSeriesRef.current) {
+      for (const line of priceLinesRef.current) {
+        priceSeriesRef.current.removePriceLine(line);
+      }
+    }
+    priceLinesRef.current = [];
 
     if (candles.length === 0) return;
 
-    if (activeIndicators.has("sma")) {
-      const values = sma(candles, 20);
-      const series = chart.addSeries(LineSeries, { color: "#2962FF", lineWidth: 2, title: "SMA 20" });
-      series.setData(
-        values.filter((v) => v.value != null).map((v) => ({ time: toTime(v.time), value: v.value as number }))
-      );
-      indicatorSeriesRef.current.push(series);
-    }
+    for (const active of activeIndicators) {
+      const definition = findIndicator(active.id);
+      if (!definition) continue;
+      const result = definition.compute(candles, active.params);
 
-    if (activeIndicators.has("ema")) {
-      const values = ema(candles, 20);
-      const series = chart.addSeries(LineSeries, { color: "#FF6D00", lineWidth: 2, title: "EMA 20" });
-      series.setData(
-        values.filter((v) => v.value != null).map((v) => ({ time: toTime(v.time), value: v.value as number }))
-      );
-      indicatorSeriesRef.current.push(series);
-    }
+      if (result.kind === "priceLines") {
+        if (!priceSeriesRef.current) continue;
+        for (const line of result.lines) {
+          const priceLine = priceSeriesRef.current.createPriceLine({
+            price: line.price,
+            title: line.title,
+            lineWidth: 1,
+          });
+          priceLinesRef.current.push(priceLine);
+        }
+        continue;
+      }
 
-    if (activeIndicators.has("bollinger")) {
-      const values = bollingerBands(candles, 20, 2);
-      const withData = values.filter((v) => v.upper != null);
-      const upper = chart.addSeries(LineSeries, { color: "#9C27B0", lineWidth: 1, title: "BB Upper" });
-      upper.setData(withData.map((v) => ({ time: toTime(v.time), value: v.upper as number })));
-      const middle = chart.addSeries(LineSeries, { color: "#9C27B0", lineWidth: 1, lineStyle: 2, title: "BB Middle" });
-      middle.setData(withData.map((v) => ({ time: toTime(v.time), value: v.middle as number })));
-      const lower = chart.addSeries(LineSeries, { color: "#9C27B0", lineWidth: 1, title: "BB Lower" });
-      lower.setData(withData.map((v) => ({ time: toTime(v.time), value: v.lower as number })));
-      indicatorSeriesRef.current.push(upper, middle, lower);
-    }
+      let paneIndex = 0;
+      if (!result.overlay) {
+        const pane = chart.addPane();
+        paneIndex = pane.paneIndex();
+        indicatorPanesRef.current.push(paneIndex);
+      }
 
-    if (activeIndicators.has("volume")) {
-      const pane = chart.addPane();
-      const paneIndex = pane.paneIndex();
-      indicatorPanesRef.current.push(paneIndex);
-      const series = chart.addSeries(HistogramSeries, { color: "#90A4AE", title: t.chart.volumeLabel }, paneIndex);
-      series.setData(candles.map((c) => ({ time: toTime(c.time), value: c.volume ?? 0 })));
-      indicatorSeriesRef.current.push(series);
+      for (const line of result.lines) {
+        const seriesDefinition = line.seriesType === "Histogram" ? HistogramSeries : LineSeries;
+        const options: Record<string, unknown> = { color: line.color, title: `${definition.name} ${line.key}` };
+        if (line.lineStyle != null) options.lineStyle = line.lineStyle;
+        const series = chart.addSeries(seriesDefinition, options, paneIndex);
+        series.setData(line.points.map((p) => ({ time: toTime(p.time), value: p.value })));
+        indicatorSeriesRef.current.push(series);
+      }
     }
-
-    if (activeIndicators.has("rsi")) {
-      const pane = chart.addPane();
-      const paneIndex = pane.paneIndex();
-      indicatorPanesRef.current.push(paneIndex);
-      const values = rsi(candles, 14);
-      const series = chart.addSeries(LineSeries, { color: "#2962FF", title: "RSI 14" }, paneIndex);
-      series.setData(
-        values.filter((v) => v.value != null).map((v) => ({ time: toTime(v.time), value: v.value as number }))
-      );
-      indicatorSeriesRef.current.push(series);
-    }
-
-    if (activeIndicators.has("macd")) {
-      const pane = chart.addPane();
-      const paneIndex = pane.paneIndex();
-      indicatorPanesRef.current.push(paneIndex);
-      const values = macd(candles);
-      const macdSeries = chart.addSeries(LineSeries, { color: "#2962FF", title: "MACD" }, paneIndex);
-      macdSeries.setData(
-        values.filter((v) => v.macd != null).map((v) => ({ time: toTime(v.time), value: v.macd as number }))
-      );
-      const signalSeries = chart.addSeries(LineSeries, { color: "#FF6D00", title: "Signal" }, paneIndex);
-      signalSeries.setData(
-        values.filter((v) => v.signal != null).map((v) => ({ time: toTime(v.time), value: v.signal as number }))
-      );
-      const histogramSeries = chart.addSeries(HistogramSeries, { color: "#90A4AE", title: "Histogram" }, paneIndex);
-      histogramSeries.setData(
-        values.filter((v) => v.histogram != null).map((v) => ({ time: toTime(v.time), value: v.histogram as number }))
-      );
-      indicatorSeriesRef.current.push(macdSeries, signalSeries, histogramSeries);
-    }
-
-    if (activeIndicators.has("stochastic")) {
-      const pane = chart.addPane();
-      const paneIndex = pane.paneIndex();
-      indicatorPanesRef.current.push(paneIndex);
-      const values = stochastic(candles, 14, 3);
-      const kSeries = chart.addSeries(LineSeries, { color: "#2962FF", title: "%K" }, paneIndex);
-      kSeries.setData(values.filter((v) => v.k != null).map((v) => ({ time: toTime(v.time), value: v.k as number })));
-      const dSeries = chart.addSeries(LineSeries, { color: "#FF6D00", title: "%D" }, paneIndex);
-      dSeries.setData(values.filter((v) => v.d != null).map((v) => ({ time: toTime(v.time), value: v.d as number })));
-      indicatorSeriesRef.current.push(kSeries, dSeries);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndicators, candles]);
 
-  function toggleIndicator(id: IndicatorId) {
+  function isActive(id: string): boolean {
+    return activeIndicators.some((a) => a.id === id);
+  }
+
+  function toggleCoreIndicator(id: string) {
     setActiveIndicators((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
+      if (prev.some((a) => a.id === id)) return prev.filter((a) => a.id !== id);
+      const definition = findIndicator(id);
+      return [...prev, { id, params: { ...(definition?.defaultParams ?? {}) } }];
     });
+  }
+
+  function removeIndicator(id: string) {
+    setActiveIndicators((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  function addAdvancedIndicator(id: string, params: Record<string, number>) {
+    setActiveIndicators((prev) => (prev.some((a) => a.id === id) ? prev : [...prev, { id, params }]));
   }
 
   return (
@@ -299,17 +274,57 @@ export function PriceChart({
       </div>
 
       <div role="group" aria-label={t.chart.indicatorsLabel}>
-        {INDICATOR_IDS.map((id) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={activeIndicators.has(id)}
-            onClick={() => toggleIndicator(id)}
-          >
-            {indicatorLabels[id]}
+        {CORE_INDICATOR_IDS.map((id) => (
+          <button key={id} type="button" aria-pressed={isActive(id)} onClick={() => toggleCoreIndicator(id)}>
+            {coreIndicatorLabels[id]}
           </button>
         ))}
       </div>
+
+      <details>
+        <summary>{t.chart.advancedLabel}</summary>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t.chart.searchPlaceholder}
+          aria-label={t.chart.advancedLabel}
+        />
+        {advancedResults.length === 0 && <p>{t.chart.noSearchResults}</p>}
+        <ul>
+          {advancedResults.map((def) => (
+            <AdvancedIndicatorRow
+              key={def.id}
+              id={def.id}
+              name={def.name}
+              defaultParams={def.defaultParams}
+              disabled={isActive(def.id)}
+              periodLabel={t.chart.periodLabel}
+              addLabel={t.chart.addButton}
+              onAdd={addAdvancedIndicator}
+            />
+          ))}
+        </ul>
+      </details>
+
+      {activeIndicators.length > 0 && (
+        <div>
+          <p>{t.chart.activeIndicatorsLabel}</p>
+          <ul>
+            {activeIndicators.map((active) => {
+              const def = findIndicator(active.id);
+              return (
+                <li key={active.id}>
+                  {def?.name ?? active.id}{" "}
+                  <button type="button" onClick={() => removeIndicator(active.id)}>
+                    {t.chart.removeButton}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       {loading && <p>{t.common.loading}</p>}
       {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
@@ -322,5 +337,51 @@ export function PriceChart({
 
       <div ref={containerRef} style={{ width: "100%" }} />
     </div>
+  );
+}
+
+function AdvancedIndicatorRow({
+  id,
+  name,
+  defaultParams,
+  disabled,
+  periodLabel,
+  addLabel,
+  onAdd,
+}: {
+  id: string;
+  name: string;
+  defaultParams: Record<string, number>;
+  disabled: boolean;
+  periodLabel: string;
+  addLabel: string;
+  onAdd: (id: string, params: Record<string, number>) => void;
+}) {
+  const hasPeriod = "period" in defaultParams;
+  const [period, setPeriod] = useState(defaultParams.period ?? 0);
+
+  return (
+    <li>
+      <span>{name}</span>
+      {hasPeriod && (
+        <label>
+          {periodLabel}:{" "}
+          <input
+            type="number"
+            min={1}
+            value={period}
+            onChange={(e) => setPeriod(Number(e.target.value))}
+            style={{ width: 60 }}
+          />
+        </label>
+      )}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onAdd(id, hasPeriod ? { ...defaultParams, period } : defaultParams)}
+      >
+        {addLabel}
+      </button>
+    </li>
   );
 }
