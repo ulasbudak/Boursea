@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
+import { SearchBox } from "./search-box";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -15,6 +16,7 @@ export default async function DashboardPage() {
     <div>
       <h1>Panel</h1>
       <p>Giriş yapıldı: {claims.email}</p>
+      <SearchBox />
       <form action={signOut}>
         <button type="submit">Çıkış Yap</button>
       </form>

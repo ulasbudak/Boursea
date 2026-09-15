@@ -129,6 +129,8 @@ So that uygulamayı kendi dilimde rahatça kullanabileyim.
 
 ### Story 1.4: Hisse Arama
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.4.md`**. Backend (`market_data` modülü: BIST için statik sembol dizini + ABD için Finnhub canlı arama, `GET /symbols/search`), web (`/dashboard` arama kutusu) ve mobil (`HomeScreen` arama) uygulandı ve doğrulandı.
+
 As a **kullanıcı**,
 I want sembol veya şirket adına göre ABD ve BIST hisselerini arayabilmek,
 So that ilgilendiğim hisseyi hızlıca bulabileyim.

@@ -50,14 +50,17 @@ cd apps/api
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-cp .env.example .env             # SUPABASE_* değerlerini doldurun
+cp .env.example .env             # SUPABASE_*, FINNHUB_API_KEY değerlerini doldurun
 uvicorn app.main:app --reload    # http://localhost:8000
 ```
+
+`FINNHUB_API_KEY` olmadan da API çalışır — yalnızca ABD hisse araması devre dışı kalır ve yanıt bunu `warnings` alanında açıkça belirtir (BIST araması statik bir dizinle her koşulda çalışır). Ücretsiz bir anahtar [finnhub.io](https://finnhub.io/register)'dan alınabilir.
 
 Doğrulama:
 
 - `GET /health` → `{"status": "ok"}`
 - `GET /health/db` → Supabase Postgres bağlantısı kuruluysa `{"status": "ok"}`, değilse `503` ile `{"status": "unavailable"}`
+- `GET /symbols/search?q=GARAN` → BIST/ABD sembol araması
 - `GET /openapi.json` → OpenAPI şeması
 
 Test ve lint:

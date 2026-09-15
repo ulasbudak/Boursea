@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_db_url: str = ""
     supabase_anon_key: str = ""
+    finnhub_api_key: str = ""
+    cors_origins: str = "http://localhost:3000,http://localhost:8081"
 
 
 @lru_cache
