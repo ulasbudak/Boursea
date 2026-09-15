@@ -190,6 +190,8 @@ So that hissenin sektörüne göre ucuz mu pahalı mı olduğunu anlayabileyim.
 
 ### Story 2.3: Geçmiş Finansal Performans Grafiği
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri, mimari yaklaşım ve görev tanımı için bkz. **`docs/stories/story-2.3.md`**. Backend (yeni `GET /fundamentals/history`: Finnhub `/stock/metric` yanıtının `series` bölümünden hisse başına gelir/net kâr/EPS), web ve mobil ("Temel Analiz" sekmesine yıllık/çeyreklik geçişli, bağımlılıksız bar grafiği bölümü) uygulandı ve doğrulandı. Epic 2 (Temel Analiz) bu story ile tamamlandı.
+
 As a **kullanıcı**,
 I want şirketin son 5 yıl/20 çeyreklik gelir, net kâr ve EPS grafiğini görmek,
 So that şirketin zaman içindeki finansal trendini değerlendirebileyim.

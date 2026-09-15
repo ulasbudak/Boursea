@@ -71,6 +71,14 @@ export const tr: Messages = {
     sectorAverage: "Sektör Ort.",
     noSectorData: "Sektör verisi yok",
   },
+  history: {
+    title: "Geçmiş Performans",
+    annual: "Yıllık",
+    quarterly: "Çeyreklik",
+    revenuePerShare: "Hisse Başına Gelir",
+    netIncomePerShare: "Hisse Başına Net Kâr",
+    eps: "EPS",
+  },
   settings: {
     title: "Ayarlar",
     language: "Dil",

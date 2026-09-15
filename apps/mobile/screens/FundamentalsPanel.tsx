@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { formatCompactNumber, formatRatio, formatSignedPercent } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { HistoricalPerformanceChart } from "./HistoricalPerformanceChart";
 
 type FundamentalsSnapshot = {
   symbol: string;
@@ -151,6 +152,7 @@ export function FundamentalsPanel({ symbol, exchange }: { symbol: string; exchan
           </View>
         );
       })}
+      <HistoricalPerformanceChart symbol={symbol} exchange={exchange} />
     </View>
   );
 }

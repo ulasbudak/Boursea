@@ -7,9 +7,12 @@ from app.db import check_database_connection
 from app.fundamentals import (
     FundamentalsSnapshot,
     FundamentalsUnavailableError,
+    HistoricalPerformance,
     SectorComparison,
     get_bist_fundamentals,
+    get_bist_historical_performance,
     get_us_fundamentals,
+    get_us_historical_performance,
     get_us_sector_comparison,
 )
 from app.market_data import (
@@ -127,3 +130,27 @@ async def get_fundamentals(symbol: str, exchange: str) -> FundamentalsResponse:
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"fundamentals": fundamentals, "sector_comparison": sector_comparison, "warnings": warnings}
+
+
+HistoryResponse = dict[str, HistoricalPerformance | list[str] | None]
+
+
+@app.get("/fundamentals/history")
+async def get_fundamentals_history(symbol: str, exchange: str) -> HistoryResponse:
+    symbol = symbol.strip()
+    exchange_filter = exchange.strip().upper()
+    warnings: list[str] = []
+    history: HistoricalPerformance | None = None
+
+    if exchange_filter == "BIST":
+        history = get_bist_historical_performance(symbol)
+        warnings.append("BIST hisseleri için geçmiş performans verisi bu sürümde sağlanmıyor.")
+    elif exchange_filter == "US":
+        try:
+            history = await get_us_historical_performance(symbol)
+        except FundamentalsUnavailableError:
+            warnings.append("ABD hisse geçmiş performans verisi şu an güncellenemiyor.")
+    else:
+        raise HTTPException(status_code=400, detail="exchange must be BIST or US")
+
+    return {"history": history, "warnings": warnings}

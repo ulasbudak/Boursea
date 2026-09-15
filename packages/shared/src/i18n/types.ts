@@ -69,6 +69,14 @@ export interface Messages {
     sectorAverage: string;
     noSectorData: string;
   };
+  history: {
+    title: string;
+    annual: string;
+    quarterly: string;
+    revenuePerShare: string;
+    netIncomePerShare: string;
+    eps: string;
+  };
   settings: {
     title: string;
     language: string;

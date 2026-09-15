@@ -9,6 +9,8 @@ FINNHUB_METRIC_URL = "https://finnhub.io/api/v1/stock/metric"
 FINNHUB_PEERS_URL = "https://finnhub.io/api/v1/stock/peers"
 FINNHUB_TIMEOUT_SECONDS = 3.0
 MAX_PEERS = 8
+MAX_ANNUAL_PERIODS = 5
+MAX_QUARTERLY_PERIODS = 20
 
 COMPARISON_METRIC_FIELDS = (
     "pe_ratio",
@@ -66,6 +68,20 @@ class SectorComparison(BaseModel):
     ebitda_margin: MetricComparison | None = None
     free_cash_flow: MetricComparison | None = None
     market_cap: MetricComparison | None = None
+
+
+class HistoricalDataPoint(BaseModel):
+    period: str
+    revenue_per_share: float | None = None
+    net_income_per_share: float | None = None
+    eps: float | None = None
+
+
+class HistoricalPerformance(BaseModel):
+    symbol: str
+    exchange: str
+    annual: list[HistoricalDataPoint] = []
+    quarterly: list[HistoricalDataPoint] = []
 
 
 class FundamentalsUnavailableError(Exception):
@@ -219,3 +235,85 @@ async def get_us_sector_comparison(
             )
 
     return SectorComparison(peer_count=len(peer_snapshots), **comparisons)
+
+
+def _extract_period_series(series_bucket: dict, *candidate_keys: str) -> dict[str, float]:
+    for key in candidate_keys:
+        entries = series_bucket.get(key)
+        if not isinstance(entries, list) or not entries:
+            continue
+        by_period = {
+            entry["period"]: float(entry["v"])
+            for entry in entries
+            if isinstance(entry, dict)
+            and isinstance(entry.get("period"), str)
+            and isinstance(entry.get("v"), (int, float))
+        }
+        if by_period:
+            return by_period
+    return {}
+
+
+def _build_data_points(series_bucket: dict, limit: int) -> list[HistoricalDataPoint]:
+    revenue_by_period = _extract_period_series(series_bucket, "salesPerShare", "revenuePerShare")
+    net_margin_by_period = _extract_period_series(series_bucket, "netMargin")
+    eps_by_period = _extract_period_series(series_bucket, "eps", "epsBasicExclExtraItems")
+
+    all_periods = set(revenue_by_period) | set(net_margin_by_period) | set(eps_by_period)
+    most_recent_periods = sorted(all_periods, reverse=True)[:limit]
+
+    points = []
+    for period in most_recent_periods:
+        revenue = revenue_by_period.get(period)
+        net_margin = net_margin_by_period.get(period)
+        net_income = revenue * net_margin if revenue is not None and net_margin is not None else None
+        points.append(
+            HistoricalDataPoint(
+                period=period,
+                revenue_per_share=revenue,
+                net_income_per_share=net_income,
+                eps=eps_by_period.get(period),
+            )
+        )
+
+    points.sort(key=lambda p: p.period)
+    return points
+
+
+def get_bist_historical_performance(symbol: str) -> HistoricalPerformance:
+    return HistoricalPerformance(symbol=symbol.strip().upper(), exchange="BIST")
+
+
+async def get_us_historical_performance(
+    symbol: str, *, client: httpx.AsyncClient | None = None
+) -> HistoricalPerformance:
+    settings = get_settings()
+    if not settings.finnhub_api_key:
+        raise FundamentalsUnavailableError("FINNHUB_API_KEY is not configured")
+
+    owns_client = client is None
+    http_client = client or httpx.AsyncClient(timeout=FINNHUB_TIMEOUT_SECONDS)
+    try:
+        response = await http_client.get(
+            FINNHUB_METRIC_URL,
+            params={"symbol": symbol, "metric": "all", "token": settings.finnhub_api_key},
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except httpx.HTTPError as exc:
+        raise FundamentalsUnavailableError(f"Finnhub request failed: {exc}") from exc
+    finally:
+        if owns_client:
+            await http_client.aclose()
+
+    series = payload.get("series")
+    if not isinstance(series, dict):
+        raise FundamentalsUnavailableError(f"No historical series for symbol {symbol}")
+
+    annual = _build_data_points(series.get("annual") or {}, MAX_ANNUAL_PERIODS)
+    quarterly = _build_data_points(series.get("quarterly") or {}, MAX_QUARTERLY_PERIODS)
+
+    if not annual and not quarterly:
+        raise FundamentalsUnavailableError(f"No historical data points for symbol {symbol}")
+
+    return HistoricalPerformance(symbol=symbol.upper(), exchange="US", annual=annual, quarterly=quarterly)

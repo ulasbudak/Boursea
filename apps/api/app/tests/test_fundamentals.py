@@ -8,8 +8,10 @@ from app.fundamentals import (
     FundamentalsSnapshot,
     FundamentalsUnavailableError,
     get_bist_fundamentals,
+    get_bist_historical_performance,
     get_peer_symbols,
     get_us_fundamentals,
+    get_us_historical_performance,
     get_us_sector_comparison,
 )
 
@@ -265,3 +267,132 @@ def test_fundamentals_endpoint_includes_sector_comparison_for_us(monkeypatch):
     body = response.json()
     assert body["sector_comparison"]["peer_count"] == 2
     assert body["sector_comparison"]["pe_ratio"]["sector_average"] == 15.0
+
+
+def test_get_bist_historical_performance_returns_empty_series():
+    history = get_bist_historical_performance("garan")
+
+    assert history.symbol == "GARAN"
+    assert history.annual == []
+    assert history.quarterly == []
+
+
+@pytest.mark.anyio
+async def test_get_us_historical_performance_derives_net_income_and_caps_periods():
+    annual_entries = [
+        {"period": f"{2015 + i}-12-31", "v": 10.0 + i} for i in range(8)
+    ]
+    net_margin_entries = [
+        {"period": f"{2015 + i}-12-31", "v": 0.2} for i in range(8)
+    ]
+    eps_entries = [{"period": f"{2015 + i}-12-31", "v": 1.5 + i} for i in range(8)]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "series": {
+                    "annual": {
+                        "salesPerShare": annual_entries,
+                        "netMargin": net_margin_entries,
+                        "eps": eps_entries,
+                    },
+                    "quarterly": {},
+                },
+                "symbol": "AAPL",
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        history = await get_us_historical_performance("AAPL", client=http_client)
+
+    assert len(history.annual) == 5  # capped at MAX_ANNUAL_PERIODS
+    assert history.quarterly == []
+    # Chronological order: oldest to newest.
+    assert history.annual[0].period < history.annual[-1].period
+    latest = history.annual[-1]
+    assert latest.period == "2022-12-31"
+    assert latest.revenue_per_share == 17.0
+    assert latest.net_income_per_share == pytest.approx(17.0 * 0.2)
+    assert latest.eps == 8.5
+
+
+@pytest.mark.anyio
+async def test_get_us_historical_performance_handles_partial_period_data():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "series": {
+                    "annual": {
+                        "salesPerShare": [{"period": "2023-12-31", "v": 10.0}],
+                        # No netMargin for this period -> net income stays None, not a guess.
+                        "eps": [{"period": "2023-12-31", "v": 2.0}],
+                    },
+                    "quarterly": {},
+                },
+                "symbol": "AAPL",
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        history = await get_us_historical_performance("AAPL", client=http_client)
+
+    assert len(history.annual) == 1
+    point = history.annual[0]
+    assert point.revenue_per_share == 10.0
+    assert point.net_income_per_share is None
+    assert point.eps == 2.0
+
+
+@pytest.mark.anyio
+async def test_get_us_historical_performance_raises_when_no_series_data():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"series": {"annual": {}, "quarterly": {}}, "symbol": "ZZZZ"})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        with pytest.raises(FundamentalsUnavailableError):
+            await get_us_historical_performance("ZZZZ", client=http_client)
+
+
+@pytest.mark.anyio
+async def test_get_us_historical_performance_raises_on_http_failure():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        with pytest.raises(FundamentalsUnavailableError):
+            await get_us_historical_performance("AAPL", client=http_client)
+
+
+def test_history_endpoint_returns_bist_empty_series_with_warning():
+    response = client.get("/fundamentals/history", params={"symbol": "GARAN", "exchange": "BIST"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["history"]["annual"] == []
+    assert len(body["warnings"]) == 1
+
+
+def test_history_endpoint_surfaces_warning_when_us_provider_unavailable(monkeypatch):
+    async def failing_get_us_historical_performance(symbol: str):
+        raise FundamentalsUnavailableError("boom")
+
+    monkeypatch.setattr(main, "get_us_historical_performance", failing_get_us_historical_performance)
+
+    response = client.get("/fundamentals/history", params={"symbol": "AAPL", "exchange": "US"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["history"] is None
+    assert len(body["warnings"]) == 1
+
+
+def test_history_endpoint_rejects_unknown_exchange():
+    response = client.get("/fundamentals/history", params={"symbol": "AAPL", "exchange": "XYZ"})
+
+    assert response.status_code == 400

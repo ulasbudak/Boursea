@@ -8,6 +8,7 @@ import {
   type Locale,
   type Messages,
 } from "@trendus/shared";
+import { HistoricalPerformanceChart } from "./historical-performance-chart";
 
 type FundamentalsSnapshot = {
   symbol: string;
@@ -146,6 +147,8 @@ export function FundamentalsPanel({
           })}
         </dl>
       )}
+
+      <HistoricalPerformanceChart exchange={exchange} symbol={symbol} locale={locale} messages={t} />
     </div>
   );
 }

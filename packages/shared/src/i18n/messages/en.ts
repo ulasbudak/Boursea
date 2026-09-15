@@ -71,6 +71,14 @@ export const en: Messages = {
     sectorAverage: "Sector Avg.",
     noSectorData: "No sector data",
   },
+  history: {
+    title: "Historical Performance",
+    annual: "Annual",
+    quarterly: "Quarterly",
+    revenuePerShare: "Revenue per Share",
+    netIncomePerShare: "Net Income per Share",
+    eps: "EPS",
+  },
   settings: {
     title: "Settings",
     language: "Language",
