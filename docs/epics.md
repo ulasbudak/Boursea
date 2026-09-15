@@ -221,6 +221,8 @@ So that fiyat hareketini istediğim şekilde analiz edebileyim.
 
 ### Story 3.2: Çekirdek İndikatörler
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-3.2.md`**. İndikatör hesaplama mantığı (`packages/shared/src/indicators`) saf TS fonksiyonları olarak eklendi; web ve mobil, `lightweight-charts` v5'in overlay/pane API'siyle SMA/EMA/Bollinger'ı fiyat panelinde, RSI/MACD/Stokastik/Hacim'i ayrı panellerde gösteriyor; her indikatör tek tıkla eklenip kaldırılabiliyor. Uygulandı ve doğrulandı.
+
 As a **kullanıcı**,
 I want grafiğe SMA/EMA, RSI, MACD, Bollinger Bantları, Hacim, Stokastik gibi çekirdek indikatörleri ekleyebilmek,
 So that temel teknik analiz yapabileyim.

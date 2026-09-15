@@ -63,6 +63,14 @@ export interface Messages {
     monthly: string;
     chartTypeLabel: string;
     timeframeLabel: string;
+    indicatorsLabel: string;
+    smaLabel: string;
+    emaLabel: string;
+    rsiLabel: string;
+    macdLabel: string;
+    bollingerLabel: string;
+    volumeLabel: string;
+    stochasticLabel: string;
   };
   fundamentals: {
     peRatio: string;
