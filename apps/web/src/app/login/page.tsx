@@ -1,13 +1,18 @@
+import { messages } from "@trendus/shared";
+import { getLocale } from "@/lib/i18n/locale";
 import { signIn, signUp } from "./actions";
 import { SubmitButton } from "./submit-button";
 import { SocialButtons } from "./social-buttons";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const locale = await getLocale();
+  const t = messages[locale];
+
   return (
     <div>
-      <h1>Giriş Yap / Kayıt Ol</h1>
+      <h1>{t.auth.title}</h1>
       <form>
-        <label htmlFor="email">E-posta</label>
+        <label htmlFor="email">{t.auth.email}</label>
         <input
           id="email"
           name="email"
@@ -15,7 +20,7 @@ export default function LoginPage() {
           placeholder="you@example.com"
           required
         />
-        <label htmlFor="password">Şifre</label>
+        <label htmlFor="password">{t.auth.password}</label>
         <input
           id="password"
           name="password"
@@ -24,14 +29,14 @@ export default function LoginPage() {
           required
           minLength={6}
         />
-        <SubmitButton formAction={signIn} pendingText="Giriş yapılıyor...">
-          Giriş Yap
+        <SubmitButton formAction={signIn} pendingText={t.auth.loggingIn}>
+          {t.auth.login}
         </SubmitButton>
-        <SubmitButton formAction={signUp} pendingText="Kayıt olunuyor...">
-          Kayıt Ol
+        <SubmitButton formAction={signUp} pendingText={t.auth.signingUp}>
+          {t.auth.signup}
         </SubmitButton>
       </form>
-      <SocialButtons />
+      <SocialButtons messages={t.auth} />
     </div>
   );
 }

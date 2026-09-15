@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { StatusBar } from "expo-status-bar";
 import { supabase } from "./lib/supabase";
+import { LocaleProvider } from "./lib/locale-provider";
 import { AuthScreen } from "./screens/AuthScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 
@@ -19,9 +20,9 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <LocaleProvider>
       {session ? <HomeScreen session={session} /> : <AuthScreen />}
       <StatusBar style="auto" />
-    </>
+    </LocaleProvider>
   );
 }

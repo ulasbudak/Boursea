@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { Messages } from "@trendus/shared";
 
 type SymbolResult = {
   symbol: string;
@@ -16,7 +17,7 @@ type SearchResponse = {
 
 const DEBOUNCE_MS = 300;
 
-export function SearchBox() {
+export function SearchBox({ messages }: { messages: Messages["search"] }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SymbolResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -41,7 +42,7 @@ export function SearchBox() {
           { signal: controller.signal }
         );
         if (!response.ok) {
-          throw new Error("Arama isteği başarısız oldu.");
+          throw new Error("Search request failed");
         }
         const data: SearchResponse = await response.json();
         setResults(data.results);
@@ -49,7 +50,7 @@ export function SearchBox() {
         setSearched(true);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        setError("Arama sırasında bir hata oluştu.");
+        setError(messages.searchError);
       } finally {
         setLoading(false);
       }
@@ -59,7 +60,7 @@ export function SearchBox() {
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [query]);
+  }, [query, messages.searchError]);
 
   function handleChange(value: string) {
     setQuery(value);
@@ -75,17 +76,17 @@ export function SearchBox() {
     <div>
       <input
         type="text"
-        placeholder="Sembol veya şirket adı ara (örn. GARAN, Apple)"
+        placeholder={messages.placeholder}
         value={query}
         onChange={(e) => handleChange(e.target.value)}
-        aria-label="Hisse ara"
+        aria-label={messages.label}
       />
-      {loading && <p>Aranıyor...</p>}
+      {loading && <p>{messages.searching}</p>}
       {error && <p role="alert">{error}</p>}
       {warnings.map((warning) => (
         <p key={warning}>{warning}</p>
       ))}
-      {searched && !loading && results.length === 0 && <p>Sonuç bulunamadı.</p>}
+      {searched && !loading && results.length === 0 && <p>{messages.noResults}</p>}
       <ul>
         {results.map((result) => (
           <li key={`${result.exchange}-${result.symbol}`}>

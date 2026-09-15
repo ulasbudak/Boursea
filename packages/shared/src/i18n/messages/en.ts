@@ -1,0 +1,61 @@
+import type { Messages } from "../types";
+
+export const en: Messages = {
+  common: {
+    appName: "Trendus",
+    disclaimer: "The information on this page is not investment advice.",
+    dataUnavailable: "Data is currently unavailable.",
+    noData: "No data",
+    loading: "Loading...",
+  },
+  home: {
+    goToDashboard: "Go to dashboard",
+    loginOrSignup: "Log in / Sign up",
+  },
+  auth: {
+    title: "Log in / Sign up",
+    email: "Email",
+    password: "Password",
+    login: "Log in",
+    loggingIn: "Logging in...",
+    signup: "Sign up",
+    signingUp: "Signing up...",
+    continueWithGoogle: "Continue with Google",
+    continueWithApple: "Continue with Apple",
+    redirecting: "Redirecting...",
+  },
+  error: {
+    title: "Something went wrong",
+    message: "Sign in/sign up could not be completed. Please try again.",
+    backToLogin: "Back to login",
+  },
+  dashboard: {
+    title: "Dashboard",
+    loggedInAs: "Logged in as",
+    signOut: "Sign out",
+    settingsLink: "Settings",
+  },
+  search: {
+    label: "Search stocks",
+    placeholder: "Search by symbol or company name (e.g. GARAN, Apple)",
+    searching: "Searching...",
+    searchError: "Something went wrong while searching.",
+    noResults: "No results found.",
+  },
+  stock: {
+    backToDashboard: "← Back to dashboard",
+    backToSearch: "← Back to search",
+    price: "Current Price",
+    change: "Daily Change",
+    marketCap: "Market Cap",
+    sector: "Sector",
+    industry: "Industry",
+  },
+  settings: {
+    title: "Settings",
+    language: "Language",
+    turkish: "Türkçe",
+    english: "English",
+    backToDashboard: "← Back to dashboard",
+  },
+};

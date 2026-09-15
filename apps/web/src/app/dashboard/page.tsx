@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/locale";
 import { signOut } from "./actions";
 import { SearchBox } from "./search-box";
 
@@ -12,13 +15,21 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  const locale = await getLocale();
+  const t = messages[locale];
+
   return (
     <div>
-      <h1>Panel</h1>
-      <p>Giriş yapıldı: {claims.email}</p>
-      <SearchBox />
+      <h1>{t.dashboard.title}</h1>
+      <p>
+        {t.dashboard.loggedInAs}: {claims.email}
+      </p>
+      <p>
+        <Link href="/settings">{t.dashboard.settingsLink}</Link>
+      </p>
+      <SearchBox messages={t.search} />
       <form action={signOut}>
-        <button type="submit">Çıkış Yap</button>
+        <button type="submit">{t.dashboard.signOut}</button>
       </form>
     </div>
   );

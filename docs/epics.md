@@ -117,6 +117,8 @@ So that kişisel izleme listemi, portföyümü ve tercihlerimi kaydedebileyim.
 
 ### Story 1.3: Dil Seçimi ve Yerelleştirme Temeli
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.3.md`**. Çeviri/biçimlendirme mantığı `packages/shared` altında paylaşılan bir i18n modülüne taşındı; web (`Accept-Language` + cookie + `/settings` sayfası) ve mobil (`expo-localization` + `AsyncStorage` + yeni `SettingsScreen`) uygulandı ve doğrulandı. Dil tercihi, yeni bir backend tablosu eklemeden Supabase `user_metadata` üzerinden kalıcı hale getirildi.
+
 As a **kullanıcı**,
 I want uygulama dilini Türkçe veya İngilizce olarak seçebilmek,
 So that uygulamayı kendi dilimde rahatça kullanabileyim.

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type { Messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/client";
 
-export function SocialButtons() {
+export function SocialButtons({ messages }: { messages: Messages["auth"] }) {
   const [error, setError] = useState<string | null>(null);
   const [loadingProvider, setLoadingProvider] = useState<
     "google" | "apple" | null
@@ -36,14 +37,14 @@ export function SocialButtons() {
         onClick={() => handleOAuthSignIn("google")}
         disabled={loadingProvider !== null}
       >
-        {loadingProvider === "google" ? "Yönlendiriliyor..." : "Google ile devam et"}
+        {loadingProvider === "google" ? messages.redirecting : messages.continueWithGoogle}
       </button>
       <button
         type="button"
         onClick={() => handleOAuthSignIn("apple")}
         disabled={loadingProvider !== null}
       >
-        {loadingProvider === "apple" ? "Yönlendiriliyor..." : "Apple ile devam et"}
+        {loadingProvider === "apple" ? messages.redirecting : messages.continueWithApple}
       </button>
       {error && <p role="alert">{error}</p>}
     </div>

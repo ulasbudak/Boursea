@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { formatChange, formatMarketCap, formatPrice, messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/locale";
 
 type StockOverview = {
   symbol: string;
@@ -20,28 +22,6 @@ type OverviewResponse = {
   warnings: string[];
 };
 
-function formatPrice(price: number, currency: string | null) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: currency ?? "USD",
-    maximumFractionDigits: 2,
-  }).format(price);
-}
-
-function formatChange(changeAbs: number, changePct: number, currency: string | null) {
-  const sign = changeAbs >= 0 ? "+" : "";
-  return `${sign}${formatPrice(changeAbs, currency)} (${sign}${changePct.toFixed(2)}%)`;
-}
-
-function formatMarketCap(marketCap: number, currency: string | null) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: currency ?? "USD",
-    notation: "compact",
-    maximumFractionDigits: 2,
-  }).format(marketCap);
-}
-
 export default async function StockDetailPage({
   params,
 }: {
@@ -54,6 +34,9 @@ export default async function StockDetailPage({
   if (!data?.claims) {
     redirect("/login");
   }
+
+  const locale = await getLocale();
+  const t = messages[locale];
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   let overviewData: OverviewResponse | null = null;
@@ -78,13 +61,13 @@ export default async function StockDetailPage({
   return (
     <div>
       <p>
-        <Link href="/dashboard">← Panele dön</Link>
+        <Link href="/dashboard">{t.stock.backToDashboard}</Link>
       </p>
       <h1>
         {overview?.name ?? symbol} <span>({exchange.toUpperCase()})</span>
       </h1>
 
-      {fetchFailed && <p role="alert">Veri şu an güncellenemiyor.</p>}
+      {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
       {!fetchFailed &&
         warnings.map((warning) => (
           <p key={warning} role="status">
@@ -95,41 +78,41 @@ export default async function StockDetailPage({
       {!fetchFailed && (
         <dl>
           <div>
-            <dt>Güncel Fiyat</dt>
+            <dt>{t.stock.price}</dt>
             <dd>
               {overview?.price != null
-                ? formatPrice(overview.price, overview.currency)
-                : "Veri yok"}
+                ? formatPrice(overview.price, overview.currency, locale)
+                : t.common.noData}
             </dd>
           </div>
           <div>
-            <dt>Günlük Değişim</dt>
+            <dt>{t.stock.change}</dt>
             <dd>
               {overview?.change_abs != null && overview?.change_pct != null
-                ? formatChange(overview.change_abs, overview.change_pct, overview.currency)
-                : "Veri yok"}
+                ? formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)
+                : t.common.noData}
             </dd>
           </div>
           <div>
-            <dt>Piyasa Değeri</dt>
+            <dt>{t.stock.marketCap}</dt>
             <dd>
               {overview?.market_cap != null
-                ? formatMarketCap(overview.market_cap, overview.currency)
-                : "Veri yok"}
+                ? formatMarketCap(overview.market_cap, overview.currency, locale)
+                : t.common.noData}
             </dd>
           </div>
           <div>
-            <dt>Sektör</dt>
-            <dd>{overview?.sector ?? "Veri yok"}</dd>
+            <dt>{t.stock.sector}</dt>
+            <dd>{overview?.sector ?? t.common.noData}</dd>
           </div>
           <div>
-            <dt>Endüstri</dt>
-            <dd>{overview?.industry ?? "Veri yok"}</dd>
+            <dt>{t.stock.industry}</dt>
+            <dd>{overview?.industry ?? t.common.noData}</dd>
           </div>
         </dl>
       )}
 
-      <p>Bu sayfadaki bilgiler yatırım tavsiyesi değildir.</p>
+      <p>{t.common.disclaimer}</p>
     </div>
   );
 }

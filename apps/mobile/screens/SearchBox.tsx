@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLocale } from "../lib/locale-context";
 
 type SymbolResult = {
   symbol: string;
@@ -27,6 +28,7 @@ export function SearchBox({
 }: {
   onSelectResult: (result: SymbolResult) => void;
 }) {
+  const { messages } = useLocale();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SymbolResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -51,7 +53,7 @@ export function SearchBox({
           { signal: controller.signal }
         );
         if (!response.ok) {
-          throw new Error("Arama isteği başarısız oldu.");
+          throw new Error("Search request failed");
         }
         const data: SearchResponse = await response.json();
         setResults(data.results);
@@ -59,7 +61,7 @@ export function SearchBox({
         setSearched(true);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
-        setError("Arama sırasında bir hata oluştu.");
+        setError(messages.search.searchError);
       } finally {
         setLoading(false);
       }
@@ -69,7 +71,7 @@ export function SearchBox({
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [query]);
+  }, [query, messages.search.searchError]);
 
   function handleChange(value: string) {
     setQuery(value);
@@ -85,7 +87,7 @@ export function SearchBox({
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Sembol veya şirket adı ara (örn. GARAN, Apple)"
+        placeholder={messages.search.placeholder}
         value={query}
         onChangeText={handleChange}
         autoCapitalize="characters"
@@ -98,7 +100,7 @@ export function SearchBox({
         </Text>
       ))}
       {searched && !loading && results.length === 0 && (
-        <Text>Sonuç bulunamadı.</Text>
+        <Text>{messages.search.noResults}</Text>
       )}
       <FlatList
         data={results}

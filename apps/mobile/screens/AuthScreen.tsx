@@ -8,8 +8,10 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
+import { useLocale } from "../lib/locale-context";
 
 export function AuthScreen() {
+  const { messages } = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,10 +38,10 @@ export function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Trendus</Text>
+      <Text style={styles.title}>{messages.common.appName}</Text>
       <TextInput
         style={styles.input}
-        placeholder="E-posta"
+        placeholder={messages.auth.email}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -47,7 +49,7 @@ export function AuthScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Şifre"
+        placeholder={messages.auth.password}
         secureTextEntry
         autoCapitalize="none"
         value={password}
@@ -59,13 +61,13 @@ export function AuthScreen() {
       ) : (
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.button} onPress={signInWithEmail}>
-            <Text style={styles.buttonText}>Giriş Yap</Text>
+            <Text style={styles.buttonText}>{messages.auth.login}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton]}
             onPress={signUpWithEmail}
           >
-            <Text style={styles.buttonText}>Kayıt Ol</Text>
+            <Text style={styles.buttonText}>{messages.auth.signup}</Text>
           </TouchableOpacity>
         </View>
       )}

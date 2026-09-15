@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { formatChange, formatMarketCap, formatPrice } from "@trendus/shared";
+import { useLocale } from "../lib/locale-context";
 
 type StockOverview = {
   symbol: string;
@@ -26,28 +28,6 @@ type OverviewResponse = {
   warnings: string[];
 };
 
-function formatPrice(price: number, currency: string | null) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: currency ?? "USD",
-    maximumFractionDigits: 2,
-  }).format(price);
-}
-
-function formatChange(changeAbs: number, changePct: number, currency: string | null) {
-  const sign = changeAbs >= 0 ? "+" : "";
-  return `${sign}${formatPrice(changeAbs, currency)} (${sign}${changePct.toFixed(2)}%)`;
-}
-
-function formatMarketCap(marketCap: number, currency: string | null) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: currency ?? "USD",
-    notation: "compact",
-    maximumFractionDigits: 2,
-  }).format(marketCap);
-}
-
 export function StockOverviewScreen({
   symbol,
   exchange,
@@ -57,6 +37,7 @@ export function StockOverviewScreen({
   exchange: string;
   onBack: () => void;
 }) {
+  const { locale, messages } = useLocale();
   const [overview, setOverview] = useState<StockOverview | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +76,7 @@ export function StockOverviewScreen({
   return (
     <ScrollView style={styles.container}>
       <TouchableOpacity onPress={onBack}>
-        <Text style={styles.backLink}>← Aramaya dön</Text>
+        <Text style={styles.backLink}>{messages.stock.backToSearch}</Text>
       </TouchableOpacity>
 
       <Text style={styles.title}>
@@ -105,7 +86,7 @@ export function StockOverviewScreen({
       {loading && <ActivityIndicator />}
 
       {!loading && fetchFailed && (
-        <Text style={styles.warning}>Veri şu an güncellenemiyor.</Text>
+        <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>
       )}
 
       {!loading &&
@@ -119,43 +100,41 @@ export function StockOverviewScreen({
       {!loading && !fetchFailed && (
         <View style={styles.metrics}>
           <View style={styles.row}>
-            <Text style={styles.label}>Güncel Fiyat</Text>
+            <Text style={styles.label}>{messages.stock.price}</Text>
             <Text style={styles.value}>
               {overview?.price != null
-                ? formatPrice(overview.price, overview.currency)
-                : "Veri yok"}
+                ? formatPrice(overview.price, overview.currency, locale)
+                : messages.common.noData}
             </Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Günlük Değişim</Text>
+            <Text style={styles.label}>{messages.stock.change}</Text>
             <Text style={styles.value}>
               {overview?.change_abs != null && overview?.change_pct != null
-                ? formatChange(overview.change_abs, overview.change_pct, overview.currency)
-                : "Veri yok"}
+                ? formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)
+                : messages.common.noData}
             </Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Piyasa Değeri</Text>
+            <Text style={styles.label}>{messages.stock.marketCap}</Text>
             <Text style={styles.value}>
               {overview?.market_cap != null
-                ? formatMarketCap(overview.market_cap, overview.currency)
-                : "Veri yok"}
+                ? formatMarketCap(overview.market_cap, overview.currency, locale)
+                : messages.common.noData}
             </Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Sektör</Text>
-            <Text style={styles.value}>{overview?.sector ?? "Veri yok"}</Text>
+            <Text style={styles.label}>{messages.stock.sector}</Text>
+            <Text style={styles.value}>{overview?.sector ?? messages.common.noData}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Endüstri</Text>
-            <Text style={styles.value}>{overview?.industry ?? "Veri yok"}</Text>
+            <Text style={styles.label}>{messages.stock.industry}</Text>
+            <Text style={styles.value}>{overview?.industry ?? messages.common.noData}</Text>
           </View>
         </View>
       )}
 
-      <Text style={styles.disclaimer}>
-        Bu sayfadaki bilgiler yatırım tavsiyesi değildir.
-      </Text>
+      <Text style={styles.disclaimer}>{messages.common.disclaimer}</Text>
     </ScrollView>
   );
 }
