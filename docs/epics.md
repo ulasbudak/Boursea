@@ -94,7 +94,7 @@ Kullanıcı ücretsiz katmanın sınırlarını görebilir ve premium katmana y�
 
 ## 5. Epic 1: Kimlik Doğrulama, Hisse Keşfi ve Temel Altyapı
 
-### Story 1.1: Proje İskeleti ve Temel Altyapı Kurulumu
+### Story 1.1: Proje İskeleti ve Temel Altyapı Kurulumu ✅ Tamamlandı
 
 > Detaylı, geliştirmeye hazır kabul kriterleri için bkz. **`docs/stories/story-1.md`** — bu ilk story, projenin geliştirmeye başlayabilmesi için gereken teknik temeli kurar.
 

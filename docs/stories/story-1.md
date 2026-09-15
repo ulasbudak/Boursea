@@ -2,7 +2,7 @@
 title: "Story 1.1: Proje İskeleti ve Temel Altyapı Kurulumu"
 epic: "Epic 1 — Kimlik Doğrulama, Hisse Keşfi ve Temel Altyapı"
 story_id: "1.1"
-status: ready-for-dev
+status: done
 created: 2026-09-15
 updated: 2026-09-15
 author: Bob (BMAD Scrum Master)
