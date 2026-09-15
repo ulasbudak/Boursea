@@ -132,4 +132,36 @@ export interface Messages {
     english: string;
     backToDashboard: string;
   };
+  screener: {
+    title: string;
+    backToDashboard: string;
+    exchangeLabel: string;
+    exchangeAll: string;
+    exchangeUs: string;
+    exchangeBist: string;
+    marketCapMinLabel: string;
+    marketCapMaxLabel: string;
+    peMinLabel: string;
+    peMaxLabel: string;
+    roeMinLabel: string;
+    debtToEquityMaxLabel: string;
+    sectorLabel: string;
+    sectorPlaceholder: string;
+    rsiMinLabel: string;
+    rsiMaxLabel: string;
+    volumeMinLabel: string;
+    runButton: string;
+    running: string;
+    noResults: string;
+    resultsTitle: string;
+    columnSymbol: string;
+    columnName: string;
+    columnExchange: string;
+    columnSector: string;
+    columnPeRatio: string;
+    columnMarketCap: string;
+    columnRoe: string;
+    columnRsi: string;
+    columnVolume: string;
+  };
 }

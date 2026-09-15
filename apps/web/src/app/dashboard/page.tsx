@@ -27,6 +27,9 @@ export default async function DashboardPage() {
       <p>
         <Link href="/settings">{t.dashboard.settingsLink}</Link>
       </p>
+      <p>
+        <Link href="/screener">{t.screener.title}</Link>
+      </p>
       <SearchBox messages={t.search} />
       <form action={signOut}>
         <button type="submit">{t.dashboard.signOut}</button>

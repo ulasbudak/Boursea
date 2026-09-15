@@ -30,6 +30,7 @@ from app.market_data import (
     search_us_symbols,
 )
 from app.scoring import StockScore, compute_bist_score, compute_us_score
+from app.screener import ScreenerCriteria, ScreenerResult, run_screener
 from app.technical import SignalRecord, evaluate_signals
 
 app = FastAPI(title="Trendus API")
@@ -246,3 +247,41 @@ async def get_symbol_score(symbol: str, exchange: str) -> ScoreResponse:
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"score": score, "warnings": warnings}
+
+
+ScreenerResponse = dict[str, list[ScreenerResult] | list[str]]
+
+
+@app.get("/screener/run")
+async def get_screener_results(
+    exchange: str = "ALL",
+    market_cap_min: float | None = None,
+    market_cap_max: float | None = None,
+    pe_min: float | None = None,
+    pe_max: float | None = None,
+    roe_min: float | None = None,
+    debt_to_equity_max: float | None = None,
+    sector: str | None = None,
+    rsi_min: float | None = None,
+    rsi_max: float | None = None,
+    volume_min: float | None = None,
+) -> ScreenerResponse:
+    exchange_filter = exchange.strip().upper()
+    if exchange_filter not in ("ALL", "BIST", "US"):
+        raise HTTPException(status_code=400, detail="exchange must be ALL, BIST or US")
+
+    criteria = ScreenerCriteria(
+        exchange=exchange_filter,
+        market_cap_min=market_cap_min,
+        market_cap_max=market_cap_max,
+        pe_min=pe_min,
+        pe_max=pe_max,
+        roe_min=roe_min,
+        debt_to_equity_max=debt_to_equity_max,
+        sector=sector,
+        rsi_min=rsi_min,
+        rsi_max=rsi_max,
+        volume_min=volume_min,
+    )
+    results, warnings = await run_screener(criteria)
+    return {"results": results, "warnings": warnings}

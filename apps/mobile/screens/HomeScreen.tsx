@@ -6,6 +6,7 @@ import { useLocale } from "../lib/locale-context";
 import { SearchBox } from "./SearchBox";
 import { StockOverviewScreen } from "./StockOverviewScreen";
 import { SettingsScreen } from "./SettingsScreen";
+import { ScreenerScreen } from "./ScreenerScreen";
 
 type SymbolResult = {
   symbol: string;
@@ -17,6 +18,7 @@ export function HomeScreen({ session }: { session: Session }) {
   const { messages } = useLocale();
   const [selectedStock, setSelectedStock] = useState<SymbolResult | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showScreener, setShowScreener] = useState(false);
 
   if (selectedStock) {
     return (
@@ -38,6 +40,14 @@ export function HomeScreen({ session }: { session: Session }) {
     );
   }
 
+  if (showScreener) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenerScreen onBack={() => setShowScreener(false)} onSelectResult={setSelectedStock} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -49,6 +59,9 @@ export function HomeScreen({ session }: { session: Session }) {
       <Text>
         {messages.dashboard.loggedInAs}: {session.user.email}
       </Text>
+      <TouchableOpacity onPress={() => setShowScreener(true)}>
+        <Text style={styles.settingsLink}>{messages.screener.title}</Text>
+      </TouchableOpacity>
       <SearchBox onSelectResult={setSelectedStock} />
       <TouchableOpacity
         style={styles.button}
