@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type SymbolResult = {
@@ -88,8 +89,10 @@ export function SearchBox() {
       <ul>
         {results.map((result) => (
           <li key={`${result.exchange}-${result.symbol}`}>
-            <span>{result.exchange}</span> <strong>{result.symbol}</strong> —{" "}
-            {result.name}
+            <Link href={`/stock/${result.exchange}/${result.symbol}`}>
+              <span>{result.exchange}</span> <strong>{result.symbol}</strong> —{" "}
+              {result.name}
+            </Link>
           </li>
         ))}
       </ul>

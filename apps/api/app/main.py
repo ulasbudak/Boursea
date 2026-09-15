@@ -1,10 +1,19 @@
-from fastapi import Depends, FastAPI, Response
+from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import get_current_claims
 from app.config import get_settings
 from app.db import check_database_connection
-from app.market_data import FinnhubError, SymbolResult, search_bist_symbols, search_us_symbols
+from app.market_data import (
+    FinnhubError,
+    MarketDataUnavailableError,
+    StockOverview,
+    SymbolResult,
+    get_bist_overview,
+    get_us_overview,
+    search_bist_symbols,
+    search_us_symbols,
+)
 
 app = FastAPI(title="Trendus API")
 
@@ -59,3 +68,27 @@ async def search_symbols(q: str, exchange: str = "ALL") -> SearchResponse:
             warnings.append("ABD hisse sonuçları şu an getirilemiyor.")
 
     return {"results": results, "warnings": warnings}
+
+
+OverviewResponse = dict[str, StockOverview | list[str] | None]
+
+
+@app.get("/symbols/overview")
+async def get_symbol_overview(symbol: str, exchange: str) -> OverviewResponse:
+    symbol = symbol.strip()
+    exchange_filter = exchange.strip().upper()
+    warnings: list[str] = []
+    overview: StockOverview | None = None
+
+    if exchange_filter == "BIST":
+        overview = get_bist_overview(symbol)
+        warnings.append("BIST hisseleri için gerçek zamanlı fiyat verisi bu sürümde sağlanmıyor.")
+    elif exchange_filter == "US":
+        try:
+            overview = await get_us_overview(symbol)
+        except MarketDataUnavailableError:
+            warnings.append("ABD hisse verisi şu an güncellenemiyor.")
+    else:
+        raise HTTPException(status_code=400, detail="exchange must be BIST or US")
+
+    return {"overview": overview, "warnings": warnings}

@@ -4,7 +4,15 @@ from fastapi.testclient import TestClient
 
 from app import main, market_data
 from app.config import Settings
-from app.market_data import FinnhubError, SymbolResult, search_bist_symbols, search_us_symbols
+from app.market_data import (
+    FinnhubError,
+    MarketDataUnavailableError,
+    SymbolResult,
+    get_bist_overview,
+    get_us_overview,
+    search_bist_symbols,
+    search_us_symbols,
+)
 
 client = TestClient(main.app)
 
@@ -138,3 +146,119 @@ def test_search_endpoint_surfaces_warning_when_finnhub_unavailable(monkeypatch):
     body = response.json()
     assert any(r["symbol"] == "GARAN" for r in body["results"])
     assert len(body["warnings"]) == 1
+
+
+def test_get_bist_overview_resolves_known_symbol(monkeypatch):
+    monkeypatch.setattr(market_data, "load_bist_symbols", lambda: BIST_FIXTURE)
+
+    overview = get_bist_overview("garan")
+
+    assert overview.symbol == "GARAN"
+    assert overview.exchange == "BIST"
+    assert overview.name == "Garanti BBVA"
+    assert overview.price is None
+
+
+def test_get_bist_overview_falls_back_to_symbol_when_unknown(monkeypatch):
+    monkeypatch.setattr(market_data, "load_bist_symbols", lambda: BIST_FIXTURE)
+
+    overview = get_bist_overview("ZZZZ")
+
+    assert overview.name == "ZZZZ"
+    assert overview.price is None
+
+
+@pytest.mark.anyio
+async def test_get_us_overview_parses_finnhub_response():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "quote" in str(request.url):
+            return httpx.Response(
+                200, json={"c": 190.5, "d": 1.5, "dp": 0.79, "pc": 189.0}
+            )
+        return httpx.Response(
+            200,
+            json={
+                "name": "Apple Inc",
+                "marketCapitalization": 3_000_000.0,
+                "currency": "USD",
+                "finnhubIndustry": "Technology",
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as client:
+        overview = await get_us_overview("AAPL", client=client)
+
+    assert overview.symbol == "AAPL"
+    assert overview.exchange == "US"
+    assert overview.name == "Apple Inc"
+    assert overview.price == 190.5
+    assert overview.change_abs == 1.5
+    assert overview.change_pct == 0.79
+    assert overview.market_cap == 3_000_000.0 * 1_000_000
+    assert overview.currency == "USD"
+    assert overview.sector == "Technology"
+
+
+@pytest.mark.anyio
+async def test_get_us_overview_raises_on_zero_quote():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "quote" in str(request.url):
+            return httpx.Response(200, json={"c": 0, "d": 0, "dp": 0, "pc": 0})
+        return httpx.Response(200, json={"name": "Unknown"})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as client:
+        with pytest.raises(MarketDataUnavailableError):
+            await get_us_overview("ZZZZ", client=client)
+
+
+@pytest.mark.anyio
+async def test_get_us_overview_raises_on_http_failure():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as client:
+        with pytest.raises(MarketDataUnavailableError):
+            await get_us_overview("AAPL", client=client)
+
+
+@pytest.mark.anyio
+async def test_get_us_overview_raises_without_api_key(monkeypatch):
+    monkeypatch.setattr(market_data, "get_settings", lambda: Settings(finnhub_api_key=""))
+
+    with pytest.raises(MarketDataUnavailableError):
+        await get_us_overview("AAPL")
+
+
+def test_overview_endpoint_returns_bist_overview_with_warning(monkeypatch):
+    monkeypatch.setattr(market_data, "load_bist_symbols", lambda: BIST_FIXTURE)
+
+    response = client.get("/symbols/overview", params={"symbol": "GARAN", "exchange": "BIST"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["overview"]["name"] == "Garanti BBVA"
+    assert body["overview"]["price"] is None
+    assert len(body["warnings"]) == 1
+
+
+def test_overview_endpoint_surfaces_warning_when_us_provider_unavailable(monkeypatch):
+    async def failing_get_us_overview(symbol: str) -> None:
+        raise MarketDataUnavailableError("boom")
+
+    monkeypatch.setattr(main, "get_us_overview", failing_get_us_overview)
+
+    response = client.get("/symbols/overview", params={"symbol": "AAPL", "exchange": "US"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["overview"] is None
+    assert len(body["warnings"]) == 1
+
+
+def test_overview_endpoint_rejects_unknown_exchange():
+    response = client.get("/symbols/overview", params={"symbol": "AAPL", "exchange": "XYZ"})
+
+    assert response.status_code == 400

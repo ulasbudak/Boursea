@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -21,7 +22,11 @@ type SearchResponse = {
 
 const DEBOUNCE_MS = 300;
 
-export function SearchBox() {
+export function SearchBox({
+  onSelectResult,
+}: {
+  onSelectResult: (result: SymbolResult) => void;
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SymbolResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -99,11 +104,11 @@ export function SearchBox() {
         data={results}
         keyExtractor={(item) => `${item.exchange}-${item.symbol}`}
         renderItem={({ item }) => (
-          <View style={styles.resultRow}>
+          <TouchableOpacity style={styles.resultRow} onPress={() => onSelectResult(item)}>
             <Text style={styles.exchangeBadge}>{item.exchange}</Text>
             <Text style={styles.symbol}>{item.symbol}</Text>
             <Text style={styles.name}>{item.name}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>

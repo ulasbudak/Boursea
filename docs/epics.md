@@ -143,6 +143,8 @@ So that ilgilendiğim hisseyi hızlıca bulabileyim.
 
 ### Story 1.5: Hisse Genel Bakış Kartı
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.5.md`**. Backend (`GET /symbols/overview`: ABD için Finnhub `/quote` + `/stock/profile2`, BIST için statik dizin + "veri şu an güncellenemiyor" uyarısı), web (`/stock/[exchange]/[symbol]` sayfası, arama sonuçları bağlandı) ve mobil (`StockOverviewScreen`, arama sonucuna dokunma) uygulandı ve doğrulandı.
+
 As a **kullanıcı**,
 I want bir hisseyi açtığımda güncel fiyat, günlük değişim, piyasa değeri ve şirket bilgilerini görmek,
 So that hisse hakkında hızlı bir ilk izlenim edinebileyim.
