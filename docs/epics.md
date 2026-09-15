@@ -163,6 +163,8 @@ So that hisse hakkında hızlı bir ilk izlenim edinebileyim.
 
 ### Story 2.1: Temel Metriklerin Gösterimi
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri, mimari yaklaşım ve görev tanımı için bkz. **`docs/stories/story-2.1.md`**. Backend (yeni `fundamentals` modülü: ABD için Finnhub `/stock/metric`, BIST için "veri yok" + uyarı; `GET /fundamentals`), web (hisse detay sayfasına "Genel Bakış"/"Temel Analiz" sekmeleri) ve mobil (`StockOverviewScreen`'e aynı sekmeler) uygulandı ve doğrulandı.
+
 As a **kullanıcı**,
 I want bir hissenin F/K, PD/DD, ROE, ROA, EPS, temettü verimi, borç/özsermaye, kâr marjı gibi temel metriklerini görmek,
 So that hissenin finansal sağlığını değerlendirebileyim.

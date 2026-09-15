@@ -48,6 +48,24 @@ export interface Messages {
     marketCap: string;
     sector: string;
     industry: string;
+    tabsLabel: string;
+    overviewTab: string;
+    fundamentalsTab: string;
+  };
+  fundamentals: {
+    peRatio: string;
+    pbRatio: string;
+    roe: string;
+    roa: string;
+    eps: string;
+    epsGrowth: string;
+    dividendYield: string;
+    debtToEquity: string;
+    grossMargin: string;
+    netMargin: string;
+    ebitdaMargin: string;
+    freeCashFlow: string;
+    marketCap: string;
   };
   settings: {
     title: string;

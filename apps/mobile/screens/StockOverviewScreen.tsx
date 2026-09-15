@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { formatChange, formatMarketCap, formatPrice } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { FundamentalsPanel } from "./FundamentalsPanel";
 
 type StockOverview = {
   symbol: string;
@@ -42,6 +43,7 @@ export function StockOverviewScreen({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [tab, setTab] = useState<"overview" | "fundamentals">("overview");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -83,56 +85,75 @@ export function StockOverviewScreen({
         {overview?.name ?? symbol} ({exchange.toUpperCase()})
       </Text>
 
-      {loading && <ActivityIndicator />}
-
-      {!loading && fetchFailed && (
-        <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>
-      )}
-
-      {!loading &&
-        !fetchFailed &&
-        warnings.map((warning) => (
-          <Text key={warning} style={styles.warning}>
-            {warning}
+      <View style={styles.tabRow}>
+        <TouchableOpacity onPress={() => setTab("overview")}>
+          <Text style={[styles.tabLabel, tab === "overview" && styles.tabLabelActive]}>
+            {messages.stock.overviewTab}
           </Text>
-        ))}
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setTab("fundamentals")}>
+          <Text style={[styles.tabLabel, tab === "fundamentals" && styles.tabLabelActive]}>
+            {messages.stock.fundamentalsTab}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      {!loading && !fetchFailed && (
-        <View style={styles.metrics}>
-          <View style={styles.row}>
-            <Text style={styles.label}>{messages.stock.price}</Text>
-            <Text style={styles.value}>
-              {overview?.price != null
-                ? formatPrice(overview.price, overview.currency, locale)
-                : messages.common.noData}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>{messages.stock.change}</Text>
-            <Text style={styles.value}>
-              {overview?.change_abs != null && overview?.change_pct != null
-                ? formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)
-                : messages.common.noData}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>{messages.stock.marketCap}</Text>
-            <Text style={styles.value}>
-              {overview?.market_cap != null
-                ? formatMarketCap(overview.market_cap, overview.currency, locale)
-                : messages.common.noData}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>{messages.stock.sector}</Text>
-            <Text style={styles.value}>{overview?.sector ?? messages.common.noData}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>{messages.stock.industry}</Text>
-            <Text style={styles.value}>{overview?.industry ?? messages.common.noData}</Text>
-          </View>
-        </View>
+      {tab === "overview" && (
+        <>
+          {loading && <ActivityIndicator />}
+
+          {!loading && fetchFailed && (
+            <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>
+          )}
+
+          {!loading &&
+            !fetchFailed &&
+            warnings.map((warning) => (
+              <Text key={warning} style={styles.warning}>
+                {warning}
+              </Text>
+            ))}
+
+          {!loading && !fetchFailed && (
+            <View style={styles.metrics}>
+              <View style={styles.row}>
+                <Text style={styles.label}>{messages.stock.price}</Text>
+                <Text style={styles.value}>
+                  {overview?.price != null
+                    ? formatPrice(overview.price, overview.currency, locale)
+                    : messages.common.noData}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>{messages.stock.change}</Text>
+                <Text style={styles.value}>
+                  {overview?.change_abs != null && overview?.change_pct != null
+                    ? formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)
+                    : messages.common.noData}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>{messages.stock.marketCap}</Text>
+                <Text style={styles.value}>
+                  {overview?.market_cap != null
+                    ? formatMarketCap(overview.market_cap, overview.currency, locale)
+                    : messages.common.noData}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>{messages.stock.sector}</Text>
+                <Text style={styles.value}>{overview?.sector ?? messages.common.noData}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>{messages.stock.industry}</Text>
+                <Text style={styles.value}>{overview?.industry ?? messages.common.noData}</Text>
+              </View>
+            </View>
+          )}
+        </>
       )}
+
+      {tab === "fundamentals" && <FundamentalsPanel symbol={symbol} exchange={exchange} />}
 
       <Text style={styles.disclaimer}>{messages.common.disclaimer}</Text>
     </ScrollView>
@@ -151,6 +172,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 12,
+  },
+  tabRow: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  tabLabel: {
+    paddingBottom: 8,
+    color: "#888",
+    fontWeight: "600",
+  },
+  tabLabelActive: {
+    color: "#111",
+    borderBottomWidth: 2,
+    borderBottomColor: "#111",
   },
   warning: {
     color: "#8a6d3b",

@@ -26,3 +26,16 @@ export function formatMarketCap(marketCap: number, currency: string | null, loca
     maximumFractionDigits: 2,
   }).format(marketCap);
 }
+
+/** Plain decimal formatting for unitless ratios (P/E, margins, growth, …) with unknown currency/percent scale. */
+export function formatRatio(value: number, locale: Locale): string {
+  return new Intl.NumberFormat(LOCALE_TAGS[locale], { maximumFractionDigits: 2 }).format(value);
+}
+
+/** Compact large-number formatting (e.g. free cash flow) without a currency symbol. */
+export function formatCompactNumber(value: number, locale: Locale): string {
+  return new Intl.NumberFormat(LOCALE_TAGS[locale], {
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(value);
+}

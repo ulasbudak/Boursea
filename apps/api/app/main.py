@@ -4,6 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth import get_current_claims
 from app.config import get_settings
 from app.db import check_database_connection
+from app.fundamentals import (
+    FundamentalsSnapshot,
+    FundamentalsUnavailableError,
+    get_bist_fundamentals,
+    get_us_fundamentals,
+)
 from app.market_data import (
     FinnhubError,
     MarketDataUnavailableError,
@@ -92,3 +98,27 @@ async def get_symbol_overview(symbol: str, exchange: str) -> OverviewResponse:
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"overview": overview, "warnings": warnings}
+
+
+FundamentalsResponse = dict[str, FundamentalsSnapshot | list[str] | None]
+
+
+@app.get("/fundamentals")
+async def get_fundamentals(symbol: str, exchange: str) -> FundamentalsResponse:
+    symbol = symbol.strip()
+    exchange_filter = exchange.strip().upper()
+    warnings: list[str] = []
+    fundamentals: FundamentalsSnapshot | None = None
+
+    if exchange_filter == "BIST":
+        fundamentals = get_bist_fundamentals(symbol)
+        warnings.append("BIST hisseleri için temel analiz verisi bu sürümde sağlanmıyor.")
+    elif exchange_filter == "US":
+        try:
+            fundamentals = await get_us_fundamentals(symbol)
+        except FundamentalsUnavailableError:
+            warnings.append("ABD hisse temel analiz verisi şu an güncellenemiyor.")
+    else:
+        raise HTTPException(status_code=400, detail="exchange must be BIST or US")
+
+    return {"fundamentals": fundamentals, "warnings": warnings}

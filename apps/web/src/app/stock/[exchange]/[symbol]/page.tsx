@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { formatChange, formatMarketCap, formatPrice, messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
+import { StockTabs } from "./stock-tabs";
 
 type StockOverview = {
   symbol: string;
@@ -58,15 +59,8 @@ export default async function StockDetailPage({
   const overview = overviewData?.overview ?? null;
   const warnings = overviewData?.warnings ?? [];
 
-  return (
+  const overviewContent = (
     <div>
-      <p>
-        <Link href="/dashboard">{t.stock.backToDashboard}</Link>
-      </p>
-      <h1>
-        {overview?.name ?? symbol} <span>({exchange.toUpperCase()})</span>
-      </h1>
-
       {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
       {!fetchFailed &&
         warnings.map((warning) => (
@@ -111,6 +105,19 @@ export default async function StockDetailPage({
           </div>
         </dl>
       )}
+    </div>
+  );
+
+  return (
+    <div>
+      <p>
+        <Link href="/dashboard">{t.stock.backToDashboard}</Link>
+      </p>
+      <h1>
+        {overview?.name ?? symbol} <span>({exchange.toUpperCase()})</span>
+      </h1>
+
+      <StockTabs exchange={exchange} symbol={symbol} locale={locale} messages={t} overviewContent={overviewContent} />
 
       <p>{t.common.disclaimer}</p>
     </div>
