@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     supabase_db_url: str = ""
     supabase_anon_key: str = ""
     finnhub_api_key: str = ""
+    twelvedata_api_key: str = ""
     cors_origins: str = "http://localhost:3000,http://localhost:8081"
 
 

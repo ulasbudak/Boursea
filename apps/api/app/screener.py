@@ -15,6 +15,10 @@ from app.technical import _rsi
 US_UNIVERSE_PATH = Path(__file__).parent / "data" / "us_universe.json"
 CACHE_TTL_SECONDS = 30 * 60
 MAX_CONCURRENT_REQUESTS = 15
+# Twelve Data's free tier caps at 8 requests/minute, far stricter than Finnhub's fundamentals quota.
+MAX_CONCURRENT_TECHNICAL_REQUESTS = 4
+# At 8 req/min this keeps a screener run's technical stage under ~2 minutes worst case.
+MAX_TECHNICAL_SYMBOLS = 16
 DEFAULT_TIMEFRAME = "daily"
 
 # Process-local cache only (no DB/Celery) — resets on redeploy, acceptable for MVP.
@@ -149,6 +153,7 @@ async def _run_us_screener(criteria: ScreenerCriteria) -> tuple[list[ScreenerRes
         return [], []
 
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+    technical_semaphore = asyncio.Semaphore(MAX_CONCURRENT_TECHNICAL_REQUESTS)
     async with httpx.AsyncClient(timeout=FINNHUB_TIMEOUT_SECONDS) as client:
         fundamentals_results = await asyncio.gather(
             *(
@@ -166,18 +171,29 @@ async def _run_us_screener(criteria: ScreenerCriteria) -> tuple[list[ScreenerRes
                 survivors.append((entry, result))
 
         technical_by_symbol: dict[str, tuple[float | None, float | None]] = {}
+        technical_warnings: list[str] = []
         if _needs_technical_data(criteria) and survivors:
+            technical_survivors = survivors[:MAX_TECHNICAL_SYMBOLS]
+            if len(survivors) > MAX_TECHNICAL_SYMBOLS:
+                technical_warnings.append(
+                    "Teknik kriterler (RSI/hacim) yalnızca ilk "
+                    f"{MAX_TECHNICAL_SYMBOLS} eşleşen sembol için kontrol edildi "
+                    "(veri sağlayıcının dakikalık istek sınırı nedeniyle)."
+                )
             technical_results = await asyncio.gather(
                 *(
-                    _fetch_technical_data(entry["symbol"], client=client, semaphore=semaphore)
-                    for entry, _ in survivors
+                    _fetch_technical_data(
+                        entry["symbol"], client=client, semaphore=technical_semaphore
+                    )
+                    for entry, _ in technical_survivors
                 ),
                 return_exceptions=True,
             )
-            for (entry, _), result in zip(survivors, technical_results):
+            for (entry, _), result in zip(technical_survivors, technical_results):
                 technical_by_symbol[entry["symbol"]] = (
                     result if isinstance(result, tuple) else (None, None)
                 )
+            survivors = technical_survivors
 
     results: list[ScreenerResult] = []
     for entry, snapshot in survivors:
@@ -198,7 +214,7 @@ async def _run_us_screener(criteria: ScreenerCriteria) -> tuple[list[ScreenerRes
             )
         )
 
-    return results, []
+    return results, technical_warnings
 
 
 def _run_bist_screener() -> tuple[list[ScreenerResult], list[str]]:

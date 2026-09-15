@@ -2,6 +2,8 @@ import asyncio
 import difflib
 import json
 import time
+from collections import deque
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -14,18 +16,43 @@ BIST_SYMBOLS_PATH = Path(__file__).parent / "data" / "bist_symbols.json"
 FINNHUB_SEARCH_URL = "https://finnhub.io/api/v1/search"
 FINNHUB_QUOTE_URL = "https://finnhub.io/api/v1/quote"
 FINNHUB_PROFILE_URL = "https://finnhub.io/api/v1/stock/profile2"
-FINNHUB_CANDLE_URL = "https://finnhub.io/api/v1/stock/candle"
 FINNHUB_TIMEOUT_SECONDS = 3.0
 MAX_RESULTS = 20
 FUZZY_MATCH_CUTOFF = 0.6
 
-ONE_DAY_SECONDS = 86400
+# Finnhub's free tier no longer grants access to /stock/candle for US symbols
+# ("You don't have access to this resource"), so historical OHLC comes from Twelve Data instead.
+TWELVEDATA_TIME_SERIES_URL = "https://api.twelvedata.com/time_series"
+TWELVEDATA_TIMEOUT_SECONDS = 5.0
+TWELVEDATA_RATE_LIMIT_PER_MINUTE = 8
+TWELVEDATA_RATE_WINDOW_SECONDS = 60.0
+
+# Process-wide, so every caller (screener, /symbols/candles, /symbols/score, ...) shares one budget.
+_twelvedata_call_times: deque[float] = deque()
+_twelvedata_throttle_lock = asyncio.Lock()
+
+
+async def _throttle_twelvedata() -> None:
+    async with _twelvedata_throttle_lock:
+        while True:
+            now = time.monotonic()
+            while (
+                _twelvedata_call_times
+                and now - _twelvedata_call_times[0] >= TWELVEDATA_RATE_WINDOW_SECONDS
+            ):
+                _twelvedata_call_times.popleft()
+            if len(_twelvedata_call_times) < TWELVEDATA_RATE_LIMIT_PER_MINUTE:
+                _twelvedata_call_times.append(now)
+                return
+            await asyncio.sleep(
+                TWELVEDATA_RATE_WINDOW_SECONDS - (now - _twelvedata_call_times[0]) + 0.1
+            )
 
 TIMEFRAMES: dict[str, dict[str, object]] = {
-    "intraday": {"resolution": "60", "lookback_seconds": 5 * ONE_DAY_SECONDS},
-    "daily": {"resolution": "D", "lookback_seconds": 365 * ONE_DAY_SECONDS},
-    "weekly": {"resolution": "W", "lookback_seconds": 5 * 365 * ONE_DAY_SECONDS},
-    "monthly": {"resolution": "M", "lookback_seconds": 20 * 365 * ONE_DAY_SECONDS},
+    "intraday": {"interval": "1h", "outputsize": 40},
+    "daily": {"interval": "1day", "outputsize": 260},
+    "weekly": {"interval": "1week", "outputsize": 260},
+    "monthly": {"interval": "1month", "outputsize": 240},
 }
 
 
@@ -213,56 +240,58 @@ def get_bist_candles(symbol: str, timeframe: str) -> list[CandlePoint]:
     return []
 
 
+def _parse_twelvedata_timestamp(value: str) -> int:
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return int(datetime.strptime(value, fmt).replace(tzinfo=UTC).timestamp())
+        except ValueError:
+            continue
+    raise ValueError(f"Unrecognized Twelve Data datetime: {value}")
+
+
 async def get_us_candles(
     symbol: str, timeframe: str, *, client: httpx.AsyncClient | None = None
 ) -> list[CandlePoint]:
     settings = get_settings()
-    if not settings.finnhub_api_key:
-        raise MarketDataUnavailableError("FINNHUB_API_KEY is not configured")
+    if not settings.twelvedata_api_key:
+        raise MarketDataUnavailableError("TWELVEDATA_API_KEY is not configured")
 
     config = TIMEFRAMES[timeframe]
-    now = int(time.time())
-    from_ts = now - int(config["lookback_seconds"])
 
     owns_client = client is None
-    http_client = client or httpx.AsyncClient(timeout=FINNHUB_TIMEOUT_SECONDS)
+    http_client = client or httpx.AsyncClient(timeout=TWELVEDATA_TIMEOUT_SECONDS)
     try:
+        await _throttle_twelvedata()
         response = await http_client.get(
-            FINNHUB_CANDLE_URL,
+            TWELVEDATA_TIME_SERIES_URL,
             params={
                 "symbol": symbol,
-                "resolution": config["resolution"],
-                "from": from_ts,
-                "to": now,
-                "token": settings.finnhub_api_key,
+                "interval": config["interval"],
+                "outputsize": config["outputsize"],
+                "apikey": settings.twelvedata_api_key,
             },
         )
         response.raise_for_status()
         payload = response.json()
     except httpx.HTTPError as exc:
-        raise MarketDataUnavailableError(f"Finnhub request failed: {exc}") from exc
+        raise MarketDataUnavailableError(f"Twelve Data request failed: {exc}") from exc
     finally:
         if owns_client:
             await http_client.aclose()
 
-    if payload.get("s") != "ok":
+    values = payload.get("values")
+    if payload.get("status") != "ok" or not values:
         raise MarketDataUnavailableError(f"No candle data for symbol {symbol}")
 
-    times = payload.get("t") or []
-    opens = payload.get("o") or []
-    highs = payload.get("h") or []
-    lows = payload.get("l") or []
-    closes = payload.get("c") or []
-    volumes = payload.get("v") or []
-
+    # Twelve Data returns newest-first; the app's indicators expect chronological order.
     return [
         CandlePoint(
-            time=t,
-            open=o,
-            high=h,
-            low=low,
-            close=c,
-            volume=volumes[i] if i < len(volumes) else None,
+            time=_parse_twelvedata_timestamp(v["datetime"]),
+            open=float(v["open"]),
+            high=float(v["high"]),
+            low=float(v["low"]),
+            close=float(v["close"]),
+            volume=float(v["volume"]) if v.get("volume") is not None else None,
         )
-        for i, (t, o, h, low, c) in enumerate(zip(times, opens, highs, lows, closes))
+        for v in reversed(values)
     ]

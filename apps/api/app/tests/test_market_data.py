@@ -57,7 +57,9 @@ def test_search_bist_symbols_returns_empty_for_blank_query():
 @pytest.fixture(autouse=True)
 def patch_settings(monkeypatch):
     monkeypatch.setattr(
-        market_data, "get_settings", lambda: Settings(finnhub_api_key="test-key")
+        market_data,
+        "get_settings",
+        lambda: Settings(finnhub_api_key="test-key", twelvedata_api_key="test-key"),
     )
 
 
@@ -271,21 +273,28 @@ def test_get_bist_candles_returns_empty_list():
 
 
 @pytest.mark.anyio
-async def test_get_us_candles_sends_correct_resolution_per_timeframe():
+async def test_get_us_candles_sends_correct_interval_per_timeframe():
     captured = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
-        captured["resolution"] = request.url.params["resolution"]
-        captured["from"] = int(request.url.params["from"])
-        captured["to"] = int(request.url.params["to"])
-        return httpx.Response(200, json={"s": "ok", "t": [], "o": [], "h": [], "l": [], "c": [], "v": []})
+        captured["interval"] = request.url.params["interval"]
+        captured["outputsize"] = request.url.params["outputsize"]
+        return httpx.Response(
+            200,
+            json={
+                "status": "ok",
+                "values": [
+                    {"datetime": "2024-01-01", "open": "1", "high": "1", "low": "1", "close": "1"}
+                ],
+            },
+        )
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as http_client:
         await get_us_candles("AAPL", "weekly", client=http_client)
 
-    assert captured["resolution"] == "W"
-    assert captured["to"] - captured["from"] == 5 * 365 * 86400
+    assert captured["interval"] == "1week"
+    assert captured["outputsize"] == "260"
 
 
 @pytest.mark.anyio
@@ -294,13 +303,25 @@ async def test_get_us_candles_parses_successful_response():
         return httpx.Response(
             200,
             json={
-                "s": "ok",
-                "t": [1000, 2000],
-                "o": [10.0, 11.0],
-                "h": [12.0, 13.0],
-                "l": [9.0, 10.5],
-                "c": [11.5, 12.5],
-                "v": [1000, 1500],
+                "status": "ok",
+                "values": [
+                    {
+                        "datetime": "2024-01-02",
+                        "open": "11.0",
+                        "high": "13.0",
+                        "low": "10.5",
+                        "close": "12.5",
+                        "volume": "1500",
+                    },
+                    {
+                        "datetime": "2024-01-01",
+                        "open": "10.0",
+                        "high": "12.0",
+                        "low": "9.0",
+                        "close": "11.5",
+                        "volume": "1000",
+                    },
+                ],
             },
         )
 
@@ -309,17 +330,17 @@ async def test_get_us_candles_parses_successful_response():
         candles = await get_us_candles("AAPL", "daily", client=http_client)
 
     assert len(candles) == 2
-    assert candles[0].time == 1000
     assert candles[0].open == 10.0
     assert candles[0].close == 11.5
     assert candles[0].volume == 1000
     assert candles[1].close == 12.5
+    assert candles[0].time < candles[1].time
 
 
 @pytest.mark.anyio
 async def test_get_us_candles_raises_when_no_data():
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"s": "no_data"})
+        return httpx.Response(200, json={"status": "error", "message": "symbol not found"})
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as http_client:
@@ -340,7 +361,7 @@ async def test_get_us_candles_raises_on_http_failure():
 
 @pytest.mark.anyio
 async def test_get_us_candles_raises_without_api_key(monkeypatch):
-    monkeypatch.setattr(market_data, "get_settings", lambda: Settings(finnhub_api_key=""))
+    monkeypatch.setattr(market_data, "get_settings", lambda: Settings(twelvedata_api_key=""))
 
     with pytest.raises(MarketDataUnavailableError):
         await get_us_candles("AAPL", "daily")
