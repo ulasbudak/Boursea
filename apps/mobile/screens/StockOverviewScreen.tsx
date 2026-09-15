@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatChange, formatMarketCap, formatPrice } from "@trendus/shared";
+import { formatChange, formatMarketCap, formatPrice, signColor } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { FundamentalsPanel } from "./FundamentalsPanel";
 import { PriceChartWebView } from "./PriceChartWebView";
 import { ScoreBadge } from "./ScoreBadge";
+import { AddToWatchlistButton } from "./AddToWatchlistButton";
 
 type StockOverview = {
   symbol: string;
@@ -41,6 +43,8 @@ export function StockOverviewScreen({
   onBack: () => void;
 }) {
   const { locale, messages } = useLocale();
+  const { mode, colors } = useTheme();
+  const styles = makeStyles(colors);
   const [overview, setOverview] = useState<StockOverview | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +82,7 @@ export function StockOverviewScreen({
   }, [symbol, exchange]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <TouchableOpacity onPress={onBack}>
         <Text style={styles.backLink}>{messages.stock.backToSearch}</Text>
       </TouchableOpacity>
@@ -86,6 +90,12 @@ export function StockOverviewScreen({
       <Text style={styles.title}>
         {overview?.name ?? symbol} ({exchange.toUpperCase()})
       </Text>
+
+      <AddToWatchlistButton
+        symbol={symbol.toUpperCase()}
+        exchange={exchange.toUpperCase()}
+        name={overview?.name ?? null}
+      />
 
       <View style={styles.tabRow}>
         <TouchableOpacity onPress={() => setTab("overview")}>
@@ -109,7 +119,7 @@ export function StockOverviewScreen({
         <>
           <ScoreBadge symbol={symbol} exchange={exchange} />
 
-          {loading && <ActivityIndicator />}
+          {loading && <ActivityIndicator color={colors.accent} />}
 
           {!loading && fetchFailed && (
             <Text style={styles.warning}>{messages.common.dataUnavailable}</Text>
@@ -124,7 +134,7 @@ export function StockOverviewScreen({
             ))}
 
           {!loading && !fetchFailed && (
-            <View style={styles.metrics}>
+            <View style={styles.card}>
               <View style={styles.row}>
                 <Text style={styles.label}>{messages.stock.price}</Text>
                 <Text style={styles.value}>
@@ -135,7 +145,12 @@ export function StockOverviewScreen({
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>{messages.stock.change}</Text>
-                <Text style={styles.value}>
+                <Text
+                  style={[
+                    styles.value,
+                    { color: signColor(overview?.change_abs, mode) },
+                  ]}
+                >
                   {overview?.change_abs != null && overview?.change_pct != null
                     ? formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)
                     : messages.common.noData}
@@ -153,7 +168,7 @@ export function StockOverviewScreen({
                 <Text style={styles.label}>{messages.stock.sector}</Text>
                 <Text style={styles.value}>{overview?.sector ?? messages.common.noData}</Text>
               </View>
-              <View style={styles.row}>
+              <View style={[styles.row, styles.rowLast]}>
                 <Text style={styles.label}>{messages.stock.industry}</Text>
                 <Text style={styles.value}>{overview?.industry ?? messages.common.noData}</Text>
               </View>
@@ -170,59 +185,75 @@ export function StockOverviewScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  backLink: {
-    color: "#111",
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  tabRow: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  tabLabel: {
-    paddingBottom: 8,
-    color: "#888",
-    fontWeight: "600",
-  },
-  tabLabelActive: {
-    color: "#111",
-    borderBottomWidth: 2,
-    borderBottomColor: "#111",
-  },
-  warning: {
-    color: "#8a6d3b",
-    marginBottom: 8,
-  },
-  metrics: {
-    gap: 8,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  label: {
-    color: "#555",
-  },
-  value: {
-    fontWeight: "600",
-  },
-  disclaimer: {
-    marginTop: 16,
-    fontSize: 12,
-    color: "#888",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.canvas,
+    },
+    content: {
+      gap: spacing[1],
+    },
+    backLink: {
+      color: colors.accent,
+      fontWeight: "600",
+      marginBottom: spacing[3],
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.textPrimary,
+      marginBottom: spacing[3],
+    },
+    tabRow: {
+      flexDirection: "row",
+      gap: spacing[4],
+      marginBottom: spacing[3],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+    },
+    tabLabel: {
+      paddingBottom: spacing[2],
+      color: colors.textTertiary,
+      fontWeight: "600",
+    },
+    tabLabelActive: {
+      color: colors.textPrimary,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.accent,
+    },
+    warning: {
+      color: colors.warning,
+      marginBottom: spacing[2],
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing[4],
+    },
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: spacing[3],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+    },
+    rowLast: {
+      borderBottomWidth: 0,
+    },
+    label: {
+      color: colors.textSecondary,
+    },
+    value: {
+      fontWeight: "600",
+      color: colors.textPrimary,
+    },
+    disclaimer: {
+      marginTop: spacing[4],
+      fontSize: 12,
+      color: colors.textTertiary,
+    },
+  });
+}

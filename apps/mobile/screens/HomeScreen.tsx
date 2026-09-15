@@ -3,10 +3,12 @@ import type { Session } from "@supabase/supabase-js";
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { supabase } from "../lib/supabase";
 import { useLocale } from "../lib/locale-context";
+import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { SearchBox } from "./SearchBox";
 import { StockOverviewScreen } from "./StockOverviewScreen";
 import { SettingsScreen } from "./SettingsScreen";
 import { ScreenerScreen } from "./ScreenerScreen";
+import { WatchlistScreen } from "./WatchlistScreen";
 
 type SymbolResult = {
   symbol: string;
@@ -16,9 +18,12 @@ type SymbolResult = {
 
 export function HomeScreen({ session }: { session: Session }) {
   const { messages } = useLocale();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [selectedStock, setSelectedStock] = useState<SymbolResult | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showScreener, setShowScreener] = useState(false);
+  const [showWatchlist, setShowWatchlist] = useState(false);
 
   if (selectedStock) {
     return (
@@ -48,60 +53,101 @@ export function HomeScreen({ session }: { session: Session }) {
     );
   }
 
+  if (showWatchlist) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <WatchlistScreen onBack={() => setShowWatchlist(false)} onSelectResult={setSelectedStock} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{messages.common.appName}</Text>
         <TouchableOpacity onPress={() => setShowSettings(true)}>
-          <Text style={styles.settingsLink}>{messages.settings.title}</Text>
+          <Text style={styles.link}>{messages.settings.title}</Text>
         </TouchableOpacity>
       </View>
-      <Text>
+      <Text style={styles.subtitle}>
         {messages.dashboard.loggedInAs}: {session.user.email}
       </Text>
-      <TouchableOpacity onPress={() => setShowScreener(true)}>
-        <Text style={styles.settingsLink}>{messages.screener.title}</Text>
+
+      <View style={styles.card}>
+        <SearchBox onSelectResult={setSelectedStock} />
+      </View>
+
+      <TouchableOpacity style={styles.navCard} onPress={() => setShowWatchlist(true)}>
+        <Text style={styles.navCardText}>{messages.watchlist.title}</Text>
       </TouchableOpacity>
-      <SearchBox onSelectResult={setSelectedStock} />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => supabase.auth.signOut()}
-      >
+
+      <TouchableOpacity style={styles.navCard} onPress={() => setShowScreener(true)}>
+        <Text style={styles.navCardText}>{messages.screener.title}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => supabase.auth.signOut()}>
         <Text style={styles.buttonText}>{messages.dashboard.signOut}</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    gap: 12,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  settingsLink: {
-    color: "#111",
-    fontWeight: "600",
-  },
-  button: {
-    backgroundColor: "#111",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: spacing[4],
+      gap: spacing[3],
+      backgroundColor: colors.canvas,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+    link: {
+      color: colors.accent,
+      fontWeight: "600",
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      padding: spacing[4],
+    },
+    navCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+      padding: spacing[4],
+    },
+    navCardText: {
+      color: colors.textPrimary,
+      fontWeight: "600",
+    },
+    button: {
+      backgroundColor: colors.surfaceElevated,
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      borderRadius: radius.md,
+      alignSelf: "flex-start",
+    },
+    buttonText: {
+      color: colors.textPrimary,
+      fontWeight: "600",
+    },
+  });
+}

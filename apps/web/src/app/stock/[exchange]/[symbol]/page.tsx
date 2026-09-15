@@ -1,10 +1,13 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { formatChange, formatMarketCap, formatPrice, messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
+import { PageHeader } from "@/components/ui/page-header";
+import { Badge, ChangeValue } from "@/components/ui/change-value";
 import { StockTabs } from "./stock-tabs";
 import { ScoreBadge } from "./score-badge";
+import { AddToWatchlistButton } from "./add-to-watchlist-button";
 
 type StockOverview = {
   symbol: string;
@@ -60,69 +63,85 @@ export default async function StockDetailPage({
   const overview = overviewData?.overview ?? null;
   const warnings = overviewData?.warnings ?? [];
 
+  const statRows: { label: string; value: ReactNode }[] = [
+    {
+      label: t.stock.price,
+      value:
+        overview?.price != null ? formatPrice(overview.price, overview.currency, locale) : t.common.noData,
+    },
+    {
+      label: t.stock.change,
+      value:
+        overview?.change_abs != null && overview?.change_pct != null ? (
+          <ChangeValue value={overview.change_abs}>
+            {formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)}
+          </ChangeValue>
+        ) : (
+          t.common.noData
+        ),
+    },
+    {
+      label: t.stock.marketCap,
+      value:
+        overview?.market_cap != null
+          ? formatMarketCap(overview.market_cap, overview.currency, locale)
+          : t.common.noData,
+    },
+    { label: t.stock.sector, value: overview?.sector ?? t.common.noData },
+    { label: t.stock.industry, value: overview?.industry ?? t.common.noData },
+  ];
+
   const overviewContent = (
-    <div>
+    <div className="flex flex-col gap-4">
       <ScoreBadge exchange={exchange} symbol={symbol} messages={t} />
 
-      {fetchFailed && <p role="alert">{t.common.dataUnavailable}</p>}
+      {fetchFailed && <p className="text-sm text-negative">{t.common.dataUnavailable}</p>}
       {!fetchFailed &&
         warnings.map((warning) => (
-          <p key={warning} role="status">
+          <p key={warning} className="text-xs text-warning">
             {warning}
           </p>
         ))}
 
       {!fetchFailed && (
-        <dl>
-          <div>
-            <dt>{t.stock.price}</dt>
-            <dd>
-              {overview?.price != null
-                ? formatPrice(overview.price, overview.currency, locale)
-                : t.common.noData}
-            </dd>
-          </div>
-          <div>
-            <dt>{t.stock.change}</dt>
-            <dd>
-              {overview?.change_abs != null && overview?.change_pct != null
-                ? formatChange(overview.change_abs, overview.change_pct, overview.currency, locale)
-                : t.common.noData}
-            </dd>
-          </div>
-          <div>
-            <dt>{t.stock.marketCap}</dt>
-            <dd>
-              {overview?.market_cap != null
-                ? formatMarketCap(overview.market_cap, overview.currency, locale)
-                : t.common.noData}
-            </dd>
-          </div>
-          <div>
-            <dt>{t.stock.sector}</dt>
-            <dd>{overview?.sector ?? t.common.noData}</dd>
-          </div>
-          <div>
-            <dt>{t.stock.industry}</dt>
-            <dd>{overview?.industry ?? t.common.noData}</dd>
-          </div>
-        </dl>
+        <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
+          <dl className="grid grid-cols-1 divide-y divide-border-subtle sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+            {statRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between px-4 py-3">
+                <dt className="text-sm text-text-secondary">{row.label}</dt>
+                <dd className="tabular-nums font-medium text-text-primary">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       )}
     </div>
   );
 
   return (
-    <div>
-      <p>
-        <Link href="/dashboard">{t.stock.backToDashboard}</Link>
-      </p>
-      <h1>
-        {overview?.name ?? symbol} <span>({exchange.toUpperCase()})</span>
-      </h1>
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      <PageHeader
+        backHref="/dashboard"
+        backLabel={t.stock.backToDashboard}
+        title={
+          <span className="flex items-center gap-2">
+            {overview?.name ?? symbol}
+            <Badge>{exchange.toUpperCase()}</Badge>
+          </span>
+        }
+        actions={
+          <AddToWatchlistButton
+            symbol={symbol.toUpperCase()}
+            exchange={exchange.toUpperCase()}
+            name={overview?.name ?? null}
+            messages={t.watchlist}
+          />
+        }
+      />
 
       <StockTabs exchange={exchange} symbol={symbol} locale={locale} messages={t} overviewContent={overviewContent} />
 
-      <p>{t.common.disclaimer}</p>
+      <p className="mt-8 text-center text-xs text-text-tertiary">{t.common.disclaimer}</p>
     </div>
   );
 }

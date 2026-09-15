@@ -173,4 +173,23 @@ export interface Messages {
     columnRsi: string;
     columnVolume: string;
   };
+  watchlist: {
+    title: string;
+    backToDashboard: string;
+    newListPlaceholder: string;
+    createListButton: string;
+    deleteListButton: string;
+    deleteListConfirm: string;
+    removeItemButton: string;
+    emptyList: string;
+    noLists: string;
+    noListsHint: string;
+    loading: string;
+    loadError: string;
+    addButtonLabel: string;
+    addedLabel: string;
+    inListsLabel: string;
+    newListInlineLabel: string;
+    addSuccessLabel: string;
+  };
 }

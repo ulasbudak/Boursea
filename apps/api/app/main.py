@@ -1,5 +1,7 @@
+import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from app.auth import get_current_claims
 from app.config import get_settings
@@ -32,6 +34,16 @@ from app.market_data import (
 from app.scoring import StockScore, compute_bist_score, compute_us_score
 from app.screener import ScreenerCriteria, ScreenerResult, run_screener
 from app.technical import SignalRecord, evaluate_signals
+from app.watchlists import (
+    Watchlist,
+    WatchlistItem,
+    WatchlistNotFoundError,
+    add_item,
+    create_watchlist,
+    delete_watchlist,
+    list_watchlists,
+    remove_item,
+)
 
 app = FastAPI(title="Trendus API")
 
@@ -40,7 +52,7 @@ _cors_origins = [origin.strip() for origin in _settings.cors_origins.split(",") 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
@@ -285,3 +297,84 @@ async def get_screener_results(
     )
     results, warnings = await run_screener(criteria)
     return {"results": results, "warnings": warnings}
+
+
+class CreateWatchlistRequest(BaseModel):
+    name: str
+
+
+class AddWatchlistItemRequest(BaseModel):
+    symbol: str
+    exchange: str
+    name: str | None = None
+
+
+def _watchlists_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="İzleme listesi verisi şu an sağlanamıyor.")
+
+
+@app.get("/watchlists")
+def get_watchlists(claims: dict = Depends(get_current_claims)) -> list[Watchlist]:
+    try:
+        return list_watchlists(claims["sub"])
+    except psycopg.Error as exc:
+        raise _watchlists_unavailable() from exc
+
+
+@app.post("/watchlists", status_code=201)
+def post_watchlist(
+    body: CreateWatchlistRequest, claims: dict = Depends(get_current_claims)
+) -> Watchlist:
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+    try:
+        return create_watchlist(claims["sub"], name)
+    except psycopg.Error as exc:
+        raise _watchlists_unavailable() from exc
+
+
+@app.delete("/watchlists/{watchlist_id}", status_code=204)
+def delete_watchlist_endpoint(
+    watchlist_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        delete_watchlist(claims["sub"], watchlist_id)
+    except WatchlistNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Watchlist not found") from exc
+    except psycopg.Error as exc:
+        raise _watchlists_unavailable() from exc
+    return Response(status_code=204)
+
+
+@app.post("/watchlists/{watchlist_id}/items", status_code=201)
+def post_watchlist_item(
+    watchlist_id: str, body: AddWatchlistItemRequest, claims: dict = Depends(get_current_claims)
+) -> WatchlistItem:
+    exchange = body.exchange.strip().upper()
+    if exchange not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    symbol = body.symbol.strip()
+    if not symbol:
+        raise HTTPException(status_code=400, detail="symbol is required")
+    try:
+        return add_item(
+            claims["sub"], watchlist_id, symbol=symbol, exchange=exchange, name=body.name
+        )
+    except WatchlistNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Watchlist not found") from exc
+    except psycopg.Error as exc:
+        raise _watchlists_unavailable() from exc
+
+
+@app.delete("/watchlists/{watchlist_id}/items/{item_id}", status_code=204)
+def delete_watchlist_item(
+    watchlist_id: str, item_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        remove_item(claims["sub"], watchlist_id, item_id)
+    except WatchlistNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Watchlist item not found") from exc
+    except psycopg.Error as exc:
+        raise _watchlists_unavailable() from exc
+    return Response(status_code=204)
