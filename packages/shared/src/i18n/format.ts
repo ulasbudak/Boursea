@@ -39,3 +39,12 @@ export function formatCompactNumber(value: number, locale: Locale): string {
     maximumFractionDigits: 2,
   }).format(value);
 }
+
+/** Formats a percentage-point difference (e.g. 12.3 -> "+12.3%") with an explicit sign. */
+export function formatSignedPercent(value: number, locale: Locale): string {
+  return new Intl.NumberFormat(LOCALE_TAGS[locale], {
+    style: "percent",
+    signDisplay: "exceptZero",
+    maximumFractionDigits: 1,
+  }).format(value / 100);
+}

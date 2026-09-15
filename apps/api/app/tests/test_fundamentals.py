@@ -5,9 +5,12 @@ from fastapi.testclient import TestClient
 from app import fundamentals, main
 from app.config import Settings
 from app.fundamentals import (
+    FundamentalsSnapshot,
     FundamentalsUnavailableError,
     get_bist_fundamentals,
+    get_peer_symbols,
     get_us_fundamentals,
+    get_us_sector_comparison,
 )
 
 client = TestClient(main.app)
@@ -152,3 +155,113 @@ def test_fundamentals_endpoint_rejects_unknown_exchange():
     response = client.get("/fundamentals", params={"symbol": "AAPL", "exchange": "XYZ"})
 
     assert response.status_code == 400
+
+
+def test_fundamentals_endpoint_bist_has_no_sector_comparison():
+    response = client.get("/fundamentals", params={"symbol": "GARAN", "exchange": "BIST"})
+
+    assert response.json()["sector_comparison"] is None
+
+
+@pytest.mark.anyio
+async def test_get_peer_symbols_excludes_self_and_caps_list():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NFLX", "ORCL", "IBM", "CSCO"])
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        peers = await get_peer_symbols("AAPL", client=http_client)
+
+    assert "AAPL" not in peers
+    assert len(peers) == fundamentals.MAX_PEERS
+
+
+@pytest.mark.anyio
+async def test_get_peer_symbols_raises_on_http_failure():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        with pytest.raises(FundamentalsUnavailableError):
+            await get_peer_symbols("AAPL", client=http_client)
+
+
+@pytest.mark.anyio
+async def test_get_us_sector_comparison_averages_available_peers():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "peers" in str(request.url):
+            return httpx.Response(200, json=["AAPL", "PEER1", "PEER2"])
+        symbol = request.url.params["symbol"]
+        if symbol == "PEER1":
+            return httpx.Response(200, json={"metric": {"peBasicExclExtraTTM": 10.0}})
+        if symbol == "PEER2":
+            return httpx.Response(200, json={"metric": {"peBasicExclExtraTTM": 20.0}})
+        return httpx.Response(500)
+
+    own_snapshot = FundamentalsSnapshot(symbol="AAPL", exchange="US", pe_ratio=18.0)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        comparison = await get_us_sector_comparison("AAPL", own_snapshot, client=http_client)
+
+    assert comparison is not None
+    assert comparison.peer_count == 2
+    assert comparison.pe_ratio.sector_average == 15.0
+    assert comparison.pe_ratio.value == 18.0
+    assert comparison.pe_ratio.diff_pct == pytest.approx(20.0)
+    # No peer had pb data, so that metric stays unavailable rather than crashing.
+    assert comparison.pb_ratio is None
+
+
+@pytest.mark.anyio
+async def test_get_us_sector_comparison_returns_none_when_no_peers():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=["AAPL"])
+
+    own_snapshot = FundamentalsSnapshot(symbol="AAPL", exchange="US", pe_ratio=18.0)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        comparison = await get_us_sector_comparison("AAPL", own_snapshot, client=http_client)
+
+    assert comparison is None
+
+
+@pytest.mark.anyio
+async def test_get_us_sector_comparison_returns_none_when_peers_request_fails():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    own_snapshot = FundamentalsSnapshot(symbol="AAPL", exchange="US", pe_ratio=18.0)
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        comparison = await get_us_sector_comparison("AAPL", own_snapshot, client=http_client)
+
+    assert comparison is None
+
+
+def test_fundamentals_endpoint_includes_sector_comparison_for_us(monkeypatch):
+    own_snapshot = FundamentalsSnapshot(symbol="AAPL", exchange="US", pe_ratio=18.0)
+    expected_comparison = fundamentals.SectorComparison(
+        peer_count=2,
+        pe_ratio=fundamentals.MetricComparison(value=18.0, sector_average=15.0, diff_pct=20.0),
+    )
+
+    async def fake_get_us_fundamentals(symbol: str) -> FundamentalsSnapshot:
+        return own_snapshot
+
+    async def fake_get_us_sector_comparison(symbol: str, snapshot: FundamentalsSnapshot):
+        assert snapshot is own_snapshot
+        return expected_comparison
+
+    monkeypatch.setattr(main, "get_us_fundamentals", fake_get_us_fundamentals)
+    monkeypatch.setattr(main, "get_us_sector_comparison", fake_get_us_sector_comparison)
+
+    response = client.get("/fundamentals", params={"symbol": "AAPL", "exchange": "US"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["sector_comparison"]["peer_count"] == 2
+    assert body["sector_comparison"]["pe_ratio"]["sector_average"] == 15.0

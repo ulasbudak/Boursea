@@ -177,6 +177,8 @@ So that hissenin finansal sağlığını değerlendirebileyim.
 
 ### Story 2.2: Sektör Kıyaslaması
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri, mimari yaklaşım ve görev tanımı için bkz. **`docs/stories/story-2.2.md`**. Backend (`GET /fundamentals` yanıtına `sector_comparison` eklendi: Finnhub `/stock/peers` ile emsal şirketler, paralel çekilen metriklerin ortalaması ve `%` fark), web ve mobil (Temel Analiz sekmesindeki her metrik satırına sektör ortalaması + fark gösterimi) uygulandı ve doğrulandı.
+
 As a **kullanıcı**,
 I want her metriğin sektör/endeks ortalamasıyla karşılaştırmasını görmek,
 So that hissenin sektörüne göre ucuz mu pahalı mı olduğunu anlayabileyim.

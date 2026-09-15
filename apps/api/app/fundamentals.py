@@ -1,10 +1,30 @@
+import asyncio
+
 import httpx
 from pydantic import BaseModel
 
 from app.config import get_settings
 
 FINNHUB_METRIC_URL = "https://finnhub.io/api/v1/stock/metric"
+FINNHUB_PEERS_URL = "https://finnhub.io/api/v1/stock/peers"
 FINNHUB_TIMEOUT_SECONDS = 3.0
+MAX_PEERS = 8
+
+COMPARISON_METRIC_FIELDS = (
+    "pe_ratio",
+    "pb_ratio",
+    "roe",
+    "roa",
+    "eps",
+    "eps_growth",
+    "dividend_yield",
+    "debt_to_equity",
+    "gross_margin",
+    "net_margin",
+    "ebitda_margin",
+    "free_cash_flow",
+    "market_cap",
+)
 
 
 class FundamentalsSnapshot(BaseModel):
@@ -23,6 +43,29 @@ class FundamentalsSnapshot(BaseModel):
     ebitda_margin: float | None = None
     free_cash_flow: float | None = None
     market_cap: float | None = None
+
+
+class MetricComparison(BaseModel):
+    value: float | None = None
+    sector_average: float | None = None
+    diff_pct: float | None = None
+
+
+class SectorComparison(BaseModel):
+    peer_count: int
+    pe_ratio: MetricComparison | None = None
+    pb_ratio: MetricComparison | None = None
+    roe: MetricComparison | None = None
+    roa: MetricComparison | None = None
+    eps: MetricComparison | None = None
+    eps_growth: MetricComparison | None = None
+    dividend_yield: MetricComparison | None = None
+    debt_to_equity: MetricComparison | None = None
+    gross_margin: MetricComparison | None = None
+    net_margin: MetricComparison | None = None
+    ebitda_margin: MetricComparison | None = None
+    free_cash_flow: MetricComparison | None = None
+    market_cap: MetricComparison | None = None
 
 
 class FundamentalsUnavailableError(Exception):
@@ -90,3 +133,89 @@ async def get_us_fundamentals(
         free_cash_flow=_first_present(metric, "freeCashFlowTTM", "freeCashFlowAnnual"),
         market_cap=market_cap * 1_000_000 if market_cap else None,
     )
+
+
+async def get_peer_symbols(symbol: str, *, client: httpx.AsyncClient | None = None) -> list[str]:
+    settings = get_settings()
+    if not settings.finnhub_api_key:
+        raise FundamentalsUnavailableError("FINNHUB_API_KEY is not configured")
+
+    owns_client = client is None
+    http_client = client or httpx.AsyncClient(timeout=FINNHUB_TIMEOUT_SECONDS)
+    try:
+        response = await http_client.get(
+            FINNHUB_PEERS_URL,
+            params={"symbol": symbol, "grouping": "sector", "token": settings.finnhub_api_key},
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except httpx.HTTPError as exc:
+        raise FundamentalsUnavailableError(f"Finnhub peers request failed: {exc}") from exc
+    finally:
+        if owns_client:
+            await http_client.aclose()
+
+    if not isinstance(payload, list):
+        raise FundamentalsUnavailableError(f"Unexpected peers response for symbol {symbol}")
+
+    normalized = symbol.strip().upper()
+    peers = [p for p in payload if isinstance(p, str) and p.strip().upper() != normalized]
+    return peers[:MAX_PEERS]
+
+
+def _average(values: list[float]) -> float | None:
+    return sum(values) / len(values) if values else None
+
+
+def _diff_pct(value: float | None, average: float | None) -> float | None:
+    if value is None or average is None or average == 0:
+        return None
+    return (value - average) / abs(average) * 100
+
+
+async def get_us_sector_comparison(
+    symbol: str,
+    own_snapshot: FundamentalsSnapshot,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> SectorComparison | None:
+    owns_client = client is None
+    http_client = client or httpx.AsyncClient(timeout=FINNHUB_TIMEOUT_SECONDS)
+    try:
+        try:
+            peers = await get_peer_symbols(symbol, client=http_client)
+        except FundamentalsUnavailableError:
+            return None
+
+        if not peers:
+            return None
+
+        results = await asyncio.gather(
+            *(get_us_fundamentals(peer, client=http_client) for peer in peers),
+            return_exceptions=True,
+        )
+    finally:
+        if owns_client:
+            await http_client.aclose()
+
+    peer_snapshots = [r for r in results if isinstance(r, FundamentalsSnapshot)]
+    if not peer_snapshots:
+        return None
+
+    comparisons: dict[str, MetricComparison | None] = {}
+    for field in COMPARISON_METRIC_FIELDS:
+        own_value = getattr(own_snapshot, field)
+        peer_values = [
+            v for v in (getattr(peer, field) for peer in peer_snapshots) if v is not None
+        ]
+        average = _average(peer_values)
+        if average is None:
+            comparisons[field] = None
+        else:
+            comparisons[field] = MetricComparison(
+                value=own_value,
+                sector_average=average,
+                diff_pct=_diff_pct(own_value, average),
+            )
+
+    return SectorComparison(peer_count=len(peer_snapshots), **comparisons)

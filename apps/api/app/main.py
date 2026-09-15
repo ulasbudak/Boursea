@@ -7,8 +7,10 @@ from app.db import check_database_connection
 from app.fundamentals import (
     FundamentalsSnapshot,
     FundamentalsUnavailableError,
+    SectorComparison,
     get_bist_fundamentals,
     get_us_fundamentals,
+    get_us_sector_comparison,
 )
 from app.market_data import (
     FinnhubError,
@@ -100,7 +102,7 @@ async def get_symbol_overview(symbol: str, exchange: str) -> OverviewResponse:
     return {"overview": overview, "warnings": warnings}
 
 
-FundamentalsResponse = dict[str, FundamentalsSnapshot | list[str] | None]
+FundamentalsResponse = dict[str, FundamentalsSnapshot | SectorComparison | list[str] | None]
 
 
 @app.get("/fundamentals")
@@ -109,6 +111,7 @@ async def get_fundamentals(symbol: str, exchange: str) -> FundamentalsResponse:
     exchange_filter = exchange.strip().upper()
     warnings: list[str] = []
     fundamentals: FundamentalsSnapshot | None = None
+    sector_comparison: SectorComparison | None = None
 
     if exchange_filter == "BIST":
         fundamentals = get_bist_fundamentals(symbol)
@@ -118,7 +121,9 @@ async def get_fundamentals(symbol: str, exchange: str) -> FundamentalsResponse:
             fundamentals = await get_us_fundamentals(symbol)
         except FundamentalsUnavailableError:
             warnings.append("ABD hisse temel analiz verisi şu an güncellenemiyor.")
+        if fundamentals is not None:
+            sector_comparison = await get_us_sector_comparison(symbol, fundamentals)
     else:
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
-    return {"fundamentals": fundamentals, "warnings": warnings}
+    return {"fundamentals": fundamentals, "sector_comparison": sector_comparison, "warnings": warnings}

@@ -68,6 +68,8 @@ export const tr: Messages = {
     ebitdaMargin: "FAVÖK Marjı",
     freeCashFlow: "Serbest Nakit Akışı",
     marketCap: "Piyasa Değeri",
+    sectorAverage: "Sektör Ort.",
+    noSectorData: "Sektör verisi yok",
   },
   settings: {
     title: "Ayarlar",

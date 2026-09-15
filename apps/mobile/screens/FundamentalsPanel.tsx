@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { formatCompactNumber, formatRatio } from "@trendus/shared";
+import { formatCompactNumber, formatRatio, formatSignedPercent } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 
 type FundamentalsSnapshot = {
@@ -21,8 +21,19 @@ type FundamentalsSnapshot = {
   market_cap: number | null;
 };
 
+type MetricKey = Exclude<keyof FundamentalsSnapshot, "symbol" | "exchange">;
+
+type MetricComparison = {
+  value: number | null;
+  sector_average: number | null;
+  diff_pct: number | null;
+};
+
+type SectorComparison = { peer_count: number } & Record<MetricKey, MetricComparison | null>;
+
 type FundamentalsResponse = {
   fundamentals: FundamentalsSnapshot | null;
+  sector_comparison: SectorComparison | null;
   warnings: string[];
 };
 
@@ -69,52 +80,45 @@ export function FundamentalsPanel({ symbol, exchange }: { symbol: string; exchan
   }
 
   const snapshot = data?.fundamentals ?? null;
+  const sectorComparison = data?.sector_comparison ?? null;
   const warnings = data?.warnings ?? [];
 
-  const rows: { label: string; value: number | null; format: (v: number) => string }[] = [
-    { label: messages.fundamentals.peRatio, value: snapshot?.pe_ratio ?? null, format: (v) => formatRatio(v, locale) },
-    { label: messages.fundamentals.pbRatio, value: snapshot?.pb_ratio ?? null, format: (v) => formatRatio(v, locale) },
-    { label: messages.fundamentals.roe, value: snapshot?.roe ?? null, format: (v) => formatRatio(v, locale) },
-    { label: messages.fundamentals.roa, value: snapshot?.roa ?? null, format: (v) => formatRatio(v, locale) },
-    { label: messages.fundamentals.eps, value: snapshot?.eps ?? null, format: (v) => formatRatio(v, locale) },
+  const rows: { key: MetricKey; label: string; format: (v: number) => string }[] = [
+    { key: "pe_ratio", label: messages.fundamentals.peRatio, format: (v) => formatRatio(v, locale) },
+    { key: "pb_ratio", label: messages.fundamentals.pbRatio, format: (v) => formatRatio(v, locale) },
+    { key: "roe", label: messages.fundamentals.roe, format: (v) => formatRatio(v, locale) },
+    { key: "roa", label: messages.fundamentals.roa, format: (v) => formatRatio(v, locale) },
+    { key: "eps", label: messages.fundamentals.eps, format: (v) => formatRatio(v, locale) },
+    { key: "eps_growth", label: messages.fundamentals.epsGrowth, format: (v) => formatRatio(v, locale) },
     {
-      label: messages.fundamentals.epsGrowth,
-      value: snapshot?.eps_growth ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
+      key: "dividend_yield",
       label: messages.fundamentals.dividendYield,
-      value: snapshot?.dividend_yield ?? null,
       format: (v) => formatRatio(v, locale),
     },
     {
+      key: "debt_to_equity",
       label: messages.fundamentals.debtToEquity,
-      value: snapshot?.debt_to_equity ?? null,
       format: (v) => formatRatio(v, locale),
     },
     {
+      key: "gross_margin",
       label: messages.fundamentals.grossMargin,
-      value: snapshot?.gross_margin ?? null,
       format: (v) => formatRatio(v, locale),
     },
+    { key: "net_margin", label: messages.fundamentals.netMargin, format: (v) => formatRatio(v, locale) },
     {
-      label: messages.fundamentals.netMargin,
-      value: snapshot?.net_margin ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
+      key: "ebitda_margin",
       label: messages.fundamentals.ebitdaMargin,
-      value: snapshot?.ebitda_margin ?? null,
       format: (v) => formatRatio(v, locale),
     },
     {
+      key: "free_cash_flow",
       label: messages.fundamentals.freeCashFlow,
-      value: snapshot?.free_cash_flow ?? null,
       format: (v) => formatCompactNumber(v, locale),
     },
     {
+      key: "market_cap",
       label: messages.fundamentals.marketCap,
-      value: snapshot?.market_cap ?? null,
       format: (v) => formatCompactNumber(v, locale),
     },
   ];
@@ -126,14 +130,27 @@ export function FundamentalsPanel({ symbol, exchange }: { symbol: string; exchan
           {warning}
         </Text>
       ))}
-      {rows.map((row) => (
-        <View key={row.label} style={styles.row}>
-          <Text style={styles.label}>{row.label}</Text>
-          <Text style={styles.value}>
-            {row.value != null ? row.format(row.value) : messages.common.noData}
-          </Text>
-        </View>
-      ))}
+      {rows.map((row) => {
+        const value = snapshot?.[row.key] ?? null;
+        const comparison = sectorComparison?.[row.key] ?? null;
+        return (
+          <View key={row.key} style={styles.row}>
+            <View style={styles.rowHeader}>
+              <Text style={styles.label}>{row.label}</Text>
+              <Text style={styles.value}>
+                {value != null ? row.format(value) : messages.common.noData}
+              </Text>
+            </View>
+            <Text style={styles.comparison}>
+              {comparison?.sector_average != null
+                ? `${messages.fundamentals.sectorAverage}: ${row.format(comparison.sector_average)}${
+                    comparison.diff_pct != null ? ` (${formatSignedPercent(comparison.diff_pct, locale)})` : ""
+                  }`
+                : messages.fundamentals.noSectorData}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -143,17 +160,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    gap: 2,
+  },
+  rowHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   label: {
     color: "#555",
   },
   value: {
     fontWeight: "600",
+  },
+  comparison: {
+    fontSize: 12,
+    color: "#888",
   },
   warning: {
     color: "#8a6d3b",

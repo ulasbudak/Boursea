@@ -66,6 +66,8 @@ export interface Messages {
     ebitdaMargin: string;
     freeCashFlow: string;
     marketCap: string;
+    sectorAverage: string;
+    noSectorData: string;
   };
   settings: {
     title: string;

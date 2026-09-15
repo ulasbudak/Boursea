@@ -68,6 +68,8 @@ export const en: Messages = {
     ebitdaMargin: "EBITDA Margin",
     freeCashFlow: "Free Cash Flow",
     marketCap: "Market Cap",
+    sectorAverage: "Sector Avg.",
+    noSectorData: "No sector data",
   },
   settings: {
     title: "Settings",

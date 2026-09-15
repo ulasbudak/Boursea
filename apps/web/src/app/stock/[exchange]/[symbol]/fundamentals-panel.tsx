@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@trendus/shared";
+import {
+  formatCompactNumber,
+  formatRatio,
+  formatSignedPercent,
+  type Locale,
+  type Messages,
+} from "@trendus/shared";
 
 type FundamentalsSnapshot = {
   symbol: string;
@@ -21,8 +27,19 @@ type FundamentalsSnapshot = {
   market_cap: number | null;
 };
 
+type MetricKey = Exclude<keyof FundamentalsSnapshot, "symbol" | "exchange">;
+
+type MetricComparison = {
+  value: number | null;
+  sector_average: number | null;
+  diff_pct: number | null;
+};
+
+type SectorComparison = { peer_count: number } & Record<MetricKey, MetricComparison | null>;
+
 type FundamentalsResponse = {
   fundamentals: FundamentalsSnapshot | null;
+  sector_comparison: SectorComparison | null;
   warnings: string[];
 };
 
@@ -71,54 +88,23 @@ export function FundamentalsPanel({
 
   const t = messages;
   const snapshot = data?.fundamentals ?? null;
+  const sectorComparison = data?.sector_comparison ?? null;
   const warnings = data?.warnings ?? [];
 
-  const rows: { label: string; value: number | null; format: (v: number) => string }[] = [
-    { label: t.fundamentals.peRatio, value: snapshot?.pe_ratio ?? null, format: (v) => formatRatio(v, locale) },
-    { label: t.fundamentals.pbRatio, value: snapshot?.pb_ratio ?? null, format: (v) => formatRatio(v, locale) },
-    { label: t.fundamentals.roe, value: snapshot?.roe ?? null, format: (v) => formatRatio(v, locale) },
-    { label: t.fundamentals.roa, value: snapshot?.roa ?? null, format: (v) => formatRatio(v, locale) },
-    { label: t.fundamentals.eps, value: snapshot?.eps ?? null, format: (v) => formatRatio(v, locale) },
-    {
-      label: t.fundamentals.epsGrowth,
-      value: snapshot?.eps_growth ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
-      label: t.fundamentals.dividendYield,
-      value: snapshot?.dividend_yield ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
-      label: t.fundamentals.debtToEquity,
-      value: snapshot?.debt_to_equity ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
-      label: t.fundamentals.grossMargin,
-      value: snapshot?.gross_margin ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
-      label: t.fundamentals.netMargin,
-      value: snapshot?.net_margin ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
-      label: t.fundamentals.ebitdaMargin,
-      value: snapshot?.ebitda_margin ?? null,
-      format: (v) => formatRatio(v, locale),
-    },
-    {
-      label: t.fundamentals.freeCashFlow,
-      value: snapshot?.free_cash_flow ?? null,
-      format: (v) => formatCompactNumber(v, locale),
-    },
-    {
-      label: t.fundamentals.marketCap,
-      value: snapshot?.market_cap ?? null,
-      format: (v) => formatCompactNumber(v, locale),
-    },
+  const rows: { key: MetricKey; label: string; format: (v: number) => string }[] = [
+    { key: "pe_ratio", label: t.fundamentals.peRatio, format: (v) => formatRatio(v, locale) },
+    { key: "pb_ratio", label: t.fundamentals.pbRatio, format: (v) => formatRatio(v, locale) },
+    { key: "roe", label: t.fundamentals.roe, format: (v) => formatRatio(v, locale) },
+    { key: "roa", label: t.fundamentals.roa, format: (v) => formatRatio(v, locale) },
+    { key: "eps", label: t.fundamentals.eps, format: (v) => formatRatio(v, locale) },
+    { key: "eps_growth", label: t.fundamentals.epsGrowth, format: (v) => formatRatio(v, locale) },
+    { key: "dividend_yield", label: t.fundamentals.dividendYield, format: (v) => formatRatio(v, locale) },
+    { key: "debt_to_equity", label: t.fundamentals.debtToEquity, format: (v) => formatRatio(v, locale) },
+    { key: "gross_margin", label: t.fundamentals.grossMargin, format: (v) => formatRatio(v, locale) },
+    { key: "net_margin", label: t.fundamentals.netMargin, format: (v) => formatRatio(v, locale) },
+    { key: "ebitda_margin", label: t.fundamentals.ebitdaMargin, format: (v) => formatRatio(v, locale) },
+    { key: "free_cash_flow", label: t.fundamentals.freeCashFlow, format: (v) => formatCompactNumber(v, locale) },
+    { key: "market_cap", label: t.fundamentals.marketCap, format: (v) => formatCompactNumber(v, locale) },
   ];
 
   if (loading) {
@@ -136,12 +122,28 @@ export function FundamentalsPanel({
         ))}
       {!fetchFailed && (
         <dl>
-          {rows.map((row) => (
-            <div key={row.label}>
-              <dt>{row.label}</dt>
-              <dd>{row.value != null ? row.format(row.value) : t.common.noData}</dd>
-            </div>
-          ))}
+          {rows.map((row) => {
+            const value = snapshot?.[row.key] ?? null;
+            const comparison = sectorComparison?.[row.key] ?? null;
+            return (
+              <div key={row.key}>
+                <dt>{row.label}</dt>
+                <dd>{value != null ? row.format(value) : t.common.noData}</dd>
+                <dd>
+                  {comparison?.sector_average != null ? (
+                    <>
+                      {t.fundamentals.sectorAverage}: {row.format(comparison.sector_average)}
+                      {comparison.diff_pct != null && (
+                        <> ({formatSignedPercent(comparison.diff_pct, locale)})</>
+                      )}
+                    </>
+                  ) : (
+                    t.fundamentals.noSectorData
+                  )}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       )}
     </div>
