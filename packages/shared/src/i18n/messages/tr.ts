@@ -99,6 +99,8 @@ export const tr: Messages = {
     noData: "Yeterli veri yok",
     outOf: "/ 100",
     explanationToggle: "Bu skor neye dayanıyor?",
+    consensusLabel: "Teknik Konsensüs",
+    consensusOutOf: "gösterge yükseliş yönünde",
   },
   fundamentals: {
     peRatio: "F/K Oranı",

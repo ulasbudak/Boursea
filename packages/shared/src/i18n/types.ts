@@ -97,6 +97,8 @@ export interface Messages {
     noData: string;
     outOf: string;
     explanationToggle: string;
+    consensusLabel: string;
+    consensusOutOf: string;
   };
   fundamentals: {
     peRatio: string;

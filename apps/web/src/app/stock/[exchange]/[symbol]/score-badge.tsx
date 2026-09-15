@@ -9,10 +9,19 @@ type ScoreFactor = {
   max_points: number;
 };
 
+type TechnicalConsensus = {
+  bullish: number;
+  bearish: number;
+  neutral: number;
+  total: number;
+};
+
 type StockScore = {
   value: number;
   label: string;
   factors: ScoreFactor[];
+  consensus: TechnicalConsensus;
+  rationale: string;
 };
 
 type ScoreResponse = {
@@ -81,6 +90,10 @@ export function ScoreBadge({
               {score.value} {t.score.outOf}
             </strong>{" "}
             — <strong>{score.label}</strong>
+          </p>
+          <p>{score.rationale}</p>
+          <p>
+            {t.score.consensusLabel}: {score.consensus.bullish}/{score.consensus.total} {t.score.consensusOutOf}
           </p>
           <details>
             <summary>{t.score.explanationToggle}</summary>

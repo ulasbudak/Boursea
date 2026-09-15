@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app import main
 from app.market_data import CandlePoint
-from app.technical import _ema, _macd_histogram, _rsi, _sma, evaluate_signals
+from app.technical import _bollinger_bands, _ema, _macd_histogram, _rsi, _sma, _stochastic, evaluate_signals
 
 client = TestClient(main.app)
 
@@ -54,6 +54,78 @@ def test_macd_histogram_returns_none_before_warmup_and_numbers_after():
     assert result[-1] is not None
 
 
+def test_bollinger_bands_null_before_warmup_and_ordered_after():
+    closes = [100.0 + (i % 5) - 2 for i in range(40)]
+    result = _bollinger_bands(closes, 20, 2.0)
+
+    assert result[0] is None
+    assert result[18] is None
+    last = result[-1]
+    assert last is not None
+    upper, middle, lower = last
+    assert upper > middle > lower
+    assert middle == pytest.approx(sum(closes[-20:]) / 20)
+
+
+def test_stochastic_within_bounds_and_null_before_warmup():
+    closes = [100.0 + (i % 7) - 3 for i in range(40)]
+    highs = [c + 1 for c in closes]
+    lows = [c - 1 for c in closes]
+    result = _stochastic(highs, lows, closes, 14, 3)
+
+    assert result[0] is None
+    for value in result:
+        if value is not None:
+            k, d = value
+            assert 0 <= k <= 100
+            assert 0 <= d <= 100
+
+
+def test_evaluate_signals_detects_bollinger_breakout_up():
+    # Flat, low-volatility period keeps the bands tight; a sharp jump then breaks above the upper band.
+    closes = [100.0] * 25 + [130.0] * 5
+    candles = make_candles(closes)
+
+    signals = evaluate_signals(candles)
+    matches = [s for s in signals if s.rule_id == "bollinger_breakout_up"]
+
+    assert len(matches) >= 1
+    assert matches[0].direction == "bullish"
+
+
+def test_evaluate_signals_detects_bollinger_breakout_down():
+    closes = [100.0] * 25 + [70.0] * 5
+    candles = make_candles(closes)
+
+    signals = evaluate_signals(candles)
+    matches = [s for s in signals if s.rule_id == "bollinger_breakout_down"]
+
+    assert len(matches) >= 1
+    assert matches[0].direction == "bearish"
+
+
+def test_evaluate_signals_detects_sma20_50_golden_cross():
+    closes = [100.0] * 60 + [100 + i * 3.0 for i in range(1, 30)]
+    candles = make_candles(closes)
+
+    signals = evaluate_signals(candles)
+    matches = [s for s in signals if s.rule_id == "sma20_50_golden_cross"]
+
+    assert len(matches) >= 1
+    assert matches[0].direction == "bullish"
+
+
+def test_evaluate_signals_detects_sma20_50_death_cross():
+    closes = [200.0] * 60 + [200 - i * 3.0 for i in range(1, 30)]
+    candles = make_candles(closes)
+
+    signals = evaluate_signals(candles)
+    matches = [s for s in signals if s.rule_id == "sma20_50_death_cross"]
+
+    assert len(matches) >= 1
+    assert matches[0].direction == "bearish"
+
+
 def test_evaluate_signals_detects_rsi_oversold_crossing():
     # Sharp, sustained decline drives RSI below 30 at some point; we only assert the rule fires
     # and that the reported date matches an actual crossing point (prev>=30, curr<30).
@@ -79,6 +151,32 @@ def test_evaluate_signals_detects_golden_cross():
 
     assert len(golden) >= 1
     assert golden[0].direction == "bullish"
+
+
+def test_evaluate_signals_detects_stochastic_bullish_cross():
+    # Steady decline pushes %K toward 0 (oversold); a modest rebound then crosses %K above %D
+    # while still inside the oversold zone.
+    decline = [200.0 - i * 3 for i in range(30)]
+    rebound = [decline[-1] + i * 2 for i in range(1, 10)]
+    candles = make_candles(decline + rebound)
+
+    signals = evaluate_signals(candles)
+    matches = [s for s in signals if s.rule_id == "stochastic_bullish_cross"]
+
+    assert len(matches) >= 1
+    assert matches[0].direction == "bullish"
+
+
+def test_evaluate_signals_detects_stochastic_bearish_cross():
+    rally = [100.0 + i * 3 for i in range(30)]
+    pullback = [rally[-1] - i * 2 for i in range(1, 10)]
+    candles = make_candles(rally + pullback)
+
+    signals = evaluate_signals(candles)
+    matches = [s for s in signals if s.rule_id == "stochastic_bearish_cross"]
+
+    assert len(matches) >= 1
+    assert matches[0].direction == "bearish"
 
 
 def test_evaluate_signals_returns_empty_for_short_series():

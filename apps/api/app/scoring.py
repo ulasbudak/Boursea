@@ -1,14 +1,12 @@
 import asyncio
-import time
 
 from pydantic import BaseModel
 
 from app.fundamentals import FundamentalsSnapshot, FundamentalsUnavailableError, get_us_fundamentals
 from app.market_data import CandlePoint, MarketDataUnavailableError, get_us_candles
-from app.technical import _rsi, _sma, evaluate_signals
+from app.technical import _bollinger_bands, _macd_histogram, _rsi, _sma, _stochastic
 
 MIN_CANDLES_FOR_TECHNICAL = 15
-NINETY_DAYS_SECONDS = 90 * 86400
 
 
 class ScoreFactor(BaseModel):
@@ -17,10 +15,19 @@ class ScoreFactor(BaseModel):
     max_points: float
 
 
+class TechnicalConsensus(BaseModel):
+    bullish: int
+    bearish: int
+    neutral: int
+    total: int
+
+
 class StockScore(BaseModel):
     value: int
     label: str
     factors: list[ScoreFactor]
+    consensus: TechnicalConsensus
+    rationale: str
 
 
 def _label_for(value: int) -> str:
@@ -101,18 +108,18 @@ def _score_trend(candles: list[CandlePoint]) -> ScoreFactor:
     latest_sma50 = sma50[-1]
     latest_sma200 = sma200[-1]
 
-    points = 6.0  # "karışık" default
+    points = 4.5  # "karışık" default
     if latest_sma50 is not None and latest_sma200 is not None:
         if price > latest_sma50 > latest_sma200:
-            points = 20.0
+            points = 15.0
         elif price < latest_sma50 < latest_sma200:
             points = 0.0
         elif price > latest_sma50:
-            points = 12.0
+            points = 9.0
     elif latest_sma50 is not None:
-        points = 12.0 if price > latest_sma50 else 0.0
+        points = 9.0 if price > latest_sma50 else 0.0
 
-    return ScoreFactor(name="Trend (Fiyat/SMA50/SMA200)", points=points, max_points=20)
+    return ScoreFactor(name="Trend (Fiyat/SMA50/SMA200)", points=points, max_points=15)
 
 
 def _score_rsi(candles: list[CandlePoint]) -> ScoreFactor:
@@ -123,29 +130,100 @@ def _score_rsi(candles: list[CandlePoint]) -> ScoreFactor:
     points = 0.0
     if latest_rsi is not None:
         if 40 <= latest_rsi <= 60:
-            points = 15.0
+            points = 10.0
         elif 30 <= latest_rsi < 40 or 60 < latest_rsi <= 70:
-            points = 8.0
+            points = 5.0
 
-    return ScoreFactor(name="RSI (14)", points=points, max_points=15)
+    return ScoreFactor(name="RSI (14)", points=points, max_points=10)
 
 
-def _score_recent_signals(candles: list[CandlePoint]) -> ScoreFactor:
-    signals = evaluate_signals(candles)
-    cutoff = int(time.time()) - NINETY_DAYS_SECONDS
-    recent = [s for s in signals if s.triggered_at >= cutoff]
+# Each entry: (indicator label, bias at the *current* bar). Oscillators (RSI, Stochastic) are
+# read as mean-reversion signals here (oversold -> bullish bias, overbought -> bearish bias) -
+# the standard convention for "current positioning bias," distinct from how Story 3.5's signal
+# list labels the RSI/Stochastic *crossing events themselves* by momentum direction.
+def _compute_consensus(candles: list[CandlePoint]) -> TechnicalConsensus:
+    closes = [c.close for c in candles]
+    highs = [c.high for c in candles]
+    lows = [c.low for c in candles]
 
-    bullish = sum(1 for s in recent if s.direction == "bullish")
-    bearish = sum(1 for s in recent if s.direction == "bearish")
+    biases: list[str] = []
 
-    if bullish > bearish:
-        points = 15.0
-    elif bullish == bearish:
-        points = 7.0
-    else:
-        points = 0.0
+    rsi_values = _rsi(closes, 14)
+    latest_rsi = rsi_values[-1] if rsi_values else None
+    if latest_rsi is not None:
+        if latest_rsi < 30:
+            biases.append("bullish")
+        elif latest_rsi > 70:
+            biases.append("bearish")
+        else:
+            biases.append("neutral")
 
-    return ScoreFactor(name="Son 90 Günün Sinyal Eğilimi", points=points, max_points=15)
+    macd_hist = _macd_histogram(closes)
+    latest_macd = macd_hist[-1] if macd_hist else None
+    if latest_macd is not None:
+        biases.append("bullish" if latest_macd > 0 else "bearish" if latest_macd < 0 else "neutral")
+
+    sma20 = _sma(closes, 20)
+    sma50 = _sma(closes, 50)
+    sma200 = _sma(closes, 200)
+    if sma50 and sma200 and sma50[-1] is not None and sma200[-1] is not None:
+        biases.append("bullish" if sma50[-1] > sma200[-1] else "bearish" if sma50[-1] < sma200[-1] else "neutral")
+    if sma20 and sma50 and sma20[-1] is not None and sma50[-1] is not None:
+        biases.append("bullish" if sma20[-1] > sma50[-1] else "bearish" if sma20[-1] < sma50[-1] else "neutral")
+
+    bands = _bollinger_bands(closes, 20, 2.0)
+    latest_bands = bands[-1] if bands else None
+    if latest_bands is not None:
+        upper, _middle, lower = latest_bands
+        price = closes[-1]
+        if price > upper:
+            biases.append("bullish")
+        elif price < lower:
+            biases.append("bearish")
+        else:
+            biases.append("neutral")
+
+    stoch = _stochastic(highs, lows, closes, 14, 3)
+    latest_stoch = stoch[-1] if stoch else None
+    if latest_stoch is not None:
+        latest_k, _latest_d = latest_stoch
+        if latest_k < 20:
+            biases.append("bullish")
+        elif latest_k > 80:
+            biases.append("bearish")
+        else:
+            biases.append("neutral")
+
+    return TechnicalConsensus(
+        bullish=biases.count("bullish"),
+        bearish=biases.count("bearish"),
+        neutral=biases.count("neutral"),
+        total=len(biases),
+    )
+
+
+def _score_consensus(consensus: TechnicalConsensus) -> ScoreFactor:
+    points = 0.0 if consensus.total == 0 else 25.0 * consensus.bullish / consensus.total
+    return ScoreFactor(name="Teknik Konsensüs", points=round(points, 2), max_points=25)
+
+
+def _build_rationale(
+    value: int, label: str, factors: list[ScoreFactor], consensus: TechnicalConsensus
+) -> str:
+    fundamental_names = {"F/K Oranı", "ROE", "Borç/Özsermaye", "Net Kâr Marjı", "EPS Büyüme Oranı"}
+    fundamental_factors = [f for f in factors if f.name in fundamental_names]
+    top_fundamental = max(fundamental_factors, key=lambda f: f.points, default=None)
+
+    parts = [f"Özet skor {value}/100 ({label})."]
+    if top_fundamental is not None and top_fundamental.points > 0:
+        parts.append(
+            f"Temel tarafta en güçlü katkı: {top_fundamental.name} ({top_fundamental.points:.0f}/{top_fundamental.max_points:.0f}p)."
+        )
+    if consensus.total > 0:
+        parts.append(f"Teknik göstergelerin {consensus.bullish}/{consensus.total} kadarı şu an yükseliş yönünde.")
+    parts.append("Bu değerlendirme kural bazlı bir özettir, yatırım tavsiyesi değildir.")
+
+    return " ".join(parts)
 
 
 def compute_score(fundamentals: FundamentalsSnapshot | None, candles: list[CandlePoint]) -> StockScore | None:
@@ -153,6 +231,8 @@ def compute_score(fundamentals: FundamentalsSnapshot | None, candles: list[Candl
         return None
 
     assert fundamentals is not None  # narrowed by _has_usable_fundamentals
+
+    consensus = _compute_consensus(candles)
 
     factors = [
         _score_pe(fundamentals.pe_ratio),
@@ -162,12 +242,14 @@ def compute_score(fundamentals: FundamentalsSnapshot | None, candles: list[Candl
         _score_eps_growth(fundamentals.eps_growth),
         _score_trend(candles),
         _score_rsi(candles),
-        _score_recent_signals(candles),
+        _score_consensus(consensus),
     ]
 
     total = sum(f.points for f in factors)
     value = round(total)
-    return StockScore(value=value, label=_label_for(value), factors=factors)
+    label = _label_for(value)
+    rationale = _build_rationale(value, label, factors, consensus)
+    return StockScore(value=value, label=label, factors=factors, consensus=consensus, rationale=rationale)
 
 
 def compute_bist_score() -> StockScore | None:

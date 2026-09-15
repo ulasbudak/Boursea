@@ -99,6 +99,8 @@ export const en: Messages = {
     noData: "Not enough data",
     outOf: "out of 100",
     explanationToggle: "What is this score based on?",
+    consensusLabel: "Technical Consensus",
+    consensusOutOf: "indicators point bullish",
   },
   fundamentals: {
     peRatio: "P/E Ratio",

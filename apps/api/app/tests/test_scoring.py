@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from app import main
 from app.fundamentals import FundamentalsSnapshot, FundamentalsUnavailableError
 from app.market_data import CandlePoint, MarketDataUnavailableError
-from app.scoring import compute_score, compute_us_score
+from app.scoring import _build_rationale, _compute_consensus, _score_consensus, compute_score, compute_us_score
 
 client = TestClient(main.app)
 
@@ -66,9 +66,8 @@ def test_compute_score_strong_fundamentals_and_uptrend_scores_high():
     assert result.value >= 70
     assert result.label == "Al"
     # Fundamental factors alone should already contribute their full 50 points.
-    fundamental_points = sum(
-        f.points for f in result.factors if f.name != "Trend (Fiyat/SMA50/SMA200)" and f.name != "RSI (14)" and f.name != "Son 90 Günün Sinyal Eğilimi"
-    )
+    technical_names = {"Trend (Fiyat/SMA50/SMA200)", "RSI (14)", "Teknik Konsensüs"}
+    fundamental_points = sum(f.points for f in result.factors if f.name not in technical_names)
     assert fundamental_points == 50
 
 
@@ -97,6 +96,64 @@ def test_compute_score_label_boundaries():
     assert _label_for(69) == "Nötr"
     assert _label_for(40) == "Nötr"
     assert _label_for(39) == "Sat"
+
+
+def test_compute_score_includes_consensus_and_rationale():
+    candles = make_candles([100.0 + i * 0.2 for i in range(260)])
+    result = compute_score(STRONG_FUNDAMENTALS, candles)
+
+    assert result is not None
+    assert result.consensus.total <= 6
+    assert result.consensus.bullish + result.consensus.bearish + result.consensus.neutral == result.consensus.total
+    assert str(result.value) in result.rationale
+    assert result.label in result.rationale
+    assert "yatırım tavsiyesi değildir" in result.rationale
+
+
+def test_compute_consensus_reads_oversold_rsi_and_stochastic_as_bullish():
+    # Sharp, sustained decline pushes RSI and %K into oversold territory - read as a bullish
+    # (mean-reversion) bias by _compute_consensus, distinct from how the signal list labels the
+    # decline itself as bearish momentum.
+    declining = make_candles([200.0 - i * 3 for i in range(60)])
+
+    consensus = _compute_consensus(declining)
+
+    assert consensus.total > 0
+    assert consensus.bullish >= 1
+
+
+def test_compute_consensus_reads_overbought_rsi_and_stochastic_as_bearish():
+    rallying = make_candles([100.0 + i * 3 for i in range(60)])
+
+    consensus = _compute_consensus(rallying)
+
+    assert consensus.total > 0
+    assert consensus.bearish >= 1
+
+
+def test_score_consensus_factor_is_proportional_to_bullish_ratio():
+    from app.scoring import TechnicalConsensus
+
+    all_bullish = _score_consensus(TechnicalConsensus(bullish=6, bearish=0, neutral=0, total=6))
+    all_bearish = _score_consensus(TechnicalConsensus(bullish=0, bearish=6, neutral=0, total=6))
+    half = _score_consensus(TechnicalConsensus(bullish=3, bearish=3, neutral=0, total=6))
+    empty = _score_consensus(TechnicalConsensus(bullish=0, bearish=0, neutral=0, total=0))
+
+    assert all_bullish.points == pytest.approx(25.0)
+    assert all_bearish.points == pytest.approx(0.0)
+    assert half.points == pytest.approx(12.5)
+    assert empty.points == pytest.approx(0.0)
+    assert all_bullish.max_points == 25
+
+
+def test_build_rationale_mentions_top_fundamental_factor():
+    result = compute_score(STRONG_FUNDAMENTALS, make_candles([100.0 + i * 0.2 for i in range(260)]))
+
+    assert result is not None
+    # Every scored fundamental factor for STRONG_FUNDAMENTALS earns full points, so any one of
+    # them may be picked as "top" - just assert the rationale references one of their labels.
+    fundamental_labels = {"F/K Oranı", "ROE", "Borç/Özsermaye", "Net Kâr Marjı", "EPS Büyüme Oranı"}
+    assert any(label in result.rationale for label in fundamental_labels)
 
 
 @pytest.mark.anyio
@@ -173,6 +230,9 @@ def test_score_endpoint_returns_computed_score_for_us(monkeypatch):
     assert body["score"]["value"] >= 70
     assert body["score"]["label"] == "Al"
     assert len(body["score"]["factors"]) == 8
+    assert "consensus" in body["score"]
+    assert "total" in body["score"]["consensus"]
+    assert isinstance(body["score"]["rationale"], str) and len(body["score"]["rationale"]) > 0
     assert body["warnings"] == []
 
 

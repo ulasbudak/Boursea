@@ -8,10 +8,19 @@ type ScoreFactor = {
   max_points: number;
 };
 
+type TechnicalConsensus = {
+  bullish: number;
+  bearish: number;
+  neutral: number;
+  total: number;
+};
+
 type StockScore = {
   value: number;
   label: string;
   factors: ScoreFactor[];
+  consensus: TechnicalConsensus;
+  rationale: string;
 };
 
 type ScoreResponse = {
@@ -73,6 +82,11 @@ export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: str
             </Text>{" "}
             — <Text style={styles.scoreLabel}>{score.label}</Text>
           </Text>
+          <Text style={styles.rationale}>{score.rationale}</Text>
+          <Text style={styles.consensus}>
+            {messages.score.consensusLabel}: {score.consensus.bullish}/{score.consensus.total}{" "}
+            {messages.score.consensusOutOf}
+          </Text>
           <TouchableOpacity onPress={() => setShowExplanation((v) => !v)}>
             <Text style={styles.toggle}>{messages.score.explanationToggle}</Text>
           </TouchableOpacity>
@@ -108,6 +122,13 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontWeight: "700",
+  },
+  rationale: {
+    color: "#333",
+  },
+  consensus: {
+    color: "#555",
+    fontSize: 13,
   },
   toggle: {
     color: "#2962FF",

@@ -288,6 +288,22 @@ So that hızlıca "bu hisseye bakmaya değer mi" sorusuna yanıt alabileyim.
 - **Given** temel veya teknik veri eksik, **When** skor hesaplanamazsa, **Then** "yeterli veri yok" durumu gösterilir, hatalı/rastgele bir skor gösterilmez.
 - **And** skor açıklaması ("bu skor neye dayanıyor") kullanıcıya bir bilgi ipucu (tooltip) ile sunulur.
 
+> **Not:** Puanlama ağırlıkları Story 3.7 ile güncellendi (aşağıya bkz.) — bu AC'ler/DoD hâlâ geçerli, yalnızca faktör bileşimi genişledi.
+
+### Story 3.7: Gelişmiş Al/Sat Önerisi Motoru
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-3.7.md`**. Kullanıcı isteği üzerine Story 3.5/3.6 güçlendirildi (yeni backend altyapısı kurmadan): `app/technical.py`'ye 6 yeni kural (Bollinger kırılımı, Stokastik aşırı bölge kesişimi, SMA20/50 kısa kesişim — toplam 12 kural); `app/scoring.py`'ye 6 göstergenin anlık yönünü ölçen bir "Teknik Konsensüs" faktörü (25/100, skorun en büyük tekil faktörü) ve şablon tabanlı, deterministik bir `rationale` (gerekçe) cümlesi eklendi. Web/mobilde skor rozetine gerekçe metni + konsensüs oranı gösterimi eklendi.
+
+As a **kullanıcı**,
+I want özet skorun yalnızca bir sayı değil, kaç göstergenin hangi yönde olduğunu ve bunun okunabilir bir gerekçesini de görmek,
+So that "al/sat önerisi"ne ne kadar güvenebileceğimi ve neye dayandığını anlayabileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bir hissenin geçmiş teknik verisi, **When** Bollinger kırılımı, Stokastik aşırı bölge kesişimi veya SMA20/50 kesişimi geçmişte gerçekleşmişse, **Then** bu 6 yeni kural türü de sinyal listesinde (Story 3.5) görünür.
+- **Given** özet skor hesaplanıyor, **When** skor yanıtı döner, **Then** 6 teknik göstergeden kaçının şu an yükseliş/düşüş/nötr yönde olduğunu gösteren bir konsensüs oranı yer alır.
+- **And** skor yanıtı, en güçlü katkı sağlayan faktörü ve konsensüs oranını içeren, "yatırım tavsiyesi değildir" hatırlatmalı deterministik bir gerekçe cümlesi içerir.
+
 ---
 
 ## 8. Epic 4: Tarama (Screener) ve Karşılaştırma

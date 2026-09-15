@@ -116,6 +116,57 @@ def _macd_histogram(
     return result
 
 
+def _bollinger_bands(
+    closes: list[float], period: int = 20, std_dev_multiplier: float = 2.0
+) -> list[tuple[float, float, float] | None]:
+    """Returns (upper, middle, lower) per bar; None before the warmup period."""
+    result: list[tuple[float, float, float] | None] = []
+    for i in range(len(closes)):
+        if i < period - 1:
+            result.append(None)
+            continue
+        window = closes[i - period + 1 : i + 1]
+        mean = sum(window) / period
+        variance = sum((v - mean) ** 2 for v in window) / period
+        std_dev = variance**0.5
+        result.append((mean + std_dev_multiplier * std_dev, mean, mean - std_dev_multiplier * std_dev))
+    return result
+
+
+def _stochastic(
+    highs: list[float], lows: list[float], closes: list[float], k_period: int = 14, d_period: int = 3
+) -> list[tuple[float, float] | None]:
+    """Returns (%K, %D) per bar; None before the warmup period or while %D isn't defined yet."""
+    k_values: list[float | None] = []
+    for i in range(len(closes)):
+        if i < k_period - 1:
+            k_values.append(None)
+            continue
+        window_highs = highs[i - k_period + 1 : i + 1]
+        window_lows = lows[i - k_period + 1 : i + 1]
+        highest_high = max(window_highs)
+        lowest_low = min(window_lows)
+        value_range = highest_high - lowest_low
+        k_values.append(50.0 if value_range == 0 else ((closes[i] - lowest_low) / value_range) * 100)
+
+    result: list[tuple[float, float] | None] = []
+    for i in range(len(closes)):
+        k = k_values[i]
+        if k is None:
+            result.append(None)
+            continue
+        if i < k_period - 1 + d_period - 1:
+            result.append(None)
+            continue
+        window = k_values[i - d_period + 1 : i + 1]
+        if any(v is None for v in window):
+            result.append(None)
+            continue
+        d = sum(window) / d_period  # type: ignore[arg-type]
+        result.append((k, d))
+    return result
+
+
 def _crossings(values: list[float | None], *, above: bool, threshold: float = 0.0) -> list[int]:
     """Indices where `values` crosses the threshold in the given direction between i-1 and i."""
     indices = []
@@ -135,15 +186,25 @@ def evaluate_signals(candles: list[CandlePoint]) -> list[SignalRecord]:
         return []
 
     closes = [c.close for c in candles]
+    highs = [c.high for c in candles]
+    lows = [c.low for c in candles]
     times = [c.time for c in candles]
 
     rsi = _rsi(closes, 14)
     macd_hist = _macd_histogram(closes)
+    sma20 = _sma(closes, 20)
     sma50 = _sma(closes, 50)
     sma200 = _sma(closes, 200)
     ma_diff: list[float | None] = [
         (s50 - s200) if s50 is not None and s200 is not None else None for s50, s200 in zip(sma50, sma200)
     ]
+    ma_diff_short: list[float | None] = [
+        (s20 - s50) if s20 is not None and s50 is not None else None for s20, s50 in zip(sma20, sma50)
+    ]
+    bands = _bollinger_bands(closes, 20, 2.0)
+    diff_upper: list[float | None] = [(c - b[0]) if b is not None else None for c, b in zip(closes, bands)]
+    diff_lower: list[float | None] = [(c - b[2]) if b is not None else None for c, b in zip(closes, bands)]
+    stoch = _stochastic(highs, lows, closes, 14, 3)
 
     signals: list[SignalRecord] = []
 
@@ -173,6 +234,42 @@ def evaluate_signals(candles: list[CandlePoint]) -> list[SignalRecord]:
         signals.append(
             SignalRecord(rule_id="death_cross", rule_name="SMA50, SMA200'ü aşağı kesti (Death Cross)", direction="bearish", triggered_at=times[i])
         )
+
+    for i in _crossings(ma_diff_short, above=True):
+        signals.append(
+            SignalRecord(rule_id="sma20_50_golden_cross", rule_name="SMA20, SMA50'yi yukarı kesti", direction="bullish", triggered_at=times[i])
+        )
+    for i in _crossings(ma_diff_short, above=False):
+        signals.append(
+            SignalRecord(rule_id="sma20_50_death_cross", rule_name="SMA20, SMA50'yi aşağı kesti", direction="bearish", triggered_at=times[i])
+        )
+
+    for i in _crossings(diff_upper, above=True):
+        signals.append(
+            SignalRecord(rule_id="bollinger_breakout_up", rule_name="Fiyat Bollinger üst bandını yukarı kırdı", direction="bullish", triggered_at=times[i])
+        )
+    for i in _crossings(diff_lower, above=False):
+        signals.append(
+            SignalRecord(rule_id="bollinger_breakout_down", rule_name="Fiyat Bollinger alt bandını aşağı kırdı", direction="bearish", triggered_at=times[i])
+        )
+
+    # Stochastic %K/%D crossovers are read as mean-reversion signals (standard TA convention):
+    # a cross while both lines sit in the oversold/overbought extreme is treated as a potential
+    # reversal, not a momentum-continuation event like the MACD/SMA/Bollinger rules above.
+    for i in range(1, len(stoch)):
+        prev, curr = stoch[i - 1], stoch[i]
+        if prev is None or curr is None:
+            continue
+        prev_k, prev_d = prev
+        curr_k, curr_d = curr
+        if prev_k <= prev_d and curr_k > curr_d and curr_k < 20:
+            signals.append(
+                SignalRecord(rule_id="stochastic_bullish_cross", rule_name="Stokastik %K, %D'yi aşırı satım bölgesinde yukarı kesti", direction="bullish", triggered_at=times[i])
+            )
+        if prev_k >= prev_d and curr_k < curr_d and curr_k > 80:
+            signals.append(
+                SignalRecord(rule_id="stochastic_bearish_cross", rule_name="Stokastik %K, %D'yi aşırı alım bölgesinde aşağı kesti", direction="bearish", triggered_at=times[i])
+            )
 
     signals.sort(key=lambda s: s.triggered_at, reverse=True)
     return signals[:MAX_SIGNALS]
