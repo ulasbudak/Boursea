@@ -29,6 +29,7 @@ from app.market_data import (
     search_bist_symbols,
     search_us_symbols,
 )
+from app.technical import SignalRecord, evaluate_signals
 
 app = FastAPI(title="Trendus API")
 
@@ -189,3 +190,35 @@ async def get_symbol_candles(symbol: str, exchange: str, timeframe: str = "daily
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"candles": candles, "warnings": warnings}
+
+
+SignalsResponse = dict[str, list[SignalRecord] | list[str]]
+
+
+@app.get("/symbols/signals")
+async def get_symbol_signals(symbol: str, exchange: str, timeframe: str = "daily") -> SignalsResponse:
+    symbol = symbol.strip()
+    exchange_filter = exchange.strip().upper()
+    timeframe_filter = timeframe.strip().lower()
+    if timeframe_filter not in TIMEFRAMES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"timeframe must be one of {', '.join(TIMEFRAMES)}",
+        )
+
+    warnings: list[str] = []
+    signals: list[SignalRecord] = []
+
+    if exchange_filter == "BIST":
+        signals = evaluate_signals(get_bist_candles(symbol, timeframe_filter))
+        warnings.append("BIST hisseleri için sinyal verisi bu sürümde sağlanmıyor.")
+    elif exchange_filter == "US":
+        try:
+            candles = await get_us_candles(symbol, timeframe_filter)
+            signals = evaluate_signals(candles)
+        except MarketDataUnavailableError:
+            warnings.append("ABD hisse sinyal verisi şu an güncellenemiyor.")
+    else:
+        raise HTTPException(status_code=400, detail="exchange must be BIST or US")
+
+    return {"signals": signals, "warnings": warnings}

@@ -22,6 +22,7 @@ import {
   type Drawing,
   type Messages,
 } from "@trendus/shared";
+import { SignalList } from "./signal-list";
 
 type Candle = {
   time: number;
@@ -493,6 +494,8 @@ export function PriceChart({
         ))}
 
       <div ref={containerRef} style={{ width: "100%" }} />
+
+      <SignalList exchange={exchange} symbol={symbol} messages={t} />
     </div>
   );
 }

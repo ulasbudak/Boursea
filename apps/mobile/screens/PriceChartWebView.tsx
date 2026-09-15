@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { ALL_INDICATORS, drawingsStorageKey, findIndicator, type Drawing } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
+import { SignalList } from "./SignalList";
 
 type Candle = {
   time: number;
@@ -510,6 +511,8 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
           style={styles.webview}
         />
       </View>
+
+      <SignalList symbol={symbol} exchange={exchange} />
     </View>
   );
 }

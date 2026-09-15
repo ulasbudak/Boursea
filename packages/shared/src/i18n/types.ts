@@ -86,6 +86,12 @@ export interface Messages {
     trendLineName: string;
     horizontalLineName: string;
   };
+  signals: {
+    title: string;
+    noSignals: string;
+    bullish: string;
+    bearish: string;
+  };
   fundamentals: {
     peRatio: string;
     pbRatio: string;

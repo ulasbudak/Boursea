@@ -262,6 +262,8 @@ So that kendi analizimi grafik üzerinde işaretleyebileyim.
 
 ### Story 3.5: Kural Bazlı Otomatik Sinyal Üretimi
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri, mimari yaklaşım ve görev tanımı için bkz. **`docs/stories/story-3.5.md`**. Yeni backend `technical` modülü (RSI/SMA/EMA/MACD Python'a taşındı; 6 kural: RSI aşırı satım/alım, MACD kesişimi, Golden/Death Cross); `GET /symbols/signals` istek-anında geçmiş veri üzerinden sinyal geçmişi üretiyor (Celery/DB olmadan — bkz. story'deki mimari gerekçe). Web ve mobilde Teknik Analiz sekmesine "Sinyaller" listesi eklendi. Uygulandı ve doğrulandı.
+
 As a **aktif trader**,
 I want RSI/MACD/hareketli ortalama kesişimi gibi hazır kurallara göre otomatik üretilen sinyalleri görmek,
 So that manuel taramaya gerek kalmadan potansiyel fırsatları fark edebileyim.

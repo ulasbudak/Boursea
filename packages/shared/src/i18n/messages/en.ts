@@ -88,6 +88,12 @@ export const en: Messages = {
     trendLineName: "Trend Line",
     horizontalLineName: "Horizontal Line",
   },
+  signals: {
+    title: "Signals",
+    noSignals: "No signals in the available history",
+    bullish: "Bullish",
+    bearish: "Bearish",
+  },
   fundamentals: {
     peRatio: "P/E Ratio",
     pbRatio: "P/B Ratio",

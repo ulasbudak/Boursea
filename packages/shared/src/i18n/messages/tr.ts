@@ -88,6 +88,12 @@ export const tr: Messages = {
     trendLineName: "Trend Çizgisi",
     horizontalLineName: "Yatay Çizgi",
   },
+  signals: {
+    title: "Sinyaller",
+    noSignals: "Mevcut geçmişte sinyal yok",
+    bullish: "Yükseliş",
+    bearish: "Düşüş",
+  },
   fundamentals: {
     peRatio: "F/K Oranı",
     pbRatio: "PD/DD Oranı",
