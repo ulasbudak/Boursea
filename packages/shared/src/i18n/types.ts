@@ -138,6 +138,15 @@ export interface Messages {
     themeDark: string;
     themeSystem: string;
     backToDashboard: string;
+    notificationsTitle: string;
+    emailNotificationsLabel: string;
+    pushNotificationsLabel: string;
+    pushEnableButton: string;
+    pushEnabledHint: string;
+    pushNotSupportedHint: string;
+    notificationSaveError: string;
+    on: string;
+    off: string;
   };
   screener: {
     title: string;

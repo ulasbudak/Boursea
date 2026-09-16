@@ -403,6 +403,8 @@ So that I don't miss technical signals without manually watching them.
 
 ### Story 5.4: Alert Notifications — Push and Email
 
+- [x] **Done** — See **`docs/stories/story-5.4.en.md`** for detailed acceptance criteria and the task breakdown. Backend (`app/notifications.py` + the `user_notification_settings` table + `/notification-settings` endpoints; the moment an alert triggers, `evaluate_and_persist` attempts an Expo push/Resend email send), web (an email-notification card on `/settings`), and mobile (a push+email card on `SettingsScreen`, with a permission/token flow via `expo-notifications`) were implemented. **Live-verified at the push-send-request level**; actual delivery to a real device could not be tested in this environment since Expo Go dropped remote push support in SDK 53+ (an EAS dev client is required — the same category of limitation as the native OAuth gap in Story 1.2, rationale in the story file). **Epic 5 is complete as of this story.**
+
 As a **user**,
 I want to get a push notification and/or email when an alert triggers,
 So that I'm notified without keeping the app open.

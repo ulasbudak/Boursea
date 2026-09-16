@@ -2,7 +2,7 @@
 name = "trendus-api"
 version = "0.1.0"
 description = "Trendus backend API"
-license = "Proprietary"
+license = { text = "Proprietary" }
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.141.1",

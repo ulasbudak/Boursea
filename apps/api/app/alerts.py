@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.db import get_connection
 from app.market_data import MarketDataUnavailableError, get_us_overview
+from app.notifications import notify_trigger
 
 UNAVAILABLE_WARNING = "ABD alarmları şu an değerlendirilemiyor."
 
@@ -101,12 +102,17 @@ def _condition_met(direction: str, threshold: float, price: float) -> bool:
     return price <= threshold
 
 
-async def evaluate_and_persist(alerts: list[PriceAlert]) -> tuple[list[PriceAlert], list[str]]:
+async def evaluate_and_persist(
+    alerts: list[PriceAlert], *, user_id: str | None = None, email: str | None = None
+) -> tuple[list[PriceAlert], list[str]]:
     """Check active US alerts against the latest price and persist any that just triggered.
 
     BIST alerts are never evaluated (no live price source yet, see docs/architecture.md
     §11) and come back flagged `unavailable=True` rather than silently staying "active"
     forever with no way to ever trigger.
+
+    If `user_id` is given, a best-effort push/email notification (Story 5.4) is fired for
+    every alert that transitions to `triggered` during this call.
     """
     warnings: list[str] = []
     price_cache: dict[str, float | None] = {}
@@ -142,6 +148,16 @@ async def evaluate_and_persist(alerts: list[PriceAlert]) -> tuple[list[PriceAler
                     update={"status": "triggered", "triggered_at": datetime.now(UTC)}
                 )
             )
+            if user_id is not None:
+                label = alert.name or alert.symbol
+                verb = "yükseldi" if alert.direction == "above" else "düştü"
+                await notify_trigger(
+                    user_id,
+                    email,
+                    "Trendus Fiyat Alarmı",
+                    f"{label} ({alert.symbol}) {alert.threshold} seviyesinin "
+                    f"{'üstüne' if alert.direction == 'above' else 'altına'} {verb}.",
+                )
         else:
             updated.append(alert)
 

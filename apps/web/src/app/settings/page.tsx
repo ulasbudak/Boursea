@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
+import { NotificationSettings } from "./notification-settings";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -34,6 +35,13 @@ export default async function SettingsPage() {
           <CardTitle>{t.settings.theme}</CardTitle>
         </CardHeader>
         <ThemeToggle messages={t.settings} />
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.notificationsTitle}</CardTitle>
+        </CardHeader>
+        <NotificationSettings messages={t.settings} />
       </Card>
     </div>
   );

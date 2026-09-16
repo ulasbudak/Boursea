@@ -229,7 +229,7 @@ def test_get_signal_alerts_endpoint(monkeypatch):
     sample = [make_alert()]
     monkeypatch.setattr(main, "list_signal_alerts", lambda user_id: sample)
 
-    async def fake_evaluate(alerts_in):
+    async def fake_evaluate(alerts_in, **kwargs):
         return alerts_in, []
 
     monkeypatch.setattr(main, "evaluate_signal_alerts", fake_evaluate)

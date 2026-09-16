@@ -39,6 +39,9 @@ from app.market_data import (
     search_bist_symbols,
     search_us_symbols,
 )
+from app.notifications import NotificationSettings
+from app.notifications import get_settings_for_user as get_notification_settings_for_user
+from app.notifications import upsert_settings_for_user as upsert_notification_settings
 from app.scoring import StockScore, compute_bist_score, compute_us_score
 from app.screener import ScreenerCriteria, ScreenerResult, run_screener
 from app.signal_alerts import SIGNAL_RULE_CATALOG, SIGNAL_RULE_IDS, SignalAlertNotFoundError
@@ -66,7 +69,7 @@ _cors_origins = [origin.strip() for origin in _settings.cors_origins.split(",") 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
@@ -420,7 +423,9 @@ async def get_alerts(claims: dict = Depends(get_current_claims)) -> dict[str, ob
         alerts = list_alerts(claims["sub"])
     except psycopg.Error as exc:
         raise _alerts_unavailable() from exc
-    updated, warnings = await evaluate_and_persist(alerts)
+    updated, warnings = await evaluate_and_persist(
+        alerts, user_id=claims["sub"], email=claims.get("email")
+    )
     return {"alerts": updated, "warnings": warnings}
 
 
@@ -488,8 +493,35 @@ async def get_signal_alerts(
         alerts = list_signal_alerts(claims["sub"])
     except psycopg.Error as exc:
         raise _signal_alerts_unavailable() from exc
-    updated, warnings = await evaluate_signal_alerts(alerts)
+    updated, warnings = await evaluate_signal_alerts(
+        alerts, user_id=claims["sub"], email=claims.get("email")
+    )
     return {"alerts": updated, "warnings": warnings}
+
+
+class UpdateNotificationSettingsRequest(BaseModel):
+    expo_push_token: str | None = None
+    push_enabled: bool | None = None
+    email_enabled: bool | None = None
+
+
+@app.get("/notification-settings")
+def get_notification_settings(
+    claims: dict = Depends(get_current_claims),
+) -> NotificationSettings:
+    return get_notification_settings_for_user(claims["sub"])
+
+
+@app.put("/notification-settings")
+def put_notification_settings(
+    body: UpdateNotificationSettingsRequest, claims: dict = Depends(get_current_claims)
+) -> NotificationSettings:
+    return upsert_notification_settings(
+        claims["sub"],
+        expo_push_token=body.expo_push_token,
+        push_enabled=body.push_enabled,
+        email_enabled=body.email_enabled,
+    )
 
 
 @app.post("/signal-alerts", status_code=201)

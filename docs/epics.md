@@ -401,6 +401,8 @@ So that manuel takip etmeden teknik sinyalleri kaçırmayayım.
 
 ### Story 5.4: Alarm Bildirimleri — Push ve E-posta
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-5.4.md`**. Backend (`app/notifications.py` + `user_notification_settings` tablosu + `/notification-settings` uç noktaları; alarm tetiklendiği anda `evaluate_and_persist` içinden Expo push/Resend e-posta gönderimi denenir), web (`/settings`'e e-posta bildirim kartı) ve mobil (`SettingsScreen`'e push+e-posta kartı, `expo-notifications` ile izin/token akışı) uygulandı. **Push gönderim isteği seviyesinde canlı doğrulandı**; gerçek cihazda teslimat, Expo Go'nun SDK 53+'ta uzak push desteğini kaldırması nedeniyle bu ortamda test edilemedi (EAS dev-client gerektiriyor — Story 1.2'deki native OAuth kısıtıyla aynı kategoride, gerekçesi story dosyasında). **Epic 5 bu story ile tamamlandı.**
+
 As a **kullanıcı**,
 I want bir alarm tetiklendiğinde push bildirimi ve/veya e-posta almak,
 So that uygulamayı açık tutmadan haberdar olabileyim.

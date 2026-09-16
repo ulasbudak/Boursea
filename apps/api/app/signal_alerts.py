@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.db import get_connection
 from app.market_data import MarketDataUnavailableError, get_us_candles
+from app.notifications import notify_trigger
 from app.technical import SIGNAL_RULE_CATALOG, SIGNAL_RULE_IDS, evaluate_signals
 
 UNAVAILABLE_WARNING = "ABD sinyal alarmları şu an değerlendirilemiyor."
@@ -103,6 +104,9 @@ def _mark_triggered(alert_id: str, triggered_at: datetime) -> None:
 
 async def evaluate_and_persist(
     alerts: list[SignalAlert],
+    *,
+    user_id: str | None = None,
+    email: str | None = None,
 ) -> tuple[list[SignalAlert], list[str]]:
     """Check active US signal alerts against the latest evaluated signals and persist any
     that just fired. Mirrors app/alerts.py's price-alert evaluation shape (on-read, no
@@ -111,6 +115,9 @@ async def evaluate_and_persist(
     BIST alerts are never evaluated (get_bist_candles() always returns [] until a live BIST
     data source is chosen, see docs/architecture.md §11) and come back flagged
     `unavailable=True` rather than silently staying "active" forever.
+
+    If `user_id` is given, a best-effort push/email notification (Story 5.4) is fired for
+    every alert that transitions to `triggered` during this call.
     """
     warnings: list[str] = []
     signal_cache: dict[tuple[str, str], list | None] = {}
@@ -149,6 +156,14 @@ async def evaluate_and_persist(
             updated.append(
                 alert.model_copy(update={"status": "triggered", "triggered_at": triggered_at})
             )
+            if user_id is not None:
+                label = alert.name or alert.symbol
+                await notify_trigger(
+                    user_id,
+                    email,
+                    "Trendus Sinyal Alarmı",
+                    f"{label} ({alert.symbol}) için '{alert.rule_name}' sinyali tetiklendi.",
+                )
         else:
             updated.append(alert)
 
