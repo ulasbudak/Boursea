@@ -332,6 +332,8 @@ So that yatırım kriterlerime uyan hisseleri hızlıca bulabileyim.
 
 ### Story 4.2: Kayıtlı Taramalar
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-4.2.md`**. Backend (`saved_screens` tablosu + `GET/POST/PUT/DELETE /saved-screens`, kriterler `jsonb` olarak saklanıyor), web (`/screener` sayfasında kayıt/yükle/yeniden adlandır/sil kartı) ve mobil (`ScreenerScreen`'de aynı işlev, satır-içi yeniden adlandırma) uygulandı ve doğrulandı. Canlı Supabase'e uçtan uca doğrulandı.
+
 As a **aktif trader**,
 I want tarama kriter setimi bir isimle kaydedip tekrar çalıştırabilmek,
 So that her seferinde kriterleri yeniden girmek zorunda kalmayayım.
@@ -343,6 +345,8 @@ So that her seferinde kriterleri yeniden girmek zorunda kalmayayım.
 - **And** kullanıcı kayıtlı bir taramayı silebilir veya yeniden adlandırabilir.
 
 ### Story 4.3: Hisse Karşılaştırma Tablosu
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-4.3.md`**. Backend (`app/comparison.py` + `GET /compare`: 2-4 sembol için paralel fundamentals+teknik+skor birleştirme, BIST için yer tutucu), web (`/compare` sayfası, arama+ekle/çıkar, göreli en iyi/kötü renklendirmesi) ve mobil (`CompareScreen`) uygulandı ve doğrulandı. Gerçek Finnhub/TwelveData verisiyle uçtan uca doğrulandı.
 
 As a **kullanıcı**,
 I want en az 4 hisseyi yan yana temel ve teknik metriklerle karşılaştırmak,

@@ -334,6 +334,8 @@ So that I can quickly find stocks matching my investment criteria.
 
 ### Story 4.2: Saved Screens
 
+- [x] **Done** — See **`docs/stories/story-4.2.en.md`** for detailed acceptance criteria and the task breakdown. Backend (a `saved_screens` table + `GET/POST/PUT/DELETE /saved-screens`, criteria stored as `jsonb`), web (a save/load/rename/delete card on the `/screener` page), and mobile (the same functionality on `ScreenerScreen`, with inline rename) were implemented and verified. Live end-to-end verified against Supabase.
+
 As an **active trader**,
 I want to save my screening criteria set under a name and re-run it,
 So that I don't have to re-enter the criteria every time.
@@ -345,6 +347,8 @@ So that I don't have to re-enter the criteria every time.
 - **And** the user can delete or rename a saved screen.
 
 ### Story 4.3: Stock Comparison Table
+
+- [x] **Done** — See **`docs/stories/story-4.3.en.md`** for detailed acceptance criteria and the task breakdown. Backend (`app/comparison.py` + `GET /compare`: parallel fundamentals+technical+score aggregation for 2-4 symbols, with a placeholder for BIST), web (a `/compare` page with search+add/remove and relative best/worst coloring), and mobile (`CompareScreen`) were implemented and verified. Live end-to-end verified against real Finnhub/TwelveData data.
 
 As a **user**,
 I want to compare at least 4 stocks side by side on fundamental and technical metrics,

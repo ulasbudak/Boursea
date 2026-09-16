@@ -11,6 +11,7 @@ import { ScreenerScreen } from "./ScreenerScreen";
 import { WatchlistScreen } from "./WatchlistScreen";
 import { AlertsScreen } from "./AlertsScreen";
 import { SignalAlertsScreen } from "./SignalAlertsScreen";
+import { CompareScreen } from "./CompareScreen";
 
 type SymbolResult = {
   symbol: string;
@@ -28,6 +29,7 @@ export function HomeScreen({ session }: { session: Session }) {
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showSignalAlerts, setShowSignalAlerts] = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
 
   if (selectedStock) {
     return (
@@ -84,6 +86,14 @@ export function HomeScreen({ session }: { session: Session }) {
     );
   }
 
+  if (showCompare) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <CompareScreen onBack={() => setShowCompare(false)} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -114,6 +124,10 @@ export function HomeScreen({ session }: { session: Session }) {
 
       <TouchableOpacity style={styles.navCard} onPress={() => setShowScreener(true)}>
         <Text style={styles.navCardText}>{messages.screener.title}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.navCard} onPress={() => setShowCompare(true)}>
+        <Text style={styles.navCardText}>{messages.comparison.title}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={() => supabase.auth.signOut()}>

@@ -181,6 +181,18 @@ export interface Messages {
     columnRoe: string;
     columnRsi: string;
     columnVolume: string;
+    savedScreensTitle: string;
+    saveButton: string;
+    saving: string;
+    namePlaceholder: string;
+    saveError: string;
+    loadError: string;
+    savedEmpty: string;
+    loadButton: string;
+    renameButton: string;
+    renamePrompt: string;
+    deleteButton: string;
+    deleteConfirm: string;
   };
   watchlist: {
     title: string;
@@ -247,5 +259,29 @@ export interface Messages {
     loading: string;
     loadError: string;
     existingForSymbol: string;
+  };
+  comparison: {
+    title: string;
+    backToDashboard: string;
+    searchPlaceholder: string;
+    addButton: string;
+    removeButton: string;
+    minHint: string;
+    maxHint: string;
+    runButton: string;
+    running: string;
+    loadError: string;
+    emptyState: string;
+    resultsTitle: string;
+    rowSymbol: string;
+    rowExchange: string;
+    rowPeRatio: string;
+    rowMarketCap: string;
+    rowRoe: string;
+    rowDebtToEquity: string;
+    rowNetMargin: string;
+    rowRsi: string;
+    rowScore: string;
+    noValue: string;
   };
 }

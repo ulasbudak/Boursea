@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { RotateCcw, Search } from "lucide-react";
 import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@trendus/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Label, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/change-value";
+import {
+  createSavedScreen,
+  deleteSavedScreen,
+  fetchSavedScreens,
+  renameSavedScreen,
+  type SavedScreen,
+} from "@/lib/saved-screens-client";
 
 type ScreenerResult = {
   symbol: string;
@@ -86,8 +93,70 @@ export function ScreenerForm({ messages, locale }: { messages: Messages["screene
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [savedScreens, setSavedScreens] = useState<SavedScreen[]>([]);
+  const [saveName, setSaveName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedError, setSavedError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchSavedScreens();
+        if (!cancelled) setSavedScreens(data);
+      } catch {
+        if (!cancelled) setSavedError(messages.loadError);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [messages.loadError]);
+
   function update<K extends keyof Criteria>(key: K, value: string) {
     setCriteria((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSaveScreen(e: FormEvent) {
+    e.preventDefault();
+    const name = saveName.trim();
+    if (!name) return;
+    setSaving(true);
+    setSavedError(null);
+    try {
+      const created = await createSavedScreen(name, criteria);
+      setSavedScreens((prev) => [...prev, created]);
+      setSaveName("");
+    } catch {
+      setSavedError(messages.saveError);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleLoadScreen(saved: SavedScreen) {
+    setCriteria({ ...EMPTY_CRITERIA, ...(saved.criteria as Partial<Criteria>) });
+  }
+
+  async function handleRenameScreen(saved: SavedScreen) {
+    const newName = window.prompt(messages.renamePrompt, saved.name);
+    if (!newName || !newName.trim() || newName.trim() === saved.name) return;
+    try {
+      const updated = await renameSavedScreen(saved.id, newName.trim());
+      setSavedScreens((prev) => prev.map((s) => (s.id === saved.id ? updated : s)));
+    } catch {
+      setSavedError(messages.saveError);
+    }
+  }
+
+  async function handleDeleteScreen(saved: SavedScreen) {
+    if (!window.confirm(messages.deleteConfirm)) return;
+    try {
+      await deleteSavedScreen(saved.id);
+      setSavedScreens((prev) => prev.filter((s) => s.id !== saved.id));
+    } catch {
+      setSavedError(messages.saveError);
+    }
   }
 
   async function runScreen(e: FormEvent) {
@@ -237,6 +306,49 @@ export function ScreenerForm({ messages, locale }: { messages: Messages["screene
             </Button>
           </div>
         </form>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+          {messages.savedScreensTitle}
+        </h2>
+
+        <form onSubmit={handleSaveScreen} className="flex gap-2">
+          <Input
+            type="text"
+            placeholder={messages.namePlaceholder}
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+          />
+          <Button type="submit" disabled={saving || !saveName.trim()}>
+            {saving ? messages.saving : messages.saveButton}
+          </Button>
+        </form>
+
+        {savedError && <p className="mt-2 text-xs text-negative">{savedError}</p>}
+
+        {savedScreens.length === 0 ? (
+          <p className="mt-3 text-xs text-text-tertiary">{messages.savedEmpty}</p>
+        ) : (
+          <ul className="mt-3 flex flex-col divide-y divide-border-subtle overflow-hidden rounded-md border border-border-subtle">
+            {savedScreens.map((saved) => (
+              <li key={saved.id} className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm">
+                <span className="font-medium text-text-primary">{saved.name}</span>
+                <div className="ml-auto flex gap-1.5">
+                  <Button type="button" variant="ghost" onClick={() => handleLoadScreen(saved)}>
+                    {messages.loadButton}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => handleRenameScreen(saved)}>
+                    {messages.renameButton}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => handleDeleteScreen(saved)}>
+                    {messages.deleteButton}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       {warnings.map((warning) => (

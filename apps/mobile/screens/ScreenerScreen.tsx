@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -11,6 +11,13 @@ import {
 import { formatCompactNumber, formatRatio } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
+import {
+  createSavedScreen,
+  deleteSavedScreen,
+  fetchSavedScreens,
+  renameSavedScreen,
+  type SavedScreen,
+} from "../lib/saved-screens-client";
 
 type ScreenerResult = {
   symbol: string;
@@ -67,8 +74,79 @@ export function ScreenerScreen({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [savedScreens, setSavedScreens] = useState<SavedScreen[]>([]);
+  const [saveName, setSaveName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedError, setSavedError] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSavedScreens() {
+      try {
+        const data = await fetchSavedScreens();
+        if (!cancelled) setSavedScreens(data);
+      } catch {
+        if (!cancelled) setSavedError(t.loadError);
+      }
+    }
+
+    loadSavedScreens();
+    return () => {
+      cancelled = true;
+    };
+  }, [t.loadError]);
+
   function update<K extends keyof Criteria>(key: K, value: Criteria[K]) {
     setCriteria((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSaveScreen() {
+    const name = saveName.trim();
+    if (!name) return;
+    setSaving(true);
+    setSavedError(null);
+    try {
+      const created = await createSavedScreen(name, criteria);
+      setSavedScreens((prev) => [...prev, created]);
+      setSaveName("");
+    } catch {
+      setSavedError(t.saveError);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleLoadScreen(saved: SavedScreen) {
+    setCriteria({ ...EMPTY_CRITERIA, ...(saved.criteria as Partial<Criteria>) });
+  }
+
+  function startRename(saved: SavedScreen) {
+    setRenamingId(saved.id);
+    setRenameValue(saved.name);
+  }
+
+  async function confirmRename(saved: SavedScreen) {
+    const newName = renameValue.trim();
+    setRenamingId(null);
+    if (!newName || newName === saved.name) return;
+    try {
+      const updated = await renameSavedScreen(saved.id, newName);
+      setSavedScreens((prev) => prev.map((s) => (s.id === saved.id ? updated : s)));
+    } catch {
+      setSavedError(t.saveError);
+    }
+  }
+
+  async function handleDeleteScreen(saved: SavedScreen) {
+    try {
+      await deleteSavedScreen(saved.id);
+      setSavedScreens((prev) => prev.filter((s) => s.id !== saved.id));
+    } catch {
+      setSavedError(t.saveError);
+    }
   }
 
   async function runScreen() {
@@ -159,6 +237,58 @@ export function ScreenerScreen({
         <TouchableOpacity onPress={() => setCriteria(SUGGESTED_CRITERIA)}>
           <Text style={styles.resetLink}>{t.resetDefaults}</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>{t.savedScreensTitle}</Text>
+        <View style={styles.optionRow}>
+          <TextInput
+            style={[styles.input, styles.saveInput]}
+            placeholder={t.namePlaceholder}
+            placeholderTextColor={colors.textTertiary}
+            value={saveName}
+            onChangeText={setSaveName}
+          />
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSaveScreen}
+            disabled={saving || !saveName.trim()}
+          >
+            <Text style={styles.buttonText}>{saving ? t.saving : t.saveButton}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {savedError && <Text style={styles.warning}>{savedError}</Text>}
+
+        {savedScreens.length === 0 ? (
+          <Text style={styles.note}>{t.savedEmpty}</Text>
+        ) : (
+          savedScreens.map((saved) => (
+            <View key={saved.id} style={styles.savedRow}>
+              {renamingId === saved.id ? (
+                <TextInput
+                  style={[styles.input, styles.savedRename]}
+                  value={renameValue}
+                  onChangeText={setRenameValue}
+                  autoFocus
+                  onSubmitEditing={() => confirmRename(saved)}
+                  onBlur={() => confirmRename(saved)}
+                />
+              ) : (
+                <Text style={styles.savedName}>{saved.name}</Text>
+              )}
+              <TouchableOpacity onPress={() => handleLoadScreen(saved)}>
+                <Text style={styles.savedAction}>{t.loadButton}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => startRename(saved)}>
+                <Text style={styles.savedAction}>{t.renameButton}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDeleteScreen(saved)}>
+                <Text style={styles.savedActionDelete}>{t.deleteButton}</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </View>
 
       {loading && <ActivityIndicator color={colors.accent} />}
@@ -285,6 +415,42 @@ function makeStyles(colors: ThemeColors) {
     },
     buttonText: {
       color: colors.accentText,
+      fontWeight: "600",
+    },
+    saveInput: {
+      flex: 1,
+    },
+    saveButton: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: spacing[4],
+      borderRadius: radius.md,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    savedRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[2],
+      paddingVertical: spacing[2],
+      borderTopWidth: 1,
+      borderTopColor: colors.borderSubtle,
+    },
+    savedName: {
+      flex: 1,
+      color: colors.textPrimary,
+      fontWeight: "600",
+    },
+    savedRename: {
+      flex: 1,
+    },
+    savedAction: {
+      color: colors.accent,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    savedActionDelete: {
+      color: colors.negative,
+      fontSize: 12,
       fontWeight: "600",
     },
     warning: {

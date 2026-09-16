@@ -12,6 +12,7 @@ from app.alerts import (
     list_alerts,
 )
 from app.auth import get_current_claims
+from app.comparison import MAX_COMPARISON_SYMBOLS, ComparisonEntry, compare_symbols
 from app.config import get_settings
 from app.db import check_database_connection
 from app.fundamentals import (
@@ -42,6 +43,14 @@ from app.market_data import (
 from app.notifications import NotificationSettings
 from app.notifications import get_settings_for_user as get_notification_settings_for_user
 from app.notifications import upsert_settings_for_user as upsert_notification_settings
+from app.saved_screens import (
+    SavedScreen,
+    SavedScreenNotFoundError,
+    create_saved_screen,
+    delete_saved_screen,
+    list_saved_screens,
+    update_saved_screen,
+)
 from app.scoring import StockScore, compute_bist_score, compute_us_score
 from app.screener import ScreenerCriteria, ScreenerResult, run_screener
 from app.signal_alerts import SIGNAL_RULE_CATALOG, SIGNAL_RULE_IDS, SignalAlertNotFoundError
@@ -568,3 +577,98 @@ def delete_signal_alert_endpoint(
     except psycopg.Error as exc:
         raise _signal_alerts_unavailable() from exc
     return Response(status_code=204)
+
+
+def _saved_screens_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="Kayıtlı tarama verisi şu an sağlanamıyor.")
+
+
+class CreateSavedScreenRequest(BaseModel):
+    name: str
+    criteria: dict
+
+
+class UpdateSavedScreenRequest(BaseModel):
+    name: str | None = None
+    criteria: dict | None = None
+
+
+@app.get("/saved-screens")
+def get_saved_screens(claims: dict = Depends(get_current_claims)) -> list[SavedScreen]:
+    try:
+        return list_saved_screens(claims["sub"])
+    except psycopg.Error as exc:
+        raise _saved_screens_unavailable() from exc
+
+
+@app.post("/saved-screens", status_code=201)
+def post_saved_screen(
+    body: CreateSavedScreenRequest, claims: dict = Depends(get_current_claims)
+) -> SavedScreen:
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+    try:
+        return create_saved_screen(claims["sub"], name, body.criteria)
+    except psycopg.Error as exc:
+        raise _saved_screens_unavailable() from exc
+
+
+@app.put("/saved-screens/{saved_screen_id}")
+def put_saved_screen(
+    saved_screen_id: str,
+    body: UpdateSavedScreenRequest,
+    claims: dict = Depends(get_current_claims),
+) -> SavedScreen:
+    name = body.name.strip() if body.name is not None else None
+    if name is not None and not name:
+        raise HTTPException(status_code=400, detail="name cannot be empty")
+    try:
+        return update_saved_screen(
+            claims["sub"], saved_screen_id, name=name, criteria=body.criteria
+        )
+    except SavedScreenNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Saved screen not found") from exc
+    except psycopg.Error as exc:
+        raise _saved_screens_unavailable() from exc
+
+
+@app.delete("/saved-screens/{saved_screen_id}", status_code=204)
+def delete_saved_screen_endpoint(
+    saved_screen_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        delete_saved_screen(claims["sub"], saved_screen_id)
+    except SavedScreenNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Saved screen not found") from exc
+    except psycopg.Error as exc:
+        raise _saved_screens_unavailable() from exc
+    return Response(status_code=204)
+
+
+ComparisonResponse = dict[str, list[ComparisonEntry] | list[str]]
+
+
+@app.get("/compare")
+async def get_comparison(symbols: str) -> ComparisonResponse:
+    raw_entries = [item.strip() for item in symbols.split(",") if item.strip()]
+    entries: list[tuple[str, str]] = []
+    for item in raw_entries:
+        if ":" not in item:
+            raise HTTPException(
+                status_code=400, detail="each symbol must be formatted as SYMBOL:EXCHANGE"
+            )
+        symbol, _, exchange = item.partition(":")
+        exchange = exchange.strip().upper()
+        if exchange not in ("US", "BIST"):
+            raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+        entries.append((symbol.strip().upper(), exchange))
+
+    if not 2 <= len(entries) <= MAX_COMPARISON_SYMBOLS:
+        raise HTTPException(
+            status_code=400, detail=f"provide between 2 and {MAX_COMPARISON_SYMBOLS} symbols"
+        )
+
+    results = await compare_symbols(entries)
+    warnings = [warning for entry in results for warning in entry.warnings]
+    return {"results": results, "warnings": warnings}

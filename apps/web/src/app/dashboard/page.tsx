@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   Bell,
   Bookmark,
+  Columns3,
   LogOut,
   Radio,
   Settings as SettingsIcon,
@@ -108,6 +109,15 @@ export default async function DashboardPage() {
               <SlidersHorizontal size={18} />
             </div>
             <span className="text-sm font-medium text-text-primary">{t.screener.title}</span>
+          </Link>
+          <Link
+            href="/compare"
+            className="group flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg hover:shadow-black/20"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-hover text-text-secondary">
+              <Columns3 size={18} />
+            </div>
+            <span className="text-sm font-medium text-text-primary">{t.comparison.title}</span>
           </Link>
           <Link
             href="/settings"
