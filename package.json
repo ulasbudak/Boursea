@@ -1,6 +1,7 @@
 {
   "name": "trendus",
   "private": true,
+  "license": "UNLICENSED",
   "packageManager": "pnpm@12.4.1",
   "scripts": {
     "dev": "turbo run dev",
