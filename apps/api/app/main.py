@@ -3,6 +3,14 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.alerts import (
+    AlertNotFoundError,
+    PriceAlert,
+    create_alert,
+    delete_alert,
+    evaluate_and_persist,
+    list_alerts,
+)
 from app.auth import get_current_claims
 from app.config import get_settings
 from app.db import check_database_connection
@@ -148,7 +156,11 @@ async def get_fundamentals(symbol: str, exchange: str) -> FundamentalsResponse:
     else:
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
-    return {"fundamentals": fundamentals, "sector_comparison": sector_comparison, "warnings": warnings}
+    return {
+        "fundamentals": fundamentals,
+        "sector_comparison": sector_comparison,
+        "warnings": warnings,
+    }
 
 
 HistoryResponse = dict[str, HistoricalPerformance | list[str] | None]
@@ -179,7 +191,9 @@ CandlesResponse = dict[str, list[CandlePoint] | list[str]]
 
 
 @app.get("/symbols/candles")
-async def get_symbol_candles(symbol: str, exchange: str, timeframe: str = "daily") -> CandlesResponse:
+async def get_symbol_candles(
+    symbol: str, exchange: str, timeframe: str = "daily"
+) -> CandlesResponse:
     symbol = symbol.strip()
     exchange_filter = exchange.strip().upper()
     timeframe_filter = timeframe.strip().lower()
@@ -210,7 +224,9 @@ SignalsResponse = dict[str, list[SignalRecord] | list[str]]
 
 
 @app.get("/symbols/signals")
-async def get_symbol_signals(symbol: str, exchange: str, timeframe: str = "daily") -> SignalsResponse:
+async def get_symbol_signals(
+    symbol: str, exchange: str, timeframe: str = "daily"
+) -> SignalsResponse:
     symbol = symbol.strip()
     exchange_filter = exchange.strip().upper()
     timeframe_filter = timeframe.strip().lower()
@@ -377,4 +393,65 @@ def delete_watchlist_item(
         raise HTTPException(status_code=404, detail="Watchlist item not found") from exc
     except psycopg.Error as exc:
         raise _watchlists_unavailable() from exc
+    return Response(status_code=204)
+
+
+class CreatePriceAlertRequest(BaseModel):
+    symbol: str
+    exchange: str
+    name: str | None = None
+    direction: str
+    threshold: float
+
+
+def _alerts_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="Alarm verisi şu an sağlanamıyor.")
+
+
+@app.get("/alerts")
+async def get_alerts(claims: dict = Depends(get_current_claims)) -> dict[str, object]:
+    try:
+        alerts = list_alerts(claims["sub"])
+    except psycopg.Error as exc:
+        raise _alerts_unavailable() from exc
+    updated, warnings = await evaluate_and_persist(alerts)
+    return {"alerts": updated, "warnings": warnings}
+
+
+@app.post("/alerts", status_code=201)
+def post_alert(
+    body: CreatePriceAlertRequest, claims: dict = Depends(get_current_claims)
+) -> PriceAlert:
+    exchange = body.exchange.strip().upper()
+    if exchange not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    direction = body.direction.strip().lower()
+    if direction not in ("above", "below"):
+        raise HTTPException(status_code=400, detail="direction must be above or below")
+    symbol = body.symbol.strip()
+    if not symbol:
+        raise HTTPException(status_code=400, detail="symbol is required")
+    if body.threshold <= 0:
+        raise HTTPException(status_code=400, detail="threshold must be positive")
+    try:
+        return create_alert(
+            claims["sub"],
+            symbol=symbol,
+            exchange=exchange,
+            name=body.name,
+            direction=direction,
+            threshold=body.threshold,
+        )
+    except psycopg.Error as exc:
+        raise _alerts_unavailable() from exc
+
+
+@app.delete("/alerts/{alert_id}", status_code=204)
+def delete_alert_endpoint(alert_id: str, claims: dict = Depends(get_current_claims)) -> Response:
+    try:
+        delete_alert(claims["sub"], alert_id)
+    except AlertNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Alert not found") from exc
+    except psycopg.Error as exc:
+        raise _alerts_unavailable() from exc
     return Response(status_code=204)

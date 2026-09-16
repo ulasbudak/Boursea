@@ -8,6 +8,7 @@ import { Badge, ChangeValue } from "@/components/ui/change-value";
 import { StockTabs } from "./stock-tabs";
 import { ScoreBadge } from "./score-badge";
 import { AddToWatchlistButton } from "./add-to-watchlist-button";
+import { CreatePriceAlertButton } from "./create-price-alert-button";
 
 type StockOverview = {
   symbol: string;
@@ -130,12 +131,20 @@ export default async function StockDetailPage({
           </span>
         }
         actions={
-          <AddToWatchlistButton
-            symbol={symbol.toUpperCase()}
-            exchange={exchange.toUpperCase()}
-            name={overview?.name ?? null}
-            messages={t.watchlist}
-          />
+          <div className="flex items-center gap-2">
+            <AddToWatchlistButton
+              symbol={symbol.toUpperCase()}
+              exchange={exchange.toUpperCase()}
+              name={overview?.name ?? null}
+              messages={t.watchlist}
+            />
+            <CreatePriceAlertButton
+              symbol={symbol.toUpperCase()}
+              exchange={exchange.toUpperCase()}
+              name={overview?.name ?? null}
+              messages={t.alerts}
+            />
+          </div>
         }
       />
 

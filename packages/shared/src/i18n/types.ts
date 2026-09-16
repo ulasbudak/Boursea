@@ -192,4 +192,31 @@ export interface Messages {
     newListInlineLabel: string;
     addSuccessLabel: string;
   };
+  alerts: {
+    title: string;
+    backToDashboard: string;
+    createButtonLabel: string;
+    formTitle: string;
+    directionLabel: string;
+    directionAbove: string;
+    directionBelow: string;
+    thresholdLabel: string;
+    thresholdPlaceholder: string;
+    saveButton: string;
+    saving: string;
+    cancelButton: string;
+    statusActive: string;
+    statusTriggered: string;
+    statusUnavailable: string;
+    bistUnavailableHint: string;
+    usUnavailableHint: string;
+    deleteButton: string;
+    emptyList: string;
+    loading: string;
+    loadError: string;
+    existingForSymbol: string;
+    columnSymbol: string;
+    columnCondition: string;
+    columnStatus: string;
+  };
 }

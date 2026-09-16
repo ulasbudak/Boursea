@@ -2,9 +2,9 @@
 title: "Story 5.1: İzleme Listesi Oluşturma ve Yönetimi"
 epic: "Epic 5 — İzleme Listesi, Alarmlar ve Bildirimler"
 story_id: "5.1"
-status: in-progress
+status: done
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-09-16
 author: Bob (BMAD Scrum Master) & Amelia (BMAD Developer)
 based_on: ["docs/PRD.md", "docs/architecture.md §7", "docs/epics.md §9"]
 ---

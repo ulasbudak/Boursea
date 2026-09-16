@@ -3,7 +3,15 @@ from fastapi.testclient import TestClient
 
 from app import main
 from app.market_data import CandlePoint
-from app.technical import _bollinger_bands, _ema, _macd_histogram, _rsi, _sma, _stochastic, evaluate_signals
+from app.technical import (
+    _bollinger_bands,
+    _ema,
+    _macd_histogram,
+    _rsi,
+    _sma,
+    _stochastic,
+    evaluate_signals,
+)
 
 client = TestClient(main.app)
 

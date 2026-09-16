@@ -14,6 +14,7 @@ import { FundamentalsPanel } from "./FundamentalsPanel";
 import { PriceChartWebView } from "./PriceChartWebView";
 import { ScoreBadge } from "./ScoreBadge";
 import { AddToWatchlistButton } from "./AddToWatchlistButton";
+import { CreatePriceAlertButton } from "./CreatePriceAlertButton";
 
 type StockOverview = {
   symbol: string;
@@ -91,11 +92,18 @@ export function StockOverviewScreen({
         {overview?.name ?? symbol} ({exchange.toUpperCase()})
       </Text>
 
-      <AddToWatchlistButton
-        symbol={symbol.toUpperCase()}
-        exchange={exchange.toUpperCase()}
-        name={overview?.name ?? null}
-      />
+      <View style={styles.actionsRow}>
+        <AddToWatchlistButton
+          symbol={symbol.toUpperCase()}
+          exchange={exchange.toUpperCase()}
+          name={overview?.name ?? null}
+        />
+        <CreatePriceAlertButton
+          symbol={symbol.toUpperCase()}
+          exchange={exchange.toUpperCase()}
+          name={overview?.name ?? null}
+        />
+      </View>
 
       <View style={styles.tabRow}>
         <TouchableOpacity onPress={() => setTab("overview")}>
@@ -204,6 +212,10 @@ function makeStyles(colors: ThemeColors) {
       fontWeight: "700",
       color: colors.textPrimary,
       marginBottom: spacing[3],
+    },
+    actionsRow: {
+      flexDirection: "row",
+      gap: spacing[2],
     },
     tabRow: {
       flexDirection: "row",

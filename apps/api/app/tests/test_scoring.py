@@ -6,7 +6,12 @@ from fastapi.testclient import TestClient
 from app import main
 from app.fundamentals import FundamentalsSnapshot, FundamentalsUnavailableError
 from app.market_data import CandlePoint, MarketDataUnavailableError
-from app.scoring import _build_rationale, _compute_consensus, _score_consensus, compute_score, compute_us_score
+from app.scoring import (
+    _compute_consensus,
+    _score_consensus,
+    compute_score,
+    compute_us_score,
+)
 
 client = TestClient(main.app)
 

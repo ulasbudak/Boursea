@@ -316,6 +316,8 @@ So that "al/sat önerisi"ne ne kadar güvenebileceğimi ve neye dayandığını 
 
 ### Story 4.1: Çoklu Kriter Tarama
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-4.1.md`**. Backend (`GET /screener/run`: temel+teknik kriterleri birleştiren, işlem-içi önbellekli tarama motoru), web (`/screener` sayfası) ve mobil (`ScreenerScreen`) uygulandı ve doğrulandı. Canlı Finnhub anahtarıyla uçtan uca doğrulama kullanıcı tarafında yapılmalı.
+
 As a **aktif trader**,
 I want piyasa değeri, F/K, RSI, hacim, sektör, borsa gibi kriterleri birleştirerek hisse taraması yapmak,
 So that yatırım kriterlerime uyan hisseleri hızlıca bulabileyim.
@@ -356,6 +358,8 @@ So that hangisinin daha iyi bir seçim olduğuna karar verebileyim.
 
 ### Story 5.1: İzleme Listesi Oluşturma ve Yönetimi
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-5.1.md`**. DB (`watchlists`/`watchlist_items` migration'ı canlı Supabase'e uygulandı), backend (`app/watchlists.py` + `/watchlists` uç noktaları — projenin ilk kimlik doğrulamalı yazma işlemleri), web (`/watchlist` sayfası + hisse detayında ekle/çıkar popover'ı) ve mobil (`WatchlistScreen`, `AddToWatchlistButton`) uygulandı ve doğrulandı. Gerçek tarayıcı/cihazda görsel doğrulama kullanıcı tarafında yapılmalı (bu ortamda tarayıcı/simülatör otomasyon aracı yok).
+
 As a **kullanıcı**,
 I want takip etmek istediğim hisseleri bir veya birden fazla izleme listesine eklemek,
 So that ilgilendiğim hisseleri tek yerden takip edebileyim.
@@ -367,6 +371,8 @@ So that ilgilendiğim hisseleri tek yerden takip edebileyim.
 - **And** kullanıcı bir hisseyi izleme listesinden kaldırabilir.
 
 ### Story 5.2: Fiyat Alarmı Kurma
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-5.2.md`**. Backend (`app/alerts.py` + `price_alerts` tablosu + `/alerts` uç noktaları — ABD alarmları `GET /alerts` çağrısında Finnhub ile anlık değerlendirilir), web (`/alerts` sayfası + hisse detayında "Fiyat Alarmı Kur" butonu) ve mobil (`AlertsScreen`, `CreatePriceAlertButton`) uygulandı. **Gerçek Supabase + Finnhub ile canlı uçtan uca doğrulandı** (bkz. story dosyası — bir sonraki story'lerden farklı olarak bu kez gerçek kimlik bilgileri mevcuttu). BIST alarmları kurulabiliyor ama canlı BIST fiyat verisi olmadığından tetiklenme durumu "değerlendirilemiyor" olarak açıkça işaretleniyor (sessiz yanlış durum yok).
 
 As a **kullanıcı**,
 I want bir hisse için fiyat eşiği bazlı alarm kurmak,
