@@ -1,0 +1,59 @@
+import { authFetch } from "@/lib/api-client";
+
+export type SignalRule = {
+  rule_id: string;
+  rule_name: string;
+  direction: "bullish" | "bearish";
+};
+
+export type SignalAlert = {
+  id: string;
+  symbol: string;
+  exchange: string;
+  name: string | null;
+  rule_id: string;
+  rule_name: string;
+  timeframe: string;
+  status: "active" | "triggered";
+  created_at: string;
+  triggered_at: string | null;
+  unavailable: boolean;
+};
+
+export type SignalAlertsResponse = {
+  alerts: SignalAlert[];
+  warnings: string[];
+};
+
+export async function fetchSignalRules(): Promise<SignalRule[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const response = await fetch(`${apiUrl}/technical/rules`);
+  if (!response.ok) throw new Error("Failed to load signal rules");
+  return response.json();
+}
+
+export async function fetchSignalAlerts(): Promise<SignalAlertsResponse> {
+  const response = await authFetch("/signal-alerts");
+  if (!response.ok) throw new Error("Failed to load signal alerts");
+  return response.json();
+}
+
+export async function createSignalAlert(alert: {
+  symbol: string;
+  exchange: string;
+  name?: string | null;
+  rule_id: string;
+  timeframe: string;
+}): Promise<SignalAlert> {
+  const response = await authFetch("/signal-alerts", {
+    method: "POST",
+    body: JSON.stringify(alert),
+  });
+  if (!response.ok) throw new Error("Failed to create signal alert");
+  return response.json();
+}
+
+export async function deleteSignalAlert(alertId: string): Promise<void> {
+  const response = await authFetch(`/signal-alerts/${alertId}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Failed to delete signal alert");
+}

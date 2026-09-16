@@ -10,6 +10,7 @@ import { SettingsScreen } from "./SettingsScreen";
 import { ScreenerScreen } from "./ScreenerScreen";
 import { WatchlistScreen } from "./WatchlistScreen";
 import { AlertsScreen } from "./AlertsScreen";
+import { SignalAlertsScreen } from "./SignalAlertsScreen";
 
 type SymbolResult = {
   symbol: string;
@@ -26,6 +27,7 @@ export function HomeScreen({ session }: { session: Session }) {
   const [showScreener, setShowScreener] = useState(false);
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showSignalAlerts, setShowSignalAlerts] = useState(false);
 
   if (selectedStock) {
     return (
@@ -71,6 +73,17 @@ export function HomeScreen({ session }: { session: Session }) {
     );
   }
 
+  if (showSignalAlerts) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <SignalAlertsScreen
+          onBack={() => setShowSignalAlerts(false)}
+          onSelectResult={setSelectedStock}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -93,6 +106,10 @@ export function HomeScreen({ session }: { session: Session }) {
 
       <TouchableOpacity style={styles.navCard} onPress={() => setShowAlerts(true)}>
         <Text style={styles.navCardText}>{messages.alerts.title}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.navCard} onPress={() => setShowSignalAlerts(true)}>
+        <Text style={styles.navCardText}>{messages.signalAlerts.title}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navCard} onPress={() => setShowScreener(true)}>

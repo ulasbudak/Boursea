@@ -41,6 +41,12 @@ from app.market_data import (
 )
 from app.scoring import StockScore, compute_bist_score, compute_us_score
 from app.screener import ScreenerCriteria, ScreenerResult, run_screener
+from app.signal_alerts import SIGNAL_RULE_CATALOG, SIGNAL_RULE_IDS, SignalAlertNotFoundError
+from app.signal_alerts import SignalAlert as SignalAlertModel
+from app.signal_alerts import create_alert as create_signal_alert
+from app.signal_alerts import delete_alert as delete_signal_alert
+from app.signal_alerts import evaluate_and_persist as evaluate_signal_alerts
+from app.signal_alerts import list_alerts as list_signal_alerts
 from app.technical import SignalRecord, evaluate_signals
 from app.watchlists import (
     Watchlist,
@@ -454,4 +460,79 @@ def delete_alert_endpoint(alert_id: str, claims: dict = Depends(get_current_clai
         raise HTTPException(status_code=404, detail="Alert not found") from exc
     except psycopg.Error as exc:
         raise _alerts_unavailable() from exc
+    return Response(status_code=204)
+
+
+@app.get("/technical/rules")
+def get_signal_rules() -> list[dict[str, str]]:
+    return SIGNAL_RULE_CATALOG
+
+
+class CreateSignalAlertRequest(BaseModel):
+    symbol: str
+    exchange: str
+    name: str | None = None
+    rule_id: str
+    timeframe: str = "daily"
+
+
+def _signal_alerts_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="Sinyal alarmı verisi şu an sağlanamıyor.")
+
+
+@app.get("/signal-alerts")
+async def get_signal_alerts(
+    claims: dict = Depends(get_current_claims),
+) -> dict[str, object]:
+    try:
+        alerts = list_signal_alerts(claims["sub"])
+    except psycopg.Error as exc:
+        raise _signal_alerts_unavailable() from exc
+    updated, warnings = await evaluate_signal_alerts(alerts)
+    return {"alerts": updated, "warnings": warnings}
+
+
+@app.post("/signal-alerts", status_code=201)
+def post_signal_alert(
+    body: CreateSignalAlertRequest, claims: dict = Depends(get_current_claims)
+) -> SignalAlertModel:
+    exchange = body.exchange.strip().upper()
+    if exchange not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    rule_id = body.rule_id.strip()
+    if rule_id not in SIGNAL_RULE_IDS:
+        raise HTTPException(
+            status_code=400, detail=f"rule_id must be one of {sorted(SIGNAL_RULE_IDS)}"
+        )
+    timeframe = body.timeframe.strip().lower()
+    if timeframe not in TIMEFRAMES:
+        raise HTTPException(
+            status_code=400, detail=f"timeframe must be one of {', '.join(TIMEFRAMES)}"
+        )
+    symbol = body.symbol.strip()
+    if not symbol:
+        raise HTTPException(status_code=400, detail="symbol is required")
+    try:
+        return create_signal_alert(
+            claims["sub"],
+            symbol=symbol,
+            exchange=exchange,
+            name=body.name,
+            rule_id=rule_id,
+            timeframe=timeframe,
+        )
+    except psycopg.Error as exc:
+        raise _signal_alerts_unavailable() from exc
+
+
+@app.delete("/signal-alerts/{alert_id}", status_code=204)
+def delete_signal_alert_endpoint(
+    alert_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        delete_signal_alert(claims["sub"], alert_id)
+    except SignalAlertNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Signal alert not found") from exc
+    except psycopg.Error as exc:
+        raise _signal_alerts_unavailable() from exc
     return Response(status_code=204)

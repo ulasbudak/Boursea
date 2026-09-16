@@ -15,6 +15,7 @@ import { PriceChartWebView } from "./PriceChartWebView";
 import { ScoreBadge } from "./ScoreBadge";
 import { AddToWatchlistButton } from "./AddToWatchlistButton";
 import { CreatePriceAlertButton } from "./CreatePriceAlertButton";
+import { CreateSignalAlertButton } from "./CreateSignalAlertButton";
 
 type StockOverview = {
   symbol: string;
@@ -99,6 +100,11 @@ export function StockOverviewScreen({
           name={overview?.name ?? null}
         />
         <CreatePriceAlertButton
+          symbol={symbol.toUpperCase()}
+          exchange={exchange.toUpperCase()}
+          name={overview?.name ?? null}
+        />
+        <CreateSignalAlertButton
           symbol={symbol.toUpperCase()}
           exchange={exchange.toUpperCase()}
           name={overview?.name ?? null}
@@ -215,6 +221,7 @@ function makeStyles(colors: ThemeColors) {
     },
     actionsRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: spacing[2],
     },
     tabRow: {

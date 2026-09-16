@@ -386,6 +386,8 @@ So that fiyat belirlediğim seviyeye ulaştığında haberdar olabileyim.
 
 ### Story 5.3: İndikatör/Sinyal Alarmı Kurma
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-5.3.md`**. Backend (`app/technical.py`'ye 12 kuralın kataloğu + `app/signal_alerts.py` + `signal_alerts` tablosu + `/signal-alerts` ve `GET /technical/rules` uç noktaları — Story 3.5'teki sinyal motoru yeniden kullanıldı, değiştirilmedi), web (hisse detayında "Sinyal Alarmı Kur" + `/signal-alerts` sayfası) ve mobil (`SignalAlertsScreen`, `CreateSignalAlertButton`) uygulandı. **Gerçek Supabase + Finnhub ile canlı uçtan uca doğrulandı** (gerçek AAPL günlük mumları üzerinden RSI hesaplanıp kural gerçekten tetiklendi). BIST aynı Story 5.2 gerekçesiyle "değerlendirilemiyor" olarak işaretleniyor.
+
 As a **aktif trader**,
 I want RSI/MACD gibi bir indikatör koşuluna göre alarm kurmak,
 So that manuel takip etmeden teknik sinyalleri kaçırmayayım.

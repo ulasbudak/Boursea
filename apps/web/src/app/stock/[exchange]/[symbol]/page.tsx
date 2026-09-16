@@ -9,6 +9,7 @@ import { StockTabs } from "./stock-tabs";
 import { ScoreBadge } from "./score-badge";
 import { AddToWatchlistButton } from "./add-to-watchlist-button";
 import { CreatePriceAlertButton } from "./create-price-alert-button";
+import { CreateSignalAlertButton } from "./create-signal-alert-button";
 
 type StockOverview = {
   symbol: string;
@@ -131,7 +132,7 @@ export default async function StockDetailPage({
           </span>
         }
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <AddToWatchlistButton
               symbol={symbol.toUpperCase()}
               exchange={exchange.toUpperCase()}
@@ -143,6 +144,12 @@ export default async function StockDetailPage({
               exchange={exchange.toUpperCase()}
               name={overview?.name ?? null}
               messages={t.alerts}
+            />
+            <CreateSignalAlertButton
+              symbol={symbol.toUpperCase()}
+              exchange={exchange.toUpperCase()}
+              name={overview?.name ?? null}
+              messages={t.signalAlerts}
             />
           </div>
         }

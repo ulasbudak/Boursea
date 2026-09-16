@@ -4,6 +4,65 @@ from app.market_data import CandlePoint
 
 MAX_SIGNALS = 20
 
+# Mirrors the rule_id/rule_name pairs produced by evaluate_signals() below — kept as a
+# standalone catalog (rather than derived from evaluate_signals) so callers like
+# app/signal_alerts.py can validate/list rule_ids without running a full evaluation.
+SIGNAL_RULE_CATALOG: list[dict[str, str]] = [
+    {"rule_id": "rsi_oversold", "rule_name": "RSI 30 altına düştü", "direction": "bearish"},
+    {"rule_id": "rsi_overbought", "rule_name": "RSI 70 üstüne çıktı", "direction": "bullish"},
+    {
+        "rule_id": "macd_bullish_cross",
+        "rule_name": "MACD sinyal çizgisini yukarı kesti",
+        "direction": "bullish",
+    },
+    {
+        "rule_id": "macd_bearish_cross",
+        "rule_name": "MACD sinyal çizgisini aşağı kesti",
+        "direction": "bearish",
+    },
+    {
+        "rule_id": "golden_cross",
+        "rule_name": "SMA50, SMA200'ü yukarı kesti (Golden Cross)",
+        "direction": "bullish",
+    },
+    {
+        "rule_id": "death_cross",
+        "rule_name": "SMA50, SMA200'ü aşağı kesti (Death Cross)",
+        "direction": "bearish",
+    },
+    {
+        "rule_id": "sma20_50_golden_cross",
+        "rule_name": "SMA20, SMA50'yi yukarı kesti",
+        "direction": "bullish",
+    },
+    {
+        "rule_id": "sma20_50_death_cross",
+        "rule_name": "SMA20, SMA50'yi aşağı kesti",
+        "direction": "bearish",
+    },
+    {
+        "rule_id": "bollinger_breakout_up",
+        "rule_name": "Fiyat Bollinger üst bandını yukarı kırdı",
+        "direction": "bullish",
+    },
+    {
+        "rule_id": "bollinger_breakout_down",
+        "rule_name": "Fiyat Bollinger alt bandını aşağı kırdı",
+        "direction": "bearish",
+    },
+    {
+        "rule_id": "stochastic_bullish_cross",
+        "rule_name": "Stokastik %K, %D'yi aşırı satım bölgesinde yukarı kesti",
+        "direction": "bullish",
+    },
+    {
+        "rule_id": "stochastic_bearish_cross",
+        "rule_name": "Stokastik %K, %D'yi aşırı alım bölgesinde aşağı kesti",
+        "direction": "bearish",
+    },
+]
+SIGNAL_RULE_IDS = {rule["rule_id"] for rule in SIGNAL_RULE_CATALOG}
+
 
 class SignalRecord(BaseModel):
     rule_id: str

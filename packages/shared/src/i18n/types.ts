@@ -219,4 +219,24 @@ export interface Messages {
     columnCondition: string;
     columnStatus: string;
   };
+  signalAlerts: {
+    title: string;
+    backToDashboard: string;
+    createButtonLabel: string;
+    formTitle: string;
+    ruleLabel: string;
+    timeframeLabel: string;
+    saveButton: string;
+    saving: string;
+    statusActive: string;
+    statusTriggered: string;
+    statusUnavailable: string;
+    bistUnavailableHint: string;
+    usUnavailableHint: string;
+    deleteButton: string;
+    emptyList: string;
+    loading: string;
+    loadError: string;
+    existingForSymbol: string;
+  };
 }
