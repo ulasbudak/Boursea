@@ -9,6 +9,8 @@ relatedDocs: ["docs/PRD.md §5.11, §8, §9", "docs/epics.md §13 (Epic 9)"]
 
 # Epic 9 — AI Destekli Yorum ve Örüntü Tanıma: Karar Notu
 
+*İngilizce versiyon: [`docs/product-brief-epic9-ai.en.md`](product-brief-epic9-ai.en.md).*
+
 ## Bağlam
 
 Bu doküman, mevcut Faz 1 MVP backlog'u (Epic 1-8) tamamlandıktan sonra eklenecek bir genişleme için yapılan keşif görüşmesinin gerekçesini kayıt altına alır. Trendus **yatırımcıya açılacak** bir proje olduğundan, burada alınan kararlar — özellikle regülasyon riski — yatırımcı sunumundan önce netleştirilmelidir.

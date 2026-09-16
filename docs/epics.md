@@ -9,6 +9,8 @@ inputDocuments: ["docs/PRD.md", "docs/architecture.md"]
 
 # Trendus — Epic & Story Backlog
 
+*İngilizce versiyon: [`docs/epics.en.md`](epics.en.md).*
+
 ## 1. Genel Bakış
 
 Bu doküman, `docs/PRD.md` ve `docs/architecture.md` temel alınarak Faz 1 (MVP) kapsamındaki fonksiyonel gereksinimleri kullanıcı-değeri odaklı epic'lere ve tek bir geliştirici oturumunda tamamlanabilir story'lere ayırır. UX tasarım dokümanı (`bmad-ux`) henüz üretilmediği için bu backlog PRD + Architecture'a dayanır; UX spesifikasyonu hazırlandığında ilgili epiklere UX-DR (UX Design Requirement) satırları eklenmelidir.

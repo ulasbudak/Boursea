@@ -2,7 +2,9 @@
 
 Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri temel ve teknik analiz parametreleriyle değerlendiren bir borsa takip uygulaması.
 
-İlgili dokümanlar: [`docs/PRD.md`](docs/PRD.md), [`docs/architecture.md`](docs/architecture.md), [`docs/epics.md`](docs/epics.md).
+İlgili dokümanlar (Türkçe / [English](README.en.md)): [`docs/PRD.md`](docs/PRD.md) ([EN](docs/PRD.en.md)), [`docs/architecture.md`](docs/architecture.md) ([EN](docs/architecture.en.md)), [`docs/epics.md`](docs/epics.md) ([EN](docs/epics.en.md)), [`docs/product-brief-epic9-ai.md`](docs/product-brief-epic9-ai.md) ([EN](docs/product-brief-epic9-ai.en.md)).
+
+Türkçe dokümanlar kaynak metindir (source of truth); İngilizce versiyonlar her güncellemede eşlenir. Bkz. [`LICENSE`](LICENSE) — bu proje kapalı kaynaklı, tüm hakları saklıdır.
 
 ## Monorepo Yapısı
 

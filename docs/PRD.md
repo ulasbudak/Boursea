@@ -8,6 +8,8 @@ author: Mary (BMAD Business Analyst) — Serdar Ulaş Budak ile birlikte
 
 # Trendus — PRD
 
+*English version: [`docs/PRD.en.md`](PRD.en.md).*
+
 ## 1. Özet ve Vizyon
 
 **Trendus**, Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri, dünyada en yaygın kullanılan **temel analiz (fundamental)** parametreleriyle değerlendiren ve buna ek olarak kapsamlı bir **teknik analiz** deneyimi sunan; web ve mobil platformlarda çalışan bir yatırım araştırma uygulamasıdır.

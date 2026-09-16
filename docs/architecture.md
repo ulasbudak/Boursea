@@ -9,6 +9,8 @@ based_on: docs/PRD.md
 
 # Trendus — Sistem Mimarisi
 
+*İngilizce versiyon: [`docs/architecture.en.md`](architecture.en.md).*
+
 ## 1. Mimari Paradigma
 
 **"Yönetilen Platformlar Üzerinde Modüler Monolit"**
