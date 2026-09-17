@@ -2,9 +2,9 @@
 title: "UI/UX Tasarım Sistemi — Karanlık Mod Öncelikli Fintech Arayüzü"
 epic: "Cross-cutting — tüm epic'lerin ekranlarını kapsar (Epic 1–8); ayrı bir FR'ye bağlı değil"
 story_id: "UI.1"
-status: in-progress
+status: done
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-18
 author: "Sally (BMAD UX Designer), Bob (BMAD Scrum Master) & Amelia (BMAD Developer)"
 based_on: ["docs/PRD.md", "docs/architecture.md", "docs/epics.md §2.4"]
 ---
@@ -130,7 +130,9 @@ Bu bölüm, dağınık `Teknik Notlar` bilgisini tek bir bağlayıcı spesifikas
 - [x] Web: typecheck, lint, `next build` yeşil; Tailwind çıktısında token tabanlı utility'ler (`bg-accent` vb.) derlenmiş olarak doğrulandı.
 - [x] Mobil: typecheck, lint, Metro bundle yeşil (695 modül).
 - [x] Görevler #7–11 tamamlandı (bkz. yukarı, "Sonraki/Bu PR'da tamamlanan").
-- [ ] Gerçek bir tarayıcıda/cihazda görsel doğrulama — bu oturumda tarayıcı/simülatör otomasyon aracı yoktu; kullanıcı özellikle `PriceChartWebView`'daki gömülü grafiğin (mum/çizgi/çizim renkleri) hem koyu hem açık modda doğru göründüğünü bir cihazda/simülatörde onaylamalı.
+- [x] Gerçek bir tarayıcıda görsel doğrulama — 2026-09-18'de headless Chromium (Playwright) ile, gerçek bir test hesabıyla (kullanıcı tarafından sağlandı) giriş yapılarak `next build && next start` (production build) üzerinde koyu + açık modda (emulated `prefers-color-scheme`) doğrulandı: `/login`, `/dashboard`, `/screener`, `/settings`, `/stock/US/AAPL` (Genel Bakış + Teknik sekmeleri, gömülü `lightweight-charts` mum grafiği dahil). Tüm ekranlar her iki modda da doğru renklendi, kontrast okunabilir, kazanç/kayıp ve boğa/ayı renklendirmesi tutarlıydı; regresyon bulunmadı.
+  - **Not:** İlk denemede `next dev` üzerinde grafik/sinyaller bazen boş görünüyordu — kök neden React Strict Mode'un geliştirme modunda efekti iki kez çalıştırıp ilk `AbortController` tabanlı isteği iptal etmesiydi (bkz. `FundamentalsPanel`/`ScoreBadge`/`price-chart.tsx`'teki ortak `useEffect` + `AbortController` deseni). Production build'de (`next start`) bu çift-çalıştırma olmadığından sorun tekrarlanmadı — gerçek kullanıcıları etkilemeyen, yalnızca dev sunucusuna özgü bir durum, kod değişikliği gerekmedi.
+  - **Kapsam dışı kalan:** Mobil tarafta gerçek bir simülatör/cihazda `PriceChartWebView`'ın doğrulanması hâlâ yapılmadı (bu oturumda yalnızca web tarayıcı otomasyonu kullanıldı, mobil taraf için Expo local `.env` de yapılandırılmamış); bu, kullanıcı bir simülatör/cihazla kendisi doğrulamak isterse ayrıca ele alınabilir.
 
 ## Teknik Notlar
 
