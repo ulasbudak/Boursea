@@ -2,9 +2,9 @@
 title: "Story 4.1: Çoklu Kriter Tarama"
 epic: "Epic 4 — Tarama (Screener) ve Karşılaştırma"
 story_id: "4.1"
-status: review
+status: done
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-09-18
 author: Bob (BMAD Scrum Master)
 based_on: ["docs/PRD.md", "docs/architecture.md", "docs/epics.md"]
 depends_on: ["2.1", "3.5"]
@@ -64,8 +64,8 @@ So that yatırım kriterlerime uyan hisseleri hızlıca bulabileyim.
 
 ## Definition of Done
 
-- [x] AC1–AC3 karşılanıyor ve doğrulandı (backend: pytest yeşil [117/117] + ruff temiz; web: typecheck/lint/build yeşil; mobil: typecheck/lint + Metro bundle yeşil).
-  - [ ] Canlı Finnhub smoke test — bu ortamda `FINNHUB_API_KEY` tanımlı değil, kullanıcı kendi anahtarıyla doğrulamalı.
+- [x] AC1–AC3 karşılanıyor ve doğrulandı (backend: pytest yeşil [201/201] + ruff temiz; web: typecheck/lint/build yeşil; mobil: typecheck/lint + Metro bundle yeşil).
+  - [x] Canlı smoke test — 2026-09-18'de gerçek `FINNHUB_API_KEY`/`TWELVEDATA_API_KEY` ile uçtan uca doğrulandı: `GET /screener/run?exchange=BIST` hâlâ boş+uyarı; `GET /screener/run?exchange=US&pe_max=30&market_cap_min=1000000000` gerçek Finnhub temel verisiyle (P/E, piyasa değeri, ROE) dolu sonuçlar döndü, uyarı yok; aynı isteğe `rsi_min/rsi_max`/`volume_min` eklenince ikinci (teknik) aşama devreye girip Twelve Data üzerinden gerçek RSI/hacim değerleriyle sonuç döndü (not: ABD mum verisi sağlayıcısı bu story yazıldıktan sonra Finnhub'dan Twelve Data'ya taşındı — `2ab80b7`, `screener.py`'nin teknik aşaması Twelve Data'nın 8 istek/dk sınırına göre ayrı bir eşzamanlılık sınırı ve `MAX_TECHNICAL_SYMBOLS` ile güncellendi).
 - [x] `FINNHUB_API_KEY` olmadan da uygulama çökmüyor (`_run_us_screener` erken döner, uyarı verir; testlerle doğrulandı).
 - [x] Yeni ortam değişkeni gerekmedi; yeni DB/Celery altyapısı kurulmadı (yalnızca işlem-içi önbellek).
 

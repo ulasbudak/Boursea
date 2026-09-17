@@ -318,7 +318,7 @@ So that "al/sat önerisi"ne ne kadar güvenebileceğimi ve neye dayandığını 
 
 ### Story 4.1: Çoklu Kriter Tarama
 
-- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-4.1.md`**. Backend (`GET /screener/run`: temel+teknik kriterleri birleştiren, işlem-içi önbellekli tarama motoru), web (`/screener` sayfası) ve mobil (`ScreenerScreen`) uygulandı ve doğrulandı. Canlı Finnhub anahtarıyla uçtan uca doğrulama kullanıcı tarafında yapılmalı.
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-4.1.md`**. Backend (`GET /screener/run`: temel+teknik kriterleri birleştiren, işlem-içi önbellekli tarama motoru), web (`/screener` sayfası) ve mobil (`ScreenerScreen`) uygulandı ve doğrulandı. Canlı uçtan uca doğrulama 2026-09-18'de gerçek Finnhub/Twelve Data anahtarlarıyla yapıldı.
 
 As a **aktif trader**,
 I want piyasa değeri, F/K, RSI, hacim, sektör, borsa gibi kriterleri birleştirerek hisse taraması yapmak,
