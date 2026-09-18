@@ -14,6 +14,7 @@ from app.alerts import (
     list_alerts,
 )
 from app.auth import get_current_claims
+from app.bulletins import Bulletin, get_or_create_todays_bulletin, list_bulletins
 from app.comparison import MAX_COMPARISON_SYMBOLS, ComparisonEntry, compare_symbols
 from app.config import get_settings
 from app.db import check_database_connection
@@ -24,6 +25,7 @@ from app.entitlements import (
     enforce_alert_limit,
     enforce_portfolio_limit,
     enforce_signal_alert_limit,
+    enforce_simulation_limit,
     enforce_watchlist_item_limit,
     get_entitlement,
 )
@@ -86,6 +88,22 @@ from app.signal_alerts import create_alert as create_signal_alert
 from app.signal_alerts import delete_alert as delete_signal_alert
 from app.signal_alerts import evaluate_and_persist as evaluate_signal_alerts
 from app.signal_alerts import list_alerts as list_signal_alerts
+from app.simulations import (
+    InsufficientFundsError,
+    Simulation,
+    SimulationNotFoundError,
+    SimulationPosition,
+    SnapshotPoint,
+    create_simulation,
+    delete_simulation,
+    get_history,
+    list_simulations,
+    place_order,
+    value_simulations,
+)
+from app.simulations import (
+    InsufficientQuantityError as InsufficientSimulationQuantityError,
+)
 from app.technical import SignalRecord, evaluate_signals
 from app.watchlists import (
     Watchlist,
@@ -368,6 +386,34 @@ async def get_technical_ai_report_endpoint(
         warnings.append("AI rapor verisi şu an sağlanamıyor.")
 
     return {"report": report, "warnings": warnings}
+
+
+BulletinsResponse = dict[str, list[Bulletin] | list[str]]
+
+
+@app.get("/bulletins")
+async def get_bulletins_endpoint(claims: dict = Depends(get_current_claims)) -> BulletinsResponse:
+    try:
+        enforce_ai_reports_access(claims["sub"])
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
+
+    warnings: list[str] = []
+    try:
+        await get_or_create_todays_bulletin()
+    except AIReportUnavailableError as exc:
+        warnings.append(str(exc))
+    except psycopg.Error:
+        warnings.append("Bülten verisi şu an sağlanamıyor.")
+
+    try:
+        bulletins = list_bulletins()
+    except psycopg.Error:
+        bulletins = []
+        if not warnings:
+            warnings.append("Bülten verisi şu an sağlanamıyor.")
+
+    return {"bulletins": bulletins, "warnings": warnings}
 
 
 ScreenerResponse = dict[str, list[ScreenerResult] | list[str]]
@@ -866,6 +912,125 @@ def delete_position_endpoint(
     except psycopg.Error as exc:
         raise _portfolios_unavailable() from exc
     return Response(status_code=204)
+
+
+def _simulations_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="Simülasyon verisi şu an sağlanamıyor.")
+
+
+class CreateSimulationRequest(BaseModel):
+    name: str
+    starting_budget: float
+
+
+class PlaceOrderRequest(BaseModel):
+    symbol: str
+    exchange: str
+    name: str | None = None
+    quantity: float
+    side: str
+
+
+SimulationsResponse = dict[str, list[Simulation] | list[str]]
+
+
+@app.get("/simulations")
+async def get_simulations(claims: dict = Depends(get_current_claims)) -> SimulationsResponse:
+    try:
+        simulations = list_simulations(claims["sub"])
+    except psycopg.Error as exc:
+        raise _simulations_unavailable() from exc
+    valued, warnings = await value_simulations(simulations)
+    return {"simulations": valued, "warnings": warnings}
+
+
+@app.post("/simulations", status_code=201)
+def post_simulation(
+    body: CreateSimulationRequest, claims: dict = Depends(get_current_claims)
+) -> Simulation:
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+    if body.starting_budget <= 0:
+        raise HTTPException(status_code=400, detail="starting_budget must be positive")
+    try:
+        enforce_simulation_limit(claims["sub"])
+        return create_simulation(claims["sub"], name, body.starting_budget)
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
+    except psycopg.Error as exc:
+        raise _simulations_unavailable() from exc
+
+
+@app.delete("/simulations/{simulation_id}", status_code=204)
+def delete_simulation_endpoint(
+    simulation_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        delete_simulation(claims["sub"], simulation_id)
+    except SimulationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Simulation not found") from exc
+    except psycopg.Error as exc:
+        raise _simulations_unavailable() from exc
+    return Response(status_code=204)
+
+
+@app.post("/simulations/{simulation_id}/orders", status_code=201)
+async def post_order(
+    simulation_id: str, body: PlaceOrderRequest, claims: dict = Depends(get_current_claims)
+) -> SimulationPosition:
+    symbol = body.symbol.strip()
+    if not symbol:
+        raise HTTPException(status_code=400, detail="symbol is required")
+    exchange = body.exchange.strip().upper()
+    if exchange not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    side = body.side.strip().lower()
+    if side not in ("buy", "sell"):
+        raise HTTPException(status_code=400, detail="side must be buy or sell")
+    if body.quantity <= 0:
+        raise HTTPException(status_code=400, detail="quantity must be positive")
+    try:
+        return await place_order(
+            claims["sub"],
+            simulation_id,
+            symbol=symbol,
+            exchange=exchange,
+            name=body.name,
+            quantity=body.quantity,
+            side=side,
+        )
+    except SimulationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Simulation not found") from exc
+    except InsufficientFundsError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Yetersiz bakiye: {exc} için bu miktarda alım yapmaya nakit yetmiyor.",
+        ) from exc
+    except InsufficientSimulationQuantityError as exc:
+        raise HTTPException(
+            status_code=400, detail="cannot sell more than the current position quantity"
+        ) from exc
+    except MarketDataUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except psycopg.Error as exc:
+        raise _simulations_unavailable() from exc
+
+
+SimulationHistoryResponse = dict[str, list[SnapshotPoint] | list[str]]
+
+
+@app.get("/simulations/{simulation_id}/history")
+async def get_simulation_history(
+    simulation_id: str, claims: dict = Depends(get_current_claims)
+) -> SimulationHistoryResponse:
+    try:
+        snapshots = await get_history(claims["sub"], simulation_id)
+    except SimulationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Simulation not found") from exc
+    except psycopg.Error as exc:
+        raise _simulations_unavailable() from exc
+    return {"history": snapshots, "warnings": []}
 
 
 HighlightsResponse = dict[str, list[Highlight] | list[str]]

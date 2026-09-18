@@ -92,3 +92,15 @@ Yeni geliştirme gerekmiyor — `app/scoring.py`'deki `compute_score()` (Story 3
 - **Entitlement genişletmesi**: `Entitlement.ai_reports: bool`, backend'de zorlanıyor (403) — Story 8.1'in gelişmiş-indikatör kilidinden farklı olarak, burada gerçek para/CPU maliyeti olduğu için yalnızca istemci tarafı gizleme yeterli değil.
 
 Detaylı uygulama planı: bkz. Story 9.1 (`docs/stories/story-9.1.md`, artık "Temel Analiz AI Raporu") ve Story 9.2 (`docs/stories/story-9.2.md`, artık "Teknik Analiz AI Raporu — CV Modeli").
+
+## 2026-09-19 Güncellemesi: Story 9.3 — Günlük Sektör Bülteni
+
+Kullanıcı, dashboard'da her gün üstüne yeni bir tane eklenen, hiç silinmeyen bir AI sektör bülteni istedi (bir sektör + o sektördeki görece iyi hisselerin analizi, premium'a özel). Bu, Epic 9'un kapsamına giren dördüncü bir AI özelliği.
+
+**Zamanlama kararı:** Kullanıcıya açıkça soruldu — proje boyunca hiçbir zamanlanmış görev (Celery/cron) altyapısı kurulmadı, her şey istek anında hesaplanıyor. Kullanıcı, yeni bir cron/Railway job kurmak yerine **istek-anında üretim + kalıcı arşiv** yaklaşımını onayladı: günün ilk isteğinde bülten üretilir, kalıcı olarak eklenir; ertesi gün başka bir istek geldiğinde o günün bülteni **ayrıca** üretilip eskilerin üzerine eklenir (asla silinmez/üzerine yazılmaz).
+
+**Veri deseni:** Story 9.1/9.2'nin `ai_reports` tablosu tek-satır-üzerine-yaz önbellek deseni için tasarlandığından, bülten için ayrı bir `sector_bulletins` tablosu kuruldu (append-only, `bulletin_date unique`).
+
+**Sektör/hisse seçimi:** Sektör, `ALL_SECTORS`'tan (11 sektör) `day_of_year % 11` deterministik rotasyonla seçiliyor (sıfır ek API maliyeti). Sektördeki hisseler mevcut kural bazlı skor motoruyla (Story 3.6/3.7) puanlanıp en yüksek 5'i seçiliyor — yeni bir seçim algoritması icat edilmedi, var olan altyapı tekrar kullanıldı.
+
+Detaylı plan: `docs/stories/story-9.3.md`.

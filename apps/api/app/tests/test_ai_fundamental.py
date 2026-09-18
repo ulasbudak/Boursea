@@ -14,7 +14,7 @@ NOW = datetime(2026, 1, 1, tzinfo=UTC)
 @pytest.fixture(autouse=True)
 def patch_settings(monkeypatch):
     monkeypatch.setattr(
-        ai_fundamental,
+        ai_reports,
         "get_settings",
         lambda: Settings(anthropic_api_key="test-key", anthropic_model="claude-test"),
     )
@@ -119,7 +119,7 @@ async def test_generates_and_saves_report_on_cache_miss(monkeypatch):
 
 @pytest.mark.anyio
 async def test_raises_when_anthropic_key_missing(monkeypatch):
-    monkeypatch.setattr(ai_fundamental, "get_settings", lambda: Settings(anthropic_api_key=""))
+    monkeypatch.setattr(ai_reports, "get_settings", lambda: Settings(anthropic_api_key=""))
     monkeypatch.setattr(ai_fundamental, "get_cached_report", lambda *a, **k: None)
 
     async def fake_get_us_fundamentals(symbol, *, client=None):

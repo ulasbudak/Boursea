@@ -37,7 +37,7 @@ export function Highlights({ onSelectResult }: { onSelectResult: (result: Symbol
     };
   }, []);
 
-  if (highlights === null) return null;
+  if (highlights === null) return <Text style={styles.emptyText}>{messages.common.loading}</Text>;
 
   if (highlights.length === 0) {
     return (

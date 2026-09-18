@@ -121,6 +121,14 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 - **FR-101** [F2 — MVP sonrası ilk öncelik] Sistem, fiyat grafiğinden üretilen bir candlestick görüntüsü üzerinde, **önceden eğitilmiş bir görüntü-tanıma (CV) modeliyle** grafik okuması yapmalıdır (model seçimi ve gerekçesi: `docs/product-brief-epic9-ai.md` §"2026-09-18 Güncellemesi" — MIT lisanslı, hazır ağırlıklı bir YOLOv8 modeli). Çıktı, mevcut sinyal motoruyla (FR-024) aynı hukuki çerçevede, deterministik skordan **ayrı ve açıkça etiketlenmiş bir "modelin okuması"** olarak sunulmalı; "AI trading stratejisi" gibi tavsiye niteliğinde bir dille konumlandırılmamalıdır (bkz. Bölüm 9, yatırım danışmanlığı sınırı). Bu özellik premium katmana bağlıdır ve sembol başına önbelleğe alınır.
 - **FR-102** [F2 — FR-025'in genişletilmiş hali] FR-101'de kullanılan hazır (üçüncü taraf) modelin ötesinde, uygulamanın **kendi verisiyle eğitilmiş/fine-tune edilmiş** bir ML modeliyle örüntü tanıma/olasılıksal sinyal skorlaması yapılmalıdır. Bu, FR-025'te tanımlanan işin somut bir uygulamasıdır; ayrı bir veri/ML altyapısı (etiketleme, eğitim, değerlendirme, yeniden eğitim döngüsü) gerektirdiğinden Faz 2'nin ilerleyen bir alt-fazında, FR-100/FR-101 üretime alındıktan sonra ele alınmalıdır.
 
+### 5.12 Alım-Satım Simülasyonu (Paper Trading)
+
+> **Analist notu (2026-09-19):** Kullanıcı isteği üzerine backlog'a eklenen, önceden hiçbir yerde planlanmamış yeni bir kapsam — Epic 10 olarak MVP sonrası **hemen** (Epic 9 ile eş zamanlı) geliştiriliyor. Gerçek para/aracı kurum bağlantısı **yok** (bkz. Bölüm 10, kapsam dışı); tamamen sanal bir bütçeyle, gerçek piyasa fiyatlarından yürütülen bir kum havuzu. Mevcut Portföy özelliğinden (FR-050/051/052) kasıtlı olarak ayrı: Portföy kullanıcının gerçekten sahip olduğu pozisyonları elle girilen fiyatlarla kaydeder (bütçe kısıtı yok); bu özellik ise bütçe kısıtlı ve emirler gerçek anlık fiyattan otomatik yürütülür.
+
+- **FR-110** Sistem, kullanıcının bir başlangıç bütçesi (sanal nakit) belirleyerek bir alım-satım simülasyonu oluşturmasına izin vermelidir. Bu özellik, mevcut freemium sınırlamasıyla aynı desende (bkz. FR-080-083) ücretsiz katmanda sınırlı (1 simülasyon), premium katmanda sınırsızdır.
+- **FR-111** Sistem, simülasyon içinde bir sembol için alım/satım emri verildiğinde, emri **kullanıcının girdiği bir fiyattan değil, o anki gerçek piyasa fiyatından** yürütmelidir. Alım emri, emrin maliyeti simülasyonun nakit bakiyesini aşıyorsa reddedilmelidir; satım emri, elde tutulan miktarı aşıyorsa reddedilmelidir. Yalnızca ABD hisseleri desteklenir (BIST için canlı fiyat kaynağı yok, bkz. FR-041).
+- **FR-112** Sistem, her simülasyon için günlük toplam değer (nakit + pozisyon değeri) ve kâr/zarar geçmişini göstermelidir. Zamanlanmış bir arka plan işi (cron) kurulmadığından (bkz. mimari kısıt, Epic 9/Story 9.3'te de aynı yaklaşım), günün kaydı kullanıcı simülasyonu her açtığında veya her emirden sonra yeniden hesaplanır; geçmiş günlerin kayıtları bir daha değiştirilmez.
+
 ## 6. Fonksiyonel Olmayan Gereksinimler (NFR)
 
 | Kategori | Gereksinim |
@@ -149,7 +157,8 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 - **Faz 1 (MVP):** FR-001, 002, 003, 010, 011, 013, 020-024, 030-032, 040-043, 050-052, 060-062, 070, 080-083, 090-091.
 - **Faz 2 (öncelik sırasına göre):**
   1. **FR-100, FR-101** (AI destekli hisse yorumu + deterministik grafik örüntü tanıma) — kullanıcı tarafından MVP sonrası **ilk öncelik** olarak belirlendi (bkz. `docs/product-brief-epic9-ai.md`), Epic 9 olarak backlog'a eklendi.
-  2. **FR-102** (ML tabanlı örüntü tanıma — FR-025'in genişletilmiş hali), FR-012 (özelleştirilebilir skor ağırlıklandırma), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS) — sıralama arasında henüz kesin öncelik belirlenmedi.
+  2. **FR-110, FR-111, FR-112** (Alım-satım simülasyonu/paper trading) — kullanıcı isteği (2026-09-19), Epic 9 ile eş zamanlı, Epic 10 olarak backlog'a eklendi.
+  3. **FR-102** (ML tabanlı örüntü tanıma — FR-025'in genişletilmiş hali), FR-012 (özelleştirilebilir skor ağırlıklandırma), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS) — sıralama arasında henüz kesin öncelik belirlenmedi.
 - **Kapsam dışı (şimdilik):** Kripto/döviz varlık sınıfları, sosyal/topluluk özellikleri, gerçek alım-satım emri iletimi (brokerage entegrasyonu).
 
 ## 9. Açık Sorular ve Varsayımlar
@@ -165,6 +174,6 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 
 ## 10. Kapsam Dışı (Explicit Out of Scope)
 
-- Gerçek alım-satım emri iletimi / aracı kurum entegrasyonu.
+- Gerçek alım-satım emri iletimi / aracı kurum entegrasyonu. (FR-110/111/112'deki simülasyon bu maddenin bir istisnası değil — tamamen sanal bütçe/nakit, hiçbir gerçek emir hiçbir aracı kuruma iletilmiyor.)
 - Kripto para, döviz, emtia gibi hisse dışı varlık sınıfları (Faz 1).
 - Kullanıcılar arası sosyal etkileşim (yorum, paylaşım, takip) özellikleri.

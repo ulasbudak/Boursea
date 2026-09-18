@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Messages } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { TextBlockSkeleton } from "@/components/ui/skeleton";
 import { fetchEntitlement } from "@/lib/entitlements-client";
 import {
   fetchFundamentalAIReport,
@@ -58,8 +59,17 @@ function FundamentalReportCard({
           {t.generateButton}
         </Button>
       )}
-      {state.status === "loading" && <p className="text-sm text-text-tertiary">{t.generating}</p>}
-      {state.status === "error" && <p className="text-sm text-negative">{state.message}</p>}
+      {state.status === "loading" && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-text-tertiary">{t.generating}</p>
+          <TextBlockSkeleton />
+        </div>
+      )}
+      {state.status === "error" && (
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {state.message}
+        </p>
+      )}
       {state.status === "loaded" && (
         <>
           <p className="whitespace-pre-line text-sm text-text-secondary">{state.report.report}</p>
@@ -115,8 +125,17 @@ function TechnicalReportCard({
           {t.generateButton}
         </Button>
       )}
-      {state.status === "loading" && <p className="text-sm text-text-tertiary">{t.generating}</p>}
-      {state.status === "error" && <p className="text-sm text-negative">{state.message}</p>}
+      {state.status === "loading" && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-text-tertiary">{t.generating}</p>
+          <TextBlockSkeleton />
+        </div>
+      )}
+      {state.status === "error" && (
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {state.message}
+        </p>
+      )}
       {state.status === "loaded" && (
         <>
           <p className="whitespace-pre-line text-sm text-text-secondary">{state.report.report}</p>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Messages } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ScoreFactor = {
   name: string;
@@ -83,7 +84,13 @@ export function ScoreBadge({
   if (loading) {
     return (
       <Card>
-        <p className="text-sm text-text-tertiary">{t.common.loading}</p>
+        <Skeleton className="mb-3 h-3 w-20" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-9 w-16" />
+          <Skeleton className="h-6 w-14 rounded-full" />
+        </div>
+        <Skeleton className="mt-3 h-4 w-full" />
+        <Skeleton className="mt-2 h-4 w-2/3" />
       </Card>
     );
   }

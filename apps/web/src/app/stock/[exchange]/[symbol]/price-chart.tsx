@@ -25,6 +25,7 @@ import {
 } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
 import { IconInput, Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import { fetchEntitlement } from "@/lib/entitlements-client";
 import { SignalList } from "./signal-list";
@@ -578,9 +579,11 @@ export function PriceChart({
       </Card>
 
       <Card>
-        {loading && <p className="mb-2 text-xs text-text-tertiary">{t.common.loading}</p>}
         {fetchFailed && (
-          <p role="alert" className="mb-2 text-xs text-negative">
+          <p
+            role="alert"
+            className="mb-2 rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-xs text-negative"
+          >
             {t.common.dataUnavailable}
           </p>
         )}
@@ -591,7 +594,10 @@ export function PriceChart({
             </p>
           ))}
 
-        <div ref={containerRef} style={{ width: "100%" }} />
+        <div className="relative" style={{ width: "100%" }}>
+          {loading && <Skeleton className="absolute inset-0 z-10 h-full w-full" />}
+          <div ref={containerRef} style={{ width: "100%" }} />
+        </div>
       </Card>
 
       <SignalList exchange={exchange} symbol={symbol} messages={t} />

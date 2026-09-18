@@ -109,7 +109,11 @@ export function WatchlistView({ messages }: { messages: Messages["watchlist"] })
         </form>
       </Card>
 
-      {error && <p className="text-sm text-negative">{error}</p>}
+      {error && (
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {error}
+        </p>
+      )}
 
       {watchlists === null && !error && <p className="text-sm text-text-tertiary">{t.loading}</p>}
 

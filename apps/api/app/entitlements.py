@@ -5,6 +5,7 @@ from app.alerts import list_alerts
 from app.db import get_connection
 from app.portfolios import list_portfolios
 from app.signal_alerts import list_alerts as list_signal_alerts
+from app.simulations import list_simulations
 from app.watchlists import list_watchlists
 
 # Story 8.2 (RevenueCat/Stripe purchase flow) hasn't shipped yet — every user without a row
@@ -14,6 +15,7 @@ FREE_WATCHLIST_ITEM_LIMIT = 10
 FREE_ALERT_LIMIT = 3
 FREE_SIGNAL_ALERT_LIMIT = 3
 FREE_PORTFOLIO_LIMIT = 1
+FREE_SIMULATION_LIMIT = 1
 
 
 class Entitlement(BaseModel):
@@ -22,6 +24,7 @@ class Entitlement(BaseModel):
     alert_limit: int | None
     signal_alert_limit: int | None
     portfolio_limit: int | None
+    simulation_limit: int | None
     advanced_indicators: bool
     realtime_data: bool
     ai_reports: bool
@@ -48,6 +51,7 @@ def get_entitlement(user_id: str) -> Entitlement:
             alert_limit=None,
             signal_alert_limit=None,
             portfolio_limit=None,
+            simulation_limit=None,
             advanced_indicators=True,
             realtime_data=True,
             ai_reports=True,
@@ -58,6 +62,7 @@ def get_entitlement(user_id: str) -> Entitlement:
         alert_limit=FREE_ALERT_LIMIT,
         signal_alert_limit=FREE_SIGNAL_ALERT_LIMIT,
         portfolio_limit=FREE_PORTFOLIO_LIMIT,
+        simulation_limit=FREE_SIMULATION_LIMIT,
         advanced_indicators=False,
         realtime_data=False,
         ai_reports=False,
@@ -107,6 +112,17 @@ def enforce_portfolio_limit(user_id: str) -> None:
     if len(list_portfolios(user_id)) >= entitlement.portfolio_limit:
         raise EntitlementLimitError(
             f"Ücretsiz katmanda en fazla {entitlement.portfolio_limit} portföy "
+            "oluşturabilirsin. Sınırsız için premium'a geç."
+        )
+
+
+def enforce_simulation_limit(user_id: str) -> None:
+    entitlement = get_entitlement(user_id)
+    if entitlement.simulation_limit is None:
+        return
+    if len(list_simulations(user_id)) >= entitlement.simulation_limit:
+        raise EntitlementLimitError(
+            f"Ücretsiz katmanda en fazla {entitlement.simulation_limit} simülasyon "
             "oluşturabilirsin. Sınırsız için premium'a geç."
         )
 

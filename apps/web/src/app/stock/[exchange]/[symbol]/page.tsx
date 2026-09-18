@@ -1,10 +1,10 @@
-import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { formatChange, formatMarketCap, formatPrice, messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge, ChangeValue } from "@/components/ui/change-value";
+import { StatTable, type StatRow } from "@/components/ui/stat-table";
 import { StockTabs } from "./stock-tabs";
 import { ScoreBadge } from "./score-badge";
 import { AddToWatchlistButton } from "./add-to-watchlist-button";
@@ -67,13 +67,15 @@ export default async function StockDetailPage({
   const overview = overviewData?.overview ?? null;
   const warnings = overviewData?.warnings ?? [];
 
-  const statRows: { label: string; value: ReactNode }[] = [
+  const statRows: StatRow[] = [
     {
+      key: "price",
       label: t.stock.price,
       value:
         overview?.price != null ? formatPrice(overview.price, overview.currency, locale) : t.common.noData,
     },
     {
+      key: "change",
       label: t.stock.change,
       value:
         overview?.change_abs != null && overview?.change_pct != null ? (
@@ -85,14 +87,15 @@ export default async function StockDetailPage({
         ),
     },
     {
+      key: "market_cap",
       label: t.stock.marketCap,
       value:
         overview?.market_cap != null
           ? formatMarketCap(overview.market_cap, overview.currency, locale)
           : t.common.noData,
     },
-    { label: t.stock.sector, value: overview?.sector ?? t.common.noData },
-    { label: t.stock.industry, value: overview?.industry ?? t.common.noData },
+    { key: "sector", label: t.stock.sector, value: overview?.sector ?? t.common.noData },
+    { key: "industry", label: t.stock.industry, value: overview?.industry ?? t.common.noData },
   ];
 
   const overviewContent = (
@@ -101,7 +104,11 @@ export default async function StockDetailPage({
 
       <DataDelayDisclosure messages={t.billing} />
 
-      {fetchFailed && <p className="text-sm text-negative">{t.common.dataUnavailable}</p>}
+      {fetchFailed && (
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {t.common.dataUnavailable}
+        </p>
+      )}
       {!fetchFailed &&
         warnings.map((warning) => (
           <p key={warning} className="text-xs text-warning">
@@ -109,18 +116,7 @@ export default async function StockDetailPage({
           </p>
         ))}
 
-      {!fetchFailed && (
-        <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
-          <dl className="grid grid-cols-1 divide-y divide-border-subtle sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            {statRows.map((row) => (
-              <div key={row.label} className="flex items-center justify-between px-4 py-3">
-                <dt className="text-sm text-text-secondary">{row.label}</dt>
-                <dd className="tabular-nums font-medium text-text-primary">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      )}
+      {!fetchFailed && <StatTable rows={statRows} />}
 
       <StockNoteCard symbol={symbol.toUpperCase()} exchange={exchange.toUpperCase()} messages={t.notes} />
     </div>

@@ -76,7 +76,11 @@ export function SignalList({
       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
         {t.signals.title}
       </p>
-      {fetchFailed && <p className="text-sm text-negative">{t.common.dataUnavailable}</p>}
+      {fetchFailed && (
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {t.common.dataUnavailable}
+        </p>
+      )}
       {!fetchFailed &&
         warnings.map((warning) => (
           <p key={warning} className="mb-2 text-xs text-warning">

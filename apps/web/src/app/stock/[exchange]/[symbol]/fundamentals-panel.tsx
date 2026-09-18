@@ -10,6 +10,8 @@ import {
 } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
 import { ChangeValue } from "@/components/ui/change-value";
+import { StatTable, type StatRow } from "@/components/ui/stat-table";
+import { StatTableSkeleton } from "@/components/ui/skeleton";
 import { HistoricalPerformanceChart } from "./historical-performance-chart";
 
 type FundamentalsSnapshot = {
@@ -111,18 +113,16 @@ export function FundamentalsPanel({
   ];
 
   if (loading) {
-    return (
-      <Card>
-        <p className="text-sm text-text-tertiary">{t.common.loading}</p>
-      </Card>
-    );
+    return <StatTableSkeleton rows={8} />;
   }
 
   return (
     <div>
       {fetchFailed && (
         <Card>
-          <p className="text-sm text-negative">{t.common.dataUnavailable}</p>
+          <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+            {t.common.dataUnavailable}
+          </p>
         </Card>
       )}
       {!fetchFailed &&
@@ -132,44 +132,33 @@ export function FundamentalsPanel({
           </p>
         ))}
       {!fetchFailed && (
-        <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
-          <dl className="grid grid-cols-1 divide-y divide-border-subtle sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            {rows.map((row, i) => {
-              const value = snapshot?.[row.key] ?? null;
-              const comparison = sectorComparison?.[row.key] ?? null;
-              return (
-                <div
-                  key={row.key}
-                  className={`flex items-center justify-between gap-3 px-4 py-3 ${
-                    i % 2 === 1 ? "sm:border-l-0" : ""
-                  }`}
-                >
-                  <dt className="text-sm text-text-secondary">{row.label}</dt>
-                  <dd className="flex flex-col items-end gap-0.5 text-right">
-                    <span className="tabular-nums font-medium text-text-primary">
-                      {value != null ? row.format(value) : t.common.noData}
-                    </span>
-                    {comparison?.sector_average != null ? (
-                      <span className="text-xs text-text-tertiary">
-                        {t.fundamentals.sectorAverage}: {row.format(comparison.sector_average)}
-                        {comparison.diff_pct != null && (
-                          <>
-                            {" "}
-                            <ChangeValue value={comparison.diff_pct}>
-                              ({formatSignedPercent(comparison.diff_pct, locale)})
-                            </ChangeValue>
-                          </>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-text-tertiary">{t.fundamentals.noSectorData}</span>
+        <StatTable
+          rows={rows.map((row): StatRow => {
+            const value = snapshot?.[row.key] ?? null;
+            const comparison = sectorComparison?.[row.key] ?? null;
+            return {
+              key: row.key,
+              label: row.label,
+              value: value != null ? row.format(value) : t.common.noData,
+              detail:
+                comparison?.sector_average != null ? (
+                  <span className="text-xs text-text-tertiary">
+                    {t.fundamentals.sectorAverage}: {row.format(comparison.sector_average)}
+                    {comparison.diff_pct != null && (
+                      <>
+                        {" "}
+                        <ChangeValue value={comparison.diff_pct}>
+                          ({formatSignedPercent(comparison.diff_pct, locale)})
+                        </ChangeValue>
+                      </>
                     )}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
-        </div>
+                  </span>
+                ) : (
+                  <span className="text-xs text-text-tertiary">{t.fundamentals.noSectorData}</span>
+                ),
+            };
+          })}
+        />
       )}
 
       <div className="mt-4">

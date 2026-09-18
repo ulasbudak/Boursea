@@ -324,6 +324,49 @@ export interface Messages {
     columnValue: string;
     columnPnl: string;
   };
+  simulation: {
+    title: string;
+    backToDashboard: string;
+    newSimulationPlaceholder: string;
+    budgetPlaceholder: string;
+    createSimulationButton: string;
+    deleteSimulationButton: string;
+    deleteSimulationConfirm: string;
+    startingBudgetLabel: string;
+    cashBalanceLabel: string;
+    positionsValueLabel: string;
+    totalEquityLabel: string;
+    totalPnlLabel: string;
+    placeOrderButton: string;
+    formTitle: string;
+    symbolLabel: string;
+    symbolPlaceholder: string;
+    exchangeLabel: string;
+    exchangeUs: string;
+    exchangeBist: string;
+    quantityLabel: string;
+    sideLabel: string;
+    sideBuy: string;
+    sideSell: string;
+    saveButton: string;
+    saving: string;
+    cancelButton: string;
+    emptyPositions: string;
+    noSimulations: string;
+    noSimulationsHint: string;
+    loading: string;
+    loadError: string;
+    priceUnavailable: string;
+    columnSymbol: string;
+    columnQuantity: string;
+    columnAvgCost: string;
+    columnPrice: string;
+    columnValue: string;
+    columnPnl: string;
+    historyTitle: string;
+    noHistoryYet: string;
+    realTimeExecutionNote: string;
+  };
   personalization: {
     interestSectorsTitle: string;
     interestSectorsHint: string;
@@ -374,5 +417,16 @@ export interface Messages {
     technicalDisclaimer: string;
     fundamentalDisclaimer: string;
     bistUnsupported: string;
+  };
+  bulletin: {
+    title: string;
+    loading: string;
+    loadError: string;
+    empty: string;
+    lockedMessage: string;
+    picksLabel: string;
+    disclaimer: string;
+    readMoreLabel: string;
+    readLessLabel: string;
   };
 }

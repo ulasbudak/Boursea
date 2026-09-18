@@ -10,6 +10,7 @@ from app.auth import get_current_claims
 from app.entitlements import EntitlementLimitError
 from app.portfolios import Portfolio
 from app.signal_alerts import SignalAlert
+from app.simulations import Simulation
 from app.watchlists import Watchlist, WatchlistItem
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
@@ -81,6 +82,7 @@ def test_get_entitlement_free_has_limits(monkeypatch):
 
     assert result.tier == "free"
     assert result.watchlist_item_limit == entitlements.FREE_WATCHLIST_ITEM_LIMIT
+    assert result.simulation_limit == entitlements.FREE_SIMULATION_LIMIT
     assert result.advanced_indicators is False
     assert result.realtime_data is False
     assert result.ai_reports is False
@@ -94,6 +96,7 @@ def test_get_entitlement_premium_is_unlimited(monkeypatch):
     assert result.tier == "premium"
     assert result.watchlist_item_limit is None
     assert result.alert_limit is None
+    assert result.simulation_limit is None
     assert result.advanced_indicators is True
     assert result.ai_reports is True
 
@@ -185,6 +188,35 @@ def test_enforce_portfolio_limit_blocks_when_at_cap(monkeypatch):
         entitlements.enforce_portfolio_limit("user-1")
 
 
+def test_enforce_simulation_limit_allows_premium(monkeypatch):
+    def unexpected_call(user_id):
+        raise AssertionError("should not query simulations for premium")
+
+    monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "premium")
+    monkeypatch.setattr(entitlements, "list_simulations", unexpected_call)
+
+    entitlements.enforce_simulation_limit("user-1")  # no error
+
+
+def test_enforce_simulation_limit_blocks_when_at_cap(monkeypatch):
+    monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "free")
+    simulations = [
+        Simulation(id=str(i), name=f"S{i}", starting_budget=1000, cash_balance=1000, created_at=NOW)
+        for i in range(entitlements.FREE_SIMULATION_LIMIT)
+    ]
+    monkeypatch.setattr(entitlements, "list_simulations", lambda user_id: simulations)
+
+    with pytest.raises(EntitlementLimitError):
+        entitlements.enforce_simulation_limit("user-1")
+
+
+def test_enforce_simulation_limit_allows_under_cap(monkeypatch):
+    monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "free")
+    monkeypatch.setattr(entitlements, "list_simulations", lambda user_id: [])
+
+    entitlements.enforce_simulation_limit("user-1")  # no error
+
+
 # --- endpoints ------------------------------------------------------------------
 
 client = TestClient(main.app)
@@ -207,6 +239,7 @@ def test_get_entitlements_endpoint(monkeypatch):
             alert_limit=3,
             signal_alert_limit=3,
             portfolio_limit=1,
+            simulation_limit=1,
             advanced_indicators=False,
             realtime_data=False,
             ai_reports=False,

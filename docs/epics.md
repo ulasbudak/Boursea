@@ -559,9 +559,44 @@ So that grafiği manuel yorumlamadan modelin "okumasını" diğer görüşlerle 
 - **Given** ücretsiz katmandaki bir kullanıcı, **When** rapor talep ederse, **Then** özellik kilitli gösterilir; backend isteği 403 ile reddeder (CPU maliyeti nedeniyle yalnızca istemci tarafı gizleme yeterli değil).
 - **And** rapor sembol+borsa bazlı önbelleğe alınır; gerçek bir eğitim/ML altyapısı (FR-102/FR-025 — kendi verimizle eğitilmiş bir model) bu story'nin kapsamında değildir, ayrı bir gelecek fazda ele alınacaktır.
 
+### Story 9.3: Günlük Sektör Bülteni
+
+- [ ] **Devam ediyor** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.3.md`**. Kullanıcı isteği (2026-09-19): ana ekranda her gün üstüne yeni bir tane eklenen, hiç silinmeyen bir AI sektör bülteni. Zamanlama kararı: proje boyunca hiç kurulmayan bir cron/Celery altyapısı yerine, istek-anında üretim + append-only arşiv (`sector_bulletins` tablosu, `bulletin_date unique`) — kullanıcı bu tercihi bilerek onayladı. Sektör seçimi `day_of_year % 11` deterministik rotasyonla, hisse seçimi mevcut skor motoruyla (Story 3.6/3.7), anlatı Story 9.1'in artık paylaşılan hale getirilmiş (`app/ai_reports.py::call_anthropic()`) Anthropic entegrasyonuyla. Backend (`app/bulletins.py` + `GET /bulletins`) ve web/mobil (dashboard'da "Bülten" bölümü) uygulandı, testler (290/290) yeşil, ücretsiz katman 403'ü ve sektör-seçim/skorlama boru hattı canlı doğrulandı. **Açık madde:** gerçek Anthropic API anahtarı henüz sağlanmadı, tam uçtan uca (anlatı üretimi dahil) doğrulama bekliyor.
+
+As a **kullanıcı (premium)**,
+I want ana ekranda her gün yeni eklenen, geçmişi silinmeyen bir AI sektör bülteni görmek,
+So that hangi sektörlerin/hisselerin öne çıktığını zaman içinde takip edebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bugüne ait bir bülten satırı yoksa, **When** premium bir kullanıcı dashboard'u açarsa, **Then** deterministik rotasyonla seçilmiş bir sektör için, o sektördeki en yüksek skorlu 5 hissenin analiziyle yeni bir bülten üretilip kalıcı olarak eklenir; ertesi gün önceki bülten silinmez/üzerine yazılmaz.
+- **Given** ücretsiz katmandaki bir kullanıcı, **When** dashboard'u açarsa, **Then** bülten bölümü kilitli gösterilir; backend isteği 403 ile reddeder.
+- **And** her bültenin sonunda "yatırım tavsiyesi değildir" ibaresi yer alır; seçilen sektörde puanlanabilir hisse yoksa o gün için hatalı bir satır kaydedilmez.
+
 ---
 
-## 14. Sonraki Adımlar
+## 14. Epic 10: Alım-Satım Simülasyonu (Paper Trading)
+
+> Kullanıcı isteği (2026-09-19) — önceden hiçbir yerde planlanmamış yeni bir kapsam, Epic 9 ile eş zamanlı geliştiriliyor. Gerçek para/aracı kurum bağlantısı yok (bkz. PRD §10); tamamen sanal bütçeyle, gerçek piyasa fiyatlarından yürütülen bir kum havuzu. Mevcut Portföy'den (Epic 6) kasıtlı olarak ayrı: Portföy elle girilen fiyatlarla gerçek sahiplikleri kaydeder, bu özellik bütçe kısıtlı ve emirler gerçek anlık fiyattan otomatik yürütülür.
+
+### Story 10.1: Bütçeli Simülasyon Oluşturma ve Emir Yürütme
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-10.1.md`**. Backend (`app/simulations.py` — Portföy'ün weighted-average/CRUD deseni + bütçe/nakit mekaniği + Story 9.3'ün append-but-upsertable günlük snapshot deseni; `GET/POST /simulations`, `DELETE /simulations/{id}`, `POST /simulations/{id}/orders`, `GET /simulations/{id}/history`), web (`/simulation` sayfası, dashboard nav girişi) ve mobil (`SimulationScreen`) uygulandı; ücretsiz katman 1 simülasyonla sınırlı (Story 8.1 entitlement altyapısı genişletildi: `FREE_SIMULATION_LIMIT`). Testler (311/311) yeşil, ruff temiz, migration canlı Supabase'e uygulandı. **Gerçek AAPL fiyatıyla canlı uçtan uca doğrulandı** (emrin tam gerçek fiyattan yürütüldüğü, bütçe/miktar aşımı reddi, BIST reddi, günlük snapshot upsert, ücretsiz katman 403'ü dahil).
+
+As a **kullanıcı**,
+I want gerçek piyasa verisiyle, kendi belirlediğim bir bütçeyle sanal alım-satım yapmak,
+So that gerçek para riskine girmeden stratejimi test edip zaman içindeki performansımı görebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bir kullanıcı bir başlangıç bütçesiyle simülasyon oluşturur, **When** bir sembol için alım/satım emri verirse, **Then** emir kullanıcının girdiği değil **o anki gerçek piyasa fiyatından** yürütülür; nakit bakiyesi buna göre güncellenir.
+- **Given** bir alım emrinin maliyeti mevcut nakit bakiyesini aşıyorsa, **When** emir verilirse, **Then** emir reddedilir ve nakit/pozisyon değişmez. Aynı şekilde elde tutulan miktarı aşan bir satım emri de reddedilir.
+- **Given** bir simülasyon, **When** kullanıcı zaman içindeki performansına bakarsa, **Then** günlük toplam değer (nakit + pozisyon değeri) ve kâr/zarar geçmişi gösterilir; geçmiş günlerin kayıtları bir daha değişmez, yalnızca bugünün kaydı güncellenir.
+- **And** yalnızca ABD hisseleri desteklenir (BIST için canlı fiyat kaynağı yok); ücretsiz katman 1 simülasyonla sınırlıdır, premium sınırsızdır.
+
+---
+
+## 15. Sonraki Adımlar
 
 1. Bu backlog kullanıcı tarafından gözden geçirilip epik sıralaması/story kapsamı onaylanmalı.
 2. `docs/stories/story-1.md` (Epic 1, Story 1.1) ilk geliştirme adımı olarak hazır — geliştirme buradan başlayabilir.

@@ -10,35 +10,70 @@ import { Field, Input, Label, Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge, ChangeValue } from "@/components/ui/change-value";
 import {
-  addTransaction,
-  createPortfolio,
-  deletePortfolio,
-  deletePosition,
-  fetchPortfolios,
-  type Portfolio,
-} from "@/lib/portfolios-client";
+  createSimulation,
+  deleteSimulation,
+  fetchHistory,
+  fetchSimulations,
+  placeOrder,
+  type Simulation,
+  type SnapshotPoint,
+} from "@/lib/simulations-client";
 
-export function PortfolioView({
-  messages,
-  locale,
-}: {
-  messages: Messages["portfolio"];
-  locale: Locale;
-}) {
+function DailyPnlChart({ points, locale, noData }: { points: SnapshotPoint[]; locale: Locale; noData: string }) {
+  const values = points.map((p) => p.pnl_abs);
+  const maxValue = values.length ? Math.max(...values, 0) : 0;
+  const minValue = values.length ? Math.min(...values, 0) : 0;
+  const range = maxValue - minValue || 1;
+
+  if (points.length === 0) {
+    return <p className="text-xs text-text-tertiary">{noData}</p>;
+  }
+
+  return (
+    <div className="flex h-20 items-end gap-1">
+      {points.map((point) => {
+        const heightPct = ((point.pnl_abs - minValue) / range) * 100;
+        return (
+          <div
+            key={point.snapshot_date}
+            title={`${new Date(point.snapshot_date).toLocaleDateString(locale)}: ${formatPrice(point.pnl_abs, "USD", locale)}`}
+            className="flex flex-1 flex-col items-center justify-end"
+          >
+            <div
+              className={`w-full rounded-sm transition-all ${point.pnl_abs >= 0 ? "bg-positive" : "bg-negative"}`}
+              style={{ height: `${Math.max(heightPct, 3)}%` }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function SimulationView({ messages, locale }: { messages: Messages["simulation"]; locale: Locale }) {
   const t = messages;
-  const [portfolios, setPortfolios] = useState<Portfolio[] | null>(null);
+  const [simulations, setSimulations] = useState<Simulation[] | null>(null);
+  const [histories, setHistories] = useState<Record<string, SnapshotPoint[]>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [newPortfolioName, setNewPortfolioName] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newBudget, setNewBudget] = useState("");
   const [creating, setCreating] = useState(false);
   const [openFormFor, setOpenFormFor] = useState<string | null>(null);
 
   async function load() {
     try {
-      const data = await fetchPortfolios();
-      setPortfolios(data.portfolios);
+      const data = await fetchSimulations();
+      setSimulations(data.simulations);
       setWarnings(data.warnings);
       setError(null);
+      for (const simulation of data.simulations) {
+        fetchHistory(simulation.id)
+          .then((h) => setHistories((prev) => ({ ...prev, [simulation.id]: h.history })))
+          .catch(() => {
+            // Best-effort — the simulation card still works without its P&L history.
+          });
+      }
     } catch {
       setError(t.loadError);
     }
@@ -49,11 +84,19 @@ export function PortfolioView({
 
     async function initialLoad() {
       try {
-        const data = await fetchPortfolios();
-        if (!cancelled) {
-          setPortfolios(data.portfolios);
-          setWarnings(data.warnings);
-          setError(null);
+        const data = await fetchSimulations();
+        if (cancelled) return;
+        setSimulations(data.simulations);
+        setWarnings(data.warnings);
+        setError(null);
+        for (const simulation of data.simulations) {
+          fetchHistory(simulation.id)
+            .then((h) => {
+              if (!cancelled) setHistories((prev) => ({ ...prev, [simulation.id]: h.history }));
+            })
+            .catch(() => {
+              // Best-effort.
+            });
         }
       } catch {
         if (!cancelled) setError(t.loadError);
@@ -68,41 +111,27 @@ export function PortfolioView({
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
-    const name = newPortfolioName.trim();
-    if (!name) return;
+    const name = newName.trim();
+    const budget = Number(newBudget);
+    if (!name || budget <= 0) return;
     setCreating(true);
     try {
-      await createPortfolio(name);
-      setNewPortfolioName("");
+      await createSimulation(name, budget);
+      setNewName("");
+      setNewBudget("");
       await load();
-    } catch {
-      setError(t.loadError);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.loadError);
     } finally {
       setCreating(false);
     }
   }
 
-  async function handleDeletePortfolio(id: string) {
-    if (!window.confirm(t.deletePortfolioConfirm)) return;
-    setPortfolios((prev) => prev?.filter((p) => p.id !== id) ?? null);
+  async function handleDelete(id: string) {
+    if (!window.confirm(t.deleteSimulationConfirm)) return;
+    setSimulations((prev) => prev?.filter((s) => s.id !== id) ?? null);
     try {
-      await deletePortfolio(id);
-    } catch {
-      await load();
-    }
-  }
-
-  async function handleDeletePosition(portfolioId: string, positionId: string) {
-    setPortfolios(
-      (prev) =>
-        prev?.map((p) =>
-          p.id === portfolioId
-            ? { ...p, positions: p.positions.filter((pos) => pos.id !== positionId) }
-            : p
-        ) ?? null
-    );
-    try {
-      await deletePosition(portfolioId, positionId);
+      await deleteSimulation(id);
     } catch {
       await load();
     }
@@ -111,21 +140,32 @@ export function PortfolioView({
   return (
     <div className="flex flex-col gap-6">
       <Card>
-        <form onSubmit={handleCreate} className="flex gap-2">
+        <form onSubmit={handleCreate} className="flex flex-wrap gap-2">
           <Input
-            value={newPortfolioName}
-            onChange={(e) => setNewPortfolioName(e.target.value)}
-            placeholder={t.newPortfolioPlaceholder}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={t.newSimulationPlaceholder}
+            className="flex-1"
+          />
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            value={newBudget}
+            onChange={(e) => setNewBudget(e.target.value)}
+            placeholder={t.budgetPlaceholder}
+            className="w-48"
           />
           <Button
             type="submit"
-            disabled={creating || !newPortfolioName.trim()}
+            disabled={creating || !newName.trim() || !(Number(newBudget) > 0)}
             className="shrink-0 gap-1.5"
           >
             <Plus size={16} />
-            {t.createPortfolioButton}
+            {t.createSimulationButton}
           </Button>
         </form>
+        <p className="mt-2 text-xs text-text-tertiary">{t.realTimeExecutionNote}</p>
       </Card>
 
       {error && (
@@ -139,7 +179,7 @@ export function PortfolioView({
         </p>
       ))}
 
-      {portfolios === null && !error && (
+      {simulations === null && !error && (
         <div className="flex flex-col gap-4">
           {[0, 1].map((i) => (
             <Card key={i}>
@@ -154,43 +194,52 @@ export function PortfolioView({
         </div>
       )}
 
-      {portfolios !== null && portfolios.length === 0 && (
+      {simulations !== null && simulations.length === 0 && (
         <Card className="text-center">
-          <p className="text-sm text-text-secondary">{t.noPortfolios}</p>
-          <p className="mt-1 text-xs text-text-tertiary">{t.noPortfoliosHint}</p>
+          <p className="text-sm text-text-secondary">{t.noSimulations}</p>
+          <p className="mt-1 text-xs text-text-tertiary">{t.noSimulationsHint}</p>
         </Card>
       )}
 
-      {portfolios?.map((portfolio) => (
-        <Card key={portfolio.id}>
+      {simulations?.map((simulation) => (
+        <Card key={simulation.id}>
           <CardHeader>
             <div>
-              <CardTitle>{portfolio.name}</CardTitle>
-              <div className="mt-1 flex items-center gap-3 text-sm">
+              <CardTitle>{simulation.name}</CardTitle>
+              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <span className="text-text-tertiary">
-                  {t.totalValueLabel}: <span className="tabular-nums text-text-primary">{formatPrice(portfolio.total_market_value, "USD", locale)}</span>
+                  {t.totalEquityLabel}:{" "}
+                  <span className="tabular-nums text-text-primary">
+                    {formatPrice(simulation.total_equity, "USD", locale)}
+                  </span>
                 </span>
-                {portfolio.total_pnl_pct !== null && (
-                  <ChangeValue value={portfolio.total_pnl_abs}>
-                    {formatPrice(portfolio.total_pnl_abs, "USD", locale)} (
-                    {formatSignedPercent(portfolio.total_pnl_pct, locale)})
+                <span className="text-text-tertiary">
+                  {t.cashBalanceLabel}:{" "}
+                  <span className="tabular-nums text-text-primary">
+                    {formatPrice(simulation.cash_balance, "USD", locale)}
+                  </span>
+                </span>
+                {simulation.total_pnl_pct !== null && (
+                  <ChangeValue value={simulation.total_pnl_abs}>
+                    {formatPrice(simulation.total_pnl_abs, "USD", locale)} (
+                    {formatSignedPercent(simulation.total_pnl_pct, locale)})
                   </ChangeValue>
                 )}
               </div>
             </div>
             <button
               type="button"
-              onClick={() => handleDeletePortfolio(portfolio.id)}
-              aria-label={t.deletePortfolioButton}
+              onClick={() => handleDelete(simulation.id)}
+              aria-label={t.deleteSimulationButton}
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-text-tertiary transition-colors hover:bg-negative/10 hover:text-negative"
             >
               <Trash2 size={14} />
-              {t.deletePortfolioButton}
+              {t.deleteSimulationButton}
             </button>
           </CardHeader>
 
-          {portfolio.positions.length === 0 ? (
-            <p className="text-sm text-text-tertiary">{t.emptyPortfolio}</p>
+          {simulation.positions.length === 0 ? (
+            <p className="text-sm text-text-tertiary">{t.emptyPositions}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -201,12 +250,11 @@ export function PortfolioView({
                     <th className="px-3 py-2 text-right font-medium">{t.columnAvgCost}</th>
                     <th className="px-3 py-2 text-right font-medium">{t.columnPrice}</th>
                     <th className="px-3 py-2 text-right font-medium">{t.columnValue}</th>
-                    <th className="px-3 py-2 text-right font-medium">{t.columnPnl}</th>
-                    <th className="py-2 pl-3" />
+                    <th className="pl-3 py-2 text-right font-medium">{t.columnPnl}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {portfolio.positions.map((position) => (
+                  {simulation.positions.map((position) => (
                     <tr key={position.id}>
                       <td className="py-2.5 pr-3">
                         <div className="flex items-center gap-2">
@@ -218,9 +266,6 @@ export function PortfolioView({
                             {position.symbol}
                           </Link>
                         </div>
-                        {position.price_unavailable && position.exchange === "BIST" && (
-                          <p className="mt-0.5 text-xs text-text-tertiary">{t.bistUnavailableHint}</p>
-                        )}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-text-primary">
                         {position.quantity}
@@ -238,7 +283,7 @@ export function PortfolioView({
                           ? formatPrice(position.market_value, "USD", locale)
                           : "—"}
                       </td>
-                      <td className="px-3 py-2.5 text-right">
+                      <td className="py-2.5 pl-3 text-right">
                         {position.pnl_abs !== null && position.pnl_pct !== null ? (
                           <ChangeValue value={position.pnl_abs}>
                             {formatPrice(position.pnl_abs, "USD", locale)} (
@@ -248,16 +293,6 @@ export function PortfolioView({
                           "—"
                         )}
                       </td>
-                      <td className="py-2.5 pl-3 text-right">
-                        <button
-                          type="button"
-                          aria-label={t.deletePositionButton}
-                          onClick={() => handleDeletePosition(portfolio.id, position.id)}
-                          className="rounded-full p-1 text-text-tertiary transition-colors hover:bg-surface-hover hover:text-negative"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -266,12 +301,19 @@ export function PortfolioView({
           )}
 
           <div className="mt-4 border-t border-border-subtle pt-4">
-            {openFormFor === portfolio.id ? (
-              <AddTransactionForm
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+              {t.historyTitle}
+            </p>
+            <DailyPnlChart points={histories[simulation.id] ?? []} locale={locale} noData={t.noHistoryYet} />
+          </div>
+
+          <div className="mt-4 border-t border-border-subtle pt-4">
+            {openFormFor === simulation.id ? (
+              <PlaceOrderForm
                 messages={t}
                 onCancel={() => setOpenFormFor(null)}
-                onSubmit={async (transaction) => {
-                  await addTransaction(portfolio.id, transaction);
+                onSubmit={async (order) => {
+                  await placeOrder(simulation.id, order);
                   setOpenFormFor(null);
                   await load();
                 }}
@@ -281,10 +323,10 @@ export function PortfolioView({
                 type="button"
                 variant="secondary"
                 className="gap-1.5"
-                onClick={() => setOpenFormFor(portfolio.id)}
+                onClick={() => setOpenFormFor(simulation.id)}
               >
                 <Plus size={14} />
-                {t.addTransactionButton}
+                {t.placeOrderButton}
               </Button>
             )}
           </div>
@@ -294,19 +336,17 @@ export function PortfolioView({
   );
 }
 
-function AddTransactionForm({
+function PlaceOrderForm({
   messages,
   onCancel,
   onSubmit,
 }: {
-  messages: Messages["portfolio"];
+  messages: Messages["simulation"];
   onCancel: () => void;
-  onSubmit: (transaction: {
+  onSubmit: (order: {
     symbol: string;
     exchange: string;
-    name?: string | null;
     quantity: number;
-    price: number;
     side: "buy" | "sell";
   }) => Promise<void>;
 }) {
@@ -314,7 +354,6 @@ function AddTransactionForm({
   const [symbol, setSymbol] = useState("");
   const [exchange, setExchange] = useState("US");
   const [quantity, setQuantity] = useState("");
-  const [price, setPrice] = useState("");
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -322,8 +361,7 @@ function AddTransactionForm({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const parsedQuantity = Number(quantity);
-    const parsedPrice = Number(price);
-    if (!symbol.trim() || parsedQuantity <= 0 || parsedPrice <= 0) return;
+    if (!symbol.trim() || parsedQuantity <= 0) return;
 
     setSaving(true);
     setError(null);
@@ -332,7 +370,6 @@ function AddTransactionForm({
         symbol: symbol.trim().toUpperCase(),
         exchange,
         quantity: parsedQuantity,
-        price: parsedPrice,
         side,
       });
     } catch (err) {
@@ -345,11 +382,11 @@ function AddTransactionForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">{t.formTitle}</p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Field>
-          <Label htmlFor="symbol">{t.symbolLabel}</Label>
+          <Label htmlFor="sim-symbol">{t.symbolLabel}</Label>
           <Input
-            id="symbol"
+            id="sim-symbol"
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
             placeholder={t.symbolPlaceholder}
@@ -357,40 +394,28 @@ function AddTransactionForm({
           />
         </Field>
         <Field>
-          <Label htmlFor="exchange">{t.exchangeLabel}</Label>
-          <Select id="exchange" value={exchange} onChange={(e) => setExchange(e.target.value)}>
+          <Label htmlFor="sim-exchange">{t.exchangeLabel}</Label>
+          <Select id="sim-exchange" value={exchange} onChange={(e) => setExchange(e.target.value)}>
             <option value="US">{t.exchangeUs}</option>
             <option value="BIST">{t.exchangeBist}</option>
           </Select>
         </Field>
         <Field>
-          <Label htmlFor="side">{t.sideLabel}</Label>
-          <Select id="side" value={side} onChange={(e) => setSide(e.target.value as "buy" | "sell")}>
+          <Label htmlFor="sim-side">{t.sideLabel}</Label>
+          <Select id="sim-side" value={side} onChange={(e) => setSide(e.target.value as "buy" | "sell")}>
             <option value="buy">{t.sideBuy}</option>
             <option value="sell">{t.sideSell}</option>
           </Select>
         </Field>
         <Field>
-          <Label htmlFor="quantity">{t.quantityLabel}</Label>
+          <Label htmlFor="sim-quantity">{t.quantityLabel}</Label>
           <Input
-            id="quantity"
+            id="sim-quantity"
             type="number"
             min="0"
             step="any"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            required
-          />
-        </Field>
-        <Field>
-          <Label htmlFor="price">{t.priceLabel}</Label>
-          <Input
-            id="price"
-            type="number"
-            min="0"
-            step="any"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
             required
           />
         </Field>

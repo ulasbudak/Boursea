@@ -68,7 +68,11 @@ export function SignalAlertsView({ messages }: { messages: Messages["signalAlert
 
   return (
     <div className="flex flex-col gap-4">
-      {error && <p className="text-sm text-negative">{error}</p>}
+      {error && (
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {error}
+        </p>
+      )}
       {warnings.map((warning) => (
         <p key={warning} className="text-xs text-warning">
           {warning}

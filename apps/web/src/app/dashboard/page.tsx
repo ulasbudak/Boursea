@@ -4,6 +4,7 @@ import {
   Bell,
   Bookmark,
   Columns3,
+  LineChart,
   LogOut,
   Radio,
   Settings as SettingsIcon,
@@ -18,6 +19,7 @@ import { Logo } from "@/components/ui/logo";
 import { signOut } from "./actions";
 import { SearchBox } from "./search-box";
 import { Highlights } from "./highlights";
+import { BulletinSection } from "./bulletin-section";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -80,6 +82,13 @@ export default async function DashboardPage() {
 
       <section>
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+          {t.bulletin.title}
+        </p>
+        <BulletinSection messages={t.bulletin} locale={locale} />
+      </section>
+
+      <section>
+        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
           {t.dashboard.quickAccess}
         </p>
         <nav className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -87,7 +96,7 @@ export default async function DashboardPage() {
             href="/watchlist"
             className="group flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg hover:shadow-black/20"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-accent/15 text-accent">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-hover text-text-secondary">
               <Bookmark size={18} />
             </div>
             <span className="text-sm font-medium text-text-primary">{t.watchlist.title}</span>
@@ -136,6 +145,15 @@ export default async function DashboardPage() {
               <Columns3 size={18} />
             </div>
             <span className="text-sm font-medium text-text-primary">{t.comparison.title}</span>
+          </Link>
+          <Link
+            href="/simulation"
+            className="group flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg hover:shadow-black/20"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-hover text-text-secondary">
+              <LineChart size={18} />
+            </div>
+            <span className="text-sm font-medium text-text-primary">{t.simulation.title}</span>
           </Link>
           <Link
             href="/settings"

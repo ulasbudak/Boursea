@@ -3,8 +3,7 @@ from datetime import datetime
 import httpx
 from pydantic import BaseModel
 
-from app.ai_reports import AIReportUnavailableError, get_cached_report, save_report
-from app.config import get_settings
+from app.ai_reports import AIReportUnavailableError, call_anthropic, get_cached_report, save_report
 from app.fundamentals import (
     FundamentalsSnapshot,
     FundamentalsUnavailableError,
@@ -14,11 +13,6 @@ from app.fundamentals import (
     get_us_historical_performance,
     get_us_sector_comparison,
 )
-
-ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages"
-ANTHROPIC_API_VERSION = "2023-06-01"
-ANTHROPIC_TIMEOUT_SECONDS = 30.0
-ANTHROPIC_MAX_TOKENS = 1024
 
 CACHE_TTL_HOURS = 24.0
 
@@ -96,47 +90,6 @@ def _build_user_prompt(
     return "\n".join(lines)
 
 
-async def _call_anthropic(user_prompt: str, *, client: httpx.AsyncClient | None = None) -> str:
-    settings = get_settings()
-    if not settings.anthropic_api_key:
-        raise AIReportUnavailableError("ANTHROPIC_API_KEY is not configured")
-
-    owns_client = client is None
-    http_client = client or httpx.AsyncClient(timeout=ANTHROPIC_TIMEOUT_SECONDS)
-    try:
-        response = await http_client.post(
-            ANTHROPIC_MESSAGES_URL,
-            headers={
-                "x-api-key": settings.anthropic_api_key,
-                "anthropic-version": ANTHROPIC_API_VERSION,
-                "content-type": "application/json",
-            },
-            json={
-                "model": settings.anthropic_model,
-                "max_tokens": ANTHROPIC_MAX_TOKENS,
-                "system": SYSTEM_PROMPT,
-                "messages": [{"role": "user", "content": user_prompt}],
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-    except httpx.HTTPError as exc:
-        raise AIReportUnavailableError(f"Anthropic request failed: {exc}") from exc
-    finally:
-        if owns_client:
-            await http_client.aclose()
-
-    content_blocks = payload.get("content")
-    if not isinstance(content_blocks, list) or not content_blocks:
-        raise AIReportUnavailableError("Anthropic response had no content")
-    text = "".join(
-        block.get("text", "") for block in content_blocks if isinstance(block, dict)
-    ).strip()
-    if not text:
-        raise AIReportUnavailableError("Anthropic response had empty text")
-    return text
-
-
 async def get_fundamental_report(
     symbol: str, exchange: str, *, client: httpx.AsyncClient | None = None
 ) -> FundamentalAIReport:
@@ -171,7 +124,7 @@ async def get_fundamental_report(
         history = None
 
     user_prompt = _build_user_prompt(fundamentals, sector_comparison, history)
-    report_text = await _call_anthropic(user_prompt, client=client)
+    report_text = await call_anthropic(SYSTEM_PROMPT, user_prompt, client=client)
 
     generated_at = save_report(symbol, exchange_filter, "fundamental", {"report": report_text})
     return FundamentalAIReport(

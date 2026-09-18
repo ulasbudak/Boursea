@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { formatRatio, type Locale, type Messages } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
 import { ToggleChip } from "@/components/ui/toggle-chip";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type HistoricalDataPoint = {
   period: string;
@@ -122,7 +123,8 @@ export function HistoricalPerformanceChart({
   if (loading) {
     return (
       <Card>
-        <p className="text-sm text-text-tertiary">{t.common.loading}</p>
+        <Skeleton className="mb-3 h-4 w-40" />
+        <Skeleton className="h-40 w-full" />
       </Card>
     );
   }
@@ -130,7 +132,9 @@ export function HistoricalPerformanceChart({
   if (fetchFailed) {
     return (
       <Card>
-        <p className="text-sm text-negative">{t.common.dataUnavailable}</p>
+        <p role="alert" className="rounded-md border border-negative/30 bg-negative/10 px-3 py-2 text-sm text-negative">
+          {t.common.dataUnavailable}
+        </p>
       </Card>
     );
   }
