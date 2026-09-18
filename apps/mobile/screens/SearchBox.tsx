@@ -66,7 +66,7 @@ export function SearchBox({
         if (err instanceof Error && err.name === "AbortError") return;
         setError(messages.search.searchError);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, DEBOUNCE_MS);
 

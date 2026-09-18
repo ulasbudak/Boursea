@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { translateSector, type Locale, type Messages } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
+import { ProseText } from "@/components/ui/prose-text";
 import { fetchEntitlement } from "@/lib/entitlements-client";
 import { fetchBulletins, type Bulletin } from "@/lib/bulletins-client";
 
@@ -66,7 +67,7 @@ export function BulletinSection({ messages, locale }: { messages: Messages["bull
               {new Date(bulletin.bulletin_date).toLocaleDateString(locale)}
             </span>
           </div>
-          <p className="whitespace-pre-line text-sm text-text-secondary">{bulletin.content}</p>
+          <ProseText text={bulletin.content} />
           {bulletin.picks.length > 0 && (
             <div className="mt-3 border-t border-border-subtle pt-3">
               <p className="mb-1.5 text-xs text-text-tertiary">{t.picksLabel}</p>

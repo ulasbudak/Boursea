@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { fetchEntitlement } from "../lib/entitlements-client";
@@ -98,7 +98,13 @@ export function AIAnalysisPanel({ symbol, exchange }: { symbol: string; exchange
     };
   }, []);
 
-  if (locked === null) return null;
+  if (locked === null) {
+    return (
+      <View style={styles.card}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
 
   if (locked) {
     return (

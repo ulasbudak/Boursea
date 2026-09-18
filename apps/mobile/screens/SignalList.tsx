@@ -43,7 +43,7 @@ export function SignalList({ symbol, exchange }: { symbol: string; exchange: str
         if (err instanceof Error && err.name === "AbortError") return;
         setFetchFailed(true);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 

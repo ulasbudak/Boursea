@@ -83,7 +83,7 @@ export function FundamentalsPanel({
         if (err instanceof DOMException && err.name === "AbortError") return;
         setFetchFailed(true);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 

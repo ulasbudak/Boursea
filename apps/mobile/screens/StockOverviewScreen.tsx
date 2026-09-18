@@ -97,7 +97,7 @@ export function StockOverviewScreen({
         if (err instanceof Error && err.name === "AbortError") return;
         setFetchFailed(true);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 

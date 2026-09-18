@@ -414,6 +414,7 @@ export const tr: Messages = {
     fundamentalTitle: "Temel Analiz AI Raporu",
     generateButton: "Rapor Oluştur",
     generating: "Rapor oluşturuluyor…",
+    loading: "Yükleniyor…",
     lockedMessage: "AI analiz raporları premium'a özel.",
     unavailableMessage: "Rapor şu an oluşturulamıyor.",
     cachedNote: "Bu rapor daha önce oluşturuldu, önbellekten gösteriliyor.",

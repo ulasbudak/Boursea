@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 
@@ -73,7 +73,7 @@ export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: str
         if (err instanceof Error && err.name === "AbortError") return;
         setFetchFailed(true);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
@@ -82,7 +82,11 @@ export function ScoreBadge({ symbol, exchange }: { symbol: string; exchange: str
   }, [symbol, exchange]);
 
   if (loading) {
-    return null;
+    return (
+      <View style={styles.card}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
   }
 
   const score = data?.score ?? null;

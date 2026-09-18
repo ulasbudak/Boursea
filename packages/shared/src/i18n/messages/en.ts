@@ -414,6 +414,7 @@ export const en: Messages = {
     fundamentalTitle: "Fundamental Analysis AI Report",
     generateButton: "Generate Report",
     generating: "Generating report…",
+    loading: "Loading…",
     lockedMessage: "AI analysis reports are a premium feature.",
     unavailableMessage: "The report can't be generated right now.",
     cachedNote: "This report was generated earlier and is shown from cache.",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Messages } from "@trendus/shared";
 import { Button } from "@/components/ui/button";
+import { TextBlockSkeleton } from "@/components/ui/skeleton";
 import { fetchEntitlement, type Entitlement } from "@/lib/entitlements-client";
 
 function limitText(limit: number | null, unlimitedLabel: string): string {
@@ -31,7 +32,7 @@ export function BillingCard({ messages }: { messages: Messages["billing"] }) {
     };
   }, []);
 
-  if (!entitlement) return null;
+  if (!entitlement) return <TextBlockSkeleton lines={4} />;
 
   const rows = [
     { label: t.watchlistLimitLabel, value: limitText(entitlement.watchlist_item_limit, t.unlimitedLabel) },

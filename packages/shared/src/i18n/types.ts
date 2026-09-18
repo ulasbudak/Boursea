@@ -411,6 +411,7 @@ export interface Messages {
     fundamentalTitle: string;
     generateButton: string;
     generating: string;
+    loading: string;
     lockedMessage: string;
     unavailableMessage: string;
     cachedNote: string;

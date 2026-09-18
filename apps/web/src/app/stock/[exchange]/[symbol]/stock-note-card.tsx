@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 import type { Messages } from "@trendus/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { deleteNote, fetchNote, saveNote } from "@/lib/notes-client";
 
 export function StockNoteCard({
@@ -68,7 +69,14 @@ export function StockNoteCard({
     }
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <Card>
+        <Skeleton className="mb-2 h-3 w-24" />
+        <Skeleton className="h-16 w-full" />
+      </Card>
+    );
+  }
 
   return (
     <Card>

@@ -5,6 +5,7 @@ import type { Messages } from "@trendus/shared";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextBlockSkeleton } from "@/components/ui/skeleton";
+import { ProseText } from "@/components/ui/prose-text";
 import { fetchEntitlement } from "@/lib/entitlements-client";
 import {
   fetchFundamentalAIReport,
@@ -72,7 +73,7 @@ function FundamentalReportCard({
       )}
       {state.status === "loaded" && (
         <>
-          <p className="whitespace-pre-line text-sm text-text-secondary">{state.report.report}</p>
+          <ProseText text={state.report.report} />
           {state.report.cached && (
             <p className="mt-2 text-xs text-text-tertiary">{t.cachedNote}</p>
           )}
@@ -138,7 +139,7 @@ function TechnicalReportCard({
       )}
       {state.status === "loaded" && (
         <>
-          <p className="whitespace-pre-line text-sm text-text-secondary">{state.report.report}</p>
+          <ProseText text={state.report.report} />
           {state.report.cached && (
             <p className="mt-2 text-xs text-text-tertiary">{t.cachedNote}</p>
           )}
@@ -182,7 +183,18 @@ export function AIAnalysisPanel({
     };
   }, []);
 
-  if (locked === null) return null;
+  if (locked === null) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Card>
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+            {t.loading}
+          </p>
+          <TextBlockSkeleton />
+        </Card>
+      </div>
+    );
+  }
 
   if (locked) {
     return (

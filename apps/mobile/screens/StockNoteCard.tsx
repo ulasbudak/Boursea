@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { deleteNote, fetchNote, saveNote } from "../lib/notes-client";
@@ -61,7 +61,13 @@ export function StockNoteCard({ symbol, exchange }: { symbol: string; exchange: 
     }
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <View style={styles.card}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>

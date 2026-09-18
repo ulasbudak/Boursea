@@ -122,7 +122,7 @@ export function CompareView({ messages, locale }: { messages: Messages["comparis
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
       } finally {
-        setSearching(false);
+        if (!controller.signal.aborted) setSearching(false);
       }
     }, DEBOUNCE_MS);
     return () => {

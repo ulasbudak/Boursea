@@ -54,7 +54,7 @@ export function SearchBox({ messages }: { messages: Messages["search"] }) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setError(messages.searchError);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, DEBOUNCE_MS);
 
