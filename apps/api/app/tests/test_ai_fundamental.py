@@ -16,7 +16,7 @@ def patch_settings(monkeypatch):
     monkeypatch.setattr(
         ai_reports,
         "get_settings",
-        lambda: Settings(anthropic_api_key="test-key", anthropic_model="claude-test"),
+        lambda: Settings(google_api_key="test-key", gemini_model="gemini-test"),
     )
 
 
@@ -25,15 +25,19 @@ def anyio_backend():
     return "asyncio"
 
 
-def _anthropic_response() -> httpx.Response:
+def _gemini_response() -> httpx.Response:
     return httpx.Response(
         200,
-        json={"content": [{"type": "text", "text": "Test temel analiz raporu."}]},
+        json={
+            "candidates": [
+                {"content": {"parts": [{"text": "Test temel analiz raporu."}]}}
+            ]
+        },
     )
 
 
 @pytest.mark.anyio
-async def test_returns_cached_report_without_calling_anthropic(monkeypatch):
+async def test_returns_cached_report_without_calling_gemini(monkeypatch):
     monkeypatch.setattr(
         ai_fundamental,
         "get_cached_report",
@@ -41,7 +45,7 @@ async def test_returns_cached_report_without_calling_anthropic(monkeypatch):
     )
 
     def unexpected_call(request: httpx.Request) -> httpx.Response:
-        raise AssertionError("should not call Anthropic when cache is fresh")
+        raise AssertionError("should not call Gemini when cache is fresh")
 
     transport = httpx.MockTransport(unexpected_call)
     async with httpx.AsyncClient(transport=transport) as http_client:
@@ -102,9 +106,9 @@ async def test_generates_and_saves_report_on_cache_miss(monkeypatch):
     monkeypatch.setattr(ai_fundamental, "save_report", fake_save_report)
 
     def handler(request: httpx.Request) -> httpx.Response:
-        assert "anthropic.com" in str(request.url)
-        assert request.headers["x-api-key"] == "test-key"
-        return _anthropic_response()
+        assert "generativelanguage.googleapis.com" in str(request.url)
+        assert request.headers["x-goog-api-key"] == "test-key"
+        return _gemini_response()
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as http_client:
@@ -118,8 +122,8 @@ async def test_generates_and_saves_report_on_cache_miss(monkeypatch):
 
 
 @pytest.mark.anyio
-async def test_raises_when_anthropic_key_missing(monkeypatch):
-    monkeypatch.setattr(ai_reports, "get_settings", lambda: Settings(anthropic_api_key=""))
+async def test_raises_when_google_api_key_missing(monkeypatch):
+    monkeypatch.setattr(ai_reports, "get_settings", lambda: Settings(google_api_key=""))
     monkeypatch.setattr(ai_fundamental, "get_cached_report", lambda *a, **k: None)
 
     async def fake_get_us_fundamentals(symbol, *, client=None):

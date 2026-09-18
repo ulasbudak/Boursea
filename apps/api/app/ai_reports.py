@@ -3,9 +3,10 @@
 because the underlying LLM/CV output is the same for everyone looking at a given
 symbol — this is what keeps per-call LLM API and CV inference cost bounded.
 
-Also holds the shared Anthropic Messages API call (`call_anthropic`) — every AI
-report module (fundamental, sector bulletin) uses the same request shape with its
-own system prompt, so the HTTP plumbing lives here once."""
+Also holds the shared Gemini API call (`call_gemini`) — every AI report module
+(fundamental, sector bulletin) uses the same request shape with its own system
+prompt, so the HTTP plumbing lives here once. Uses a Google AI Studio API key
+(https://aistudio.google.com/apikey), not Vertex AI."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -16,10 +17,8 @@ from psycopg.types.json import Json
 from app.config import get_settings
 from app.db import get_connection
 
-ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages"
-ANTHROPIC_API_VERSION = "2023-06-01"
-ANTHROPIC_TIMEOUT_SECONDS = 30.0
-ANTHROPIC_MAX_TOKENS = 1024
+GEMINI_TIMEOUT_SECONDS = 30.0
+GEMINI_MAX_OUTPUT_TOKENS = 1024
 
 
 class AIReportUnavailableError(Exception):
@@ -28,46 +27,54 @@ class AIReportUnavailableError(Exception):
     error)."""
 
 
-async def call_anthropic(
+async def call_gemini(
     system_prompt: str, user_prompt: str, *, client: httpx.AsyncClient | None = None
 ) -> str:
     settings = get_settings()
-    if not settings.anthropic_api_key:
-        raise AIReportUnavailableError("ANTHROPIC_API_KEY is not configured")
+    if not settings.google_api_key:
+        raise AIReportUnavailableError("GOOGLE_API_KEY is not configured")
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{settings.gemini_model}:generateContent"
+    )
 
     owns_client = client is None
-    http_client = client or httpx.AsyncClient(timeout=ANTHROPIC_TIMEOUT_SECONDS)
+    http_client = client or httpx.AsyncClient(timeout=GEMINI_TIMEOUT_SECONDS)
     try:
         response = await http_client.post(
-            ANTHROPIC_MESSAGES_URL,
+            url,
             headers={
-                "x-api-key": settings.anthropic_api_key,
-                "anthropic-version": ANTHROPIC_API_VERSION,
+                "x-goog-api-key": settings.google_api_key,
                 "content-type": "application/json",
             },
             json={
-                "model": settings.anthropic_model,
-                "max_tokens": ANTHROPIC_MAX_TOKENS,
-                "system": system_prompt,
-                "messages": [{"role": "user", "content": user_prompt}],
+                "systemInstruction": {"parts": [{"text": system_prompt}]},
+                "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+                "generationConfig": {
+                    "maxOutputTokens": GEMINI_MAX_OUTPUT_TOKENS,
+                    # gemini-3.6-flash reasons by default, which burns most of
+                    # maxOutputTokens on invisible "thoughts" before writing any
+                    # report text — disable it, these reports don't need it.
+                    "thinkingConfig": {"thinkingBudget": 0},
+                },
             },
         )
         response.raise_for_status()
         payload = response.json()
     except httpx.HTTPError as exc:
-        raise AIReportUnavailableError(f"Anthropic request failed: {exc}") from exc
+        raise AIReportUnavailableError(f"Gemini request failed: {exc}") from exc
     finally:
         if owns_client:
             await http_client.aclose()
 
-    content_blocks = payload.get("content")
-    if not isinstance(content_blocks, list) or not content_blocks:
-        raise AIReportUnavailableError("Anthropic response had no content")
-    text = "".join(
-        block.get("text", "") for block in content_blocks if isinstance(block, dict)
-    ).strip()
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise AIReportUnavailableError("Gemini response had no candidates")
+    parts = candidates[0].get("content", {}).get("parts", [])
+    text = "".join(part.get("text", "") for part in parts if isinstance(part, dict)).strip()
     if not text:
-        raise AIReportUnavailableError("Anthropic response had empty text")
+        raise AIReportUnavailableError("Gemini response had empty text")
     return text
 
 

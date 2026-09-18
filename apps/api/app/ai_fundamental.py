@@ -3,7 +3,7 @@ from datetime import datetime
 import httpx
 from pydantic import BaseModel
 
-from app.ai_reports import AIReportUnavailableError, call_anthropic, get_cached_report, save_report
+from app.ai_reports import AIReportUnavailableError, call_gemini, get_cached_report, save_report
 from app.fundamentals import (
     FundamentalsSnapshot,
     FundamentalsUnavailableError,
@@ -124,7 +124,7 @@ async def get_fundamental_report(
         history = None
 
     user_prompt = _build_user_prompt(fundamentals, sector_comparison, history)
-    report_text = await call_anthropic(SYSTEM_PROMPT, user_prompt, client=client)
+    report_text = await call_gemini(SYSTEM_PROMPT, user_prompt, client=client)
 
     generated_at = save_report(symbol, exchange_filter, "fundamental", {"report": report_text})
     return FundamentalAIReport(

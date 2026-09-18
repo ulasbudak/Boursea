@@ -19,7 +19,7 @@ def patch_settings(monkeypatch):
     monkeypatch.setattr(
         ai_reports,
         "get_settings",
-        lambda: Settings(anthropic_api_key="test-key", anthropic_model="claude-test"),
+        lambda: Settings(google_api_key="test-key", gemini_model="gemini-test"),
     )
 
 
@@ -104,12 +104,12 @@ async def test_generates_and_saves_new_bulletin(monkeypatch):
             created_at=NOW,
         )
 
-    async def fake_call_anthropic(system_prompt, user_prompt, *, client=None):
+    async def fake_call_gemini(system_prompt, user_prompt, *, client=None):
         return "Bugünün bülteni."
 
     monkeypatch.setattr(bulletins, "_score_sector_candidates", fake_score)
     monkeypatch.setattr(bulletins, "_save_bulletin", fake_save)
-    monkeypatch.setattr(bulletins, "call_anthropic", fake_call_anthropic)
+    monkeypatch.setattr(bulletins, "call_gemini", fake_call_gemini)
 
     result = await get_or_create_todays_bulletin()
 

@@ -1,6 +1,6 @@
 """Daily sector bulletin (premium). Picks a sector by deterministic day-of-year
 rotation (no extra API cost to "discover" a good sector), scores that sector's
-stocks with the existing rule-based engine (app/scoring.py), and asks Claude to
+stocks with the existing rule-based engine (app/scoring.py), and asks Gemini to
 write a short narrative grounded in those scores.
 
 Unlike app/ai_reports.py's cache (one row per symbol, overwritten on refresh),
@@ -16,7 +16,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 from pydantic import BaseModel
 
-from app.ai_reports import AIReportUnavailableError, call_anthropic
+from app.ai_reports import AIReportUnavailableError, call_gemini
 from app.db import get_connection
 from app.scoring import compute_us_score
 from app.screener import load_us_universe
@@ -174,6 +174,6 @@ async def get_or_create_todays_bulletin() -> Bulletin:
         raise AIReportUnavailableError(f"{sector} sektörü için bugün yeterli veri yok.")
 
     user_prompt = _build_bulletin_prompt(sector, picks)
-    content = await call_anthropic(SYSTEM_PROMPT, user_prompt)
+    content = await call_gemini(SYSTEM_PROMPT, user_prompt)
 
     return _save_bulletin(today, sector, picks, content)
