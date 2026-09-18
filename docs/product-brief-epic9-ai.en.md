@@ -60,3 +60,7 @@ The existing open question in PRD §9 has become concrete and more urgent alongs
 2. Legal opinion should be obtained on the regulatory risk above — before any investor presentation.
 3. Finnhub `company-news` endpoint access and the LLM provider/cost choice should be finalized (an architecture decision, to be recorded in `docs/architecture.md`).
 4. Epic 9 development does not start until Epic 1–8 (Phase 1 MVP) is complete.
+
+## 2026-09-18 Update: Scope Made Concrete
+
+After Epic 1-8 (Phase 1 MVP, except Story 8.2 — still waiting on the user's own payment-provider setup), the user made Epic 9 concrete as three separate, clearly labeled "opinions" shown together on the stock detail page: (a) a pretrained computer-vision model's chart reading, (b) an LLM-generated fundamental-analysis report, (c) the existing rule-based score's (Story 3.6/3.7) Buy/Neutral/Sell output. See `docs/product-brief-epic9-ai.md` §"2026-09-18 Güncellemesi" (Turkish, canonical) for the full detail: model selection (ChartScanAI, MIT-licensed YOLOv8, chosen over three other open-source candidates after live license/technical verification), LLM provider (Anthropic Claude API, a custom "financial analyst" system prompt — no separate "Claude finance skill" product could be confirmed to exist), and architecture decisions (no Celery, global per-symbol cache, lazy-loaded CV dependency, backend-enforced entitlement gate). Detailed plans: `docs/stories/story-9.1.md` (now "Fundamental Analysis AI Report") and `docs/stories/story-9.2.md` (now "Technical Analysis AI Report — CV Model").

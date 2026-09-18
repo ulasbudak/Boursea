@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     finnhub_api_key: str = ""
     twelvedata_api_key: str = ""
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-5-20250929"
     resend_api_key: str = ""
     notification_from_email: str = "Trendus <alerts@trendus.app>"
     cors_origins: str = "http://localhost:3000,http://localhost:8081"

@@ -46,6 +46,10 @@ export function BillingCard({ messages }: { messages: Messages["billing"] }) {
       label: t.realtimeDataLabel,
       value: entitlement.realtime_data ? t.unlockedLabel : t.lockedLabel,
     },
+    {
+      label: t.aiReportsLabel,
+      value: entitlement.ai_reports ? t.unlockedLabel : t.lockedLabel,
+    },
   ];
 
   return (

@@ -83,6 +83,7 @@ def test_get_entitlement_free_has_limits(monkeypatch):
     assert result.watchlist_item_limit == entitlements.FREE_WATCHLIST_ITEM_LIMIT
     assert result.advanced_indicators is False
     assert result.realtime_data is False
+    assert result.ai_reports is False
 
 
 def test_get_entitlement_premium_is_unlimited(monkeypatch):
@@ -94,6 +95,20 @@ def test_get_entitlement_premium_is_unlimited(monkeypatch):
     assert result.watchlist_item_limit is None
     assert result.alert_limit is None
     assert result.advanced_indicators is True
+    assert result.ai_reports is True
+
+
+def test_enforce_ai_reports_access_blocks_free(monkeypatch):
+    monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "free")
+
+    with pytest.raises(EntitlementLimitError):
+        entitlements.enforce_ai_reports_access("user-1")
+
+
+def test_enforce_ai_reports_access_allows_premium(monkeypatch):
+    monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "premium")
+
+    entitlements.enforce_ai_reports_access("user-1")  # no error
 
 
 def test_enforce_watchlist_item_limit_allows_premium(monkeypatch):
@@ -194,6 +209,7 @@ def test_get_entitlements_endpoint(monkeypatch):
             portfolio_limit=1,
             advanced_indicators=False,
             realtime_data=False,
+            ai_reports=False,
         ),
     )
 
@@ -260,3 +276,45 @@ def test_post_portfolio_endpoint_returns_403_at_limit(monkeypatch):
     response = client.post("/portfolios", json={"name": "New"})
 
     assert response.status_code == 403
+
+
+def test_get_fundamental_ai_report_endpoint_returns_403_for_free_user(monkeypatch):
+    def blocked(user_id):
+        raise EntitlementLimitError("AI analiz raporları yalnızca premium katmanda kullanılabilir.")
+
+    monkeypatch.setattr(main, "enforce_ai_reports_access", blocked)
+
+    params = {"symbol": "AAPL", "exchange": "US"}
+    response = client.get("/symbols/ai-report/fundamental", params=params)
+
+    assert response.status_code == 403
+
+
+def test_get_fundamental_ai_report_endpoint_requires_auth():
+    main.app.dependency_overrides.pop(get_current_claims, None)
+
+    params = {"symbol": "AAPL", "exchange": "US"}
+    response = client.get("/symbols/ai-report/fundamental", params=params)
+
+    assert response.status_code == 401
+
+
+def test_get_technical_ai_report_endpoint_returns_403_for_free_user(monkeypatch):
+    def blocked(user_id):
+        raise EntitlementLimitError("AI analiz raporları yalnızca premium katmanda kullanılabilir.")
+
+    monkeypatch.setattr(main, "enforce_ai_reports_access", blocked)
+
+    params = {"symbol": "AAPL", "exchange": "US"}
+    response = client.get("/symbols/ai-report/technical", params=params)
+
+    assert response.status_code == 403
+
+
+def test_get_technical_ai_report_endpoint_requires_auth():
+    main.app.dependency_overrides.pop(get_current_claims, None)
+
+    params = {"symbol": "AAPL", "exchange": "US"}
+    response = client.get("/symbols/ai-report/technical", params=params)
+
+    assert response.status_code == 401

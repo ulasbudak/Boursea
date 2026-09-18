@@ -181,6 +181,12 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
               {entitlement.realtime_data ? messages.billing.unlockedLabel : messages.billing.lockedLabel}
             </Text>
           </View>
+          <View style={styles.billingRow}>
+            <Text style={styles.notificationLabel}>{messages.billing.aiReportsLabel}</Text>
+            <Text style={styles.billingValue}>
+              {entitlement.ai_reports ? messages.billing.unlockedLabel : messages.billing.lockedLabel}
+            </Text>
+          </View>
 
           {entitlement.tier === "free" && (
             <View>

@@ -3,10 +3,11 @@
 import { useState, type ReactNode } from "react";
 import type { Locale, Messages } from "@trendus/shared";
 import { ToggleChip } from "@/components/ui/toggle-chip";
+import { AIAnalysisPanel } from "./ai-analysis-panel";
 import { FundamentalsPanel } from "./fundamentals-panel";
 import { PriceChart } from "./price-chart";
 
-type Tab = "overview" | "fundamentals" | "technical";
+type Tab = "overview" | "fundamentals" | "technical" | "ai";
 
 export function StockTabs({
   exchange,
@@ -28,6 +29,7 @@ export function StockTabs({
     { id: "overview", label: t.overviewTab },
     { id: "fundamentals", label: t.fundamentalsTab },
     { id: "technical", label: t.technicalTab },
+    { id: "ai", label: t.aiTab },
   ];
 
   return (
@@ -51,6 +53,7 @@ export function StockTabs({
         <FundamentalsPanel exchange={exchange} symbol={symbol} locale={locale} messages={messages} />
       )}
       {tab === "technical" && <PriceChart exchange={exchange} symbol={symbol} messages={messages} />}
+      {tab === "ai" && <AIAnalysisPanel exchange={exchange} symbol={symbol} messages={messages} />}
     </div>
   );
 }

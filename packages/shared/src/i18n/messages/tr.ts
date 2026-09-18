@@ -57,6 +57,7 @@ export const tr: Messages = {
     overviewTab: "Genel Bakış",
     fundamentalsTab: "Temel Analiz",
     technicalTab: "Teknik Analiz",
+    aiTab: "AI Analiz",
   },
   chart: {
     candlestick: "Mum",
@@ -357,9 +358,25 @@ export const tr: Messages = {
     unlimitedLabel: "Sınırsız",
     advancedIndicatorsLabel: "Geniş indikatör kütüphanesi",
     realtimeDataLabel: "Gerçek zamanlı veri",
+    aiReportsLabel: "AI analiz raporları",
     lockedLabel: "Kilitli",
     unlockedLabel: "Açık",
     delayedDataDisclosure: "Ücretsiz katmanda fiyat verisi gecikmeli/günlük olabilir.",
     advancedIndicatorsLocked: "Geniş indikatör kütüphanesi premium'a özel. Bu, temel 7 indikatörle devam edebilirsin.",
+  },
+  aiAnalysis: {
+    title: "AI Analiz",
+    deterministicTitle: "Deterministik Skor",
+    technicalTitle: "Teknik Analiz AI Raporu",
+    fundamentalTitle: "Temel Analiz AI Raporu",
+    generateButton: "Rapor Oluştur",
+    generating: "Rapor oluşturuluyor…",
+    lockedMessage: "AI analiz raporları premium'a özel.",
+    unavailableMessage: "Rapor şu an oluşturulamıyor.",
+    cachedNote: "Bu rapor daha önce oluşturuldu, önbellekten gösteriliyor.",
+    technicalDisclaimer:
+      "Üçüncü taraf, deneysel bir modelin okumasıdır — yatırım tavsiyesi değildir.",
+    fundamentalDisclaimer: "Yapay zeka tarafından üretilmiştir — yatırım tavsiyesi değildir.",
+    bistUnsupported: "BIST hisseleri için bu rapor henüz desteklenmiyor.",
   },
 };

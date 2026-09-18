@@ -55,6 +55,7 @@ export interface Messages {
     overviewTab: string;
     fundamentalsTab: string;
     technicalTab: string;
+    aiTab: string;
   };
   chart: {
     candlestick: string;
@@ -354,9 +355,24 @@ export interface Messages {
     unlimitedLabel: string;
     advancedIndicatorsLabel: string;
     realtimeDataLabel: string;
+    aiReportsLabel: string;
     lockedLabel: string;
     unlockedLabel: string;
     delayedDataDisclosure: string;
     advancedIndicatorsLocked: string;
+  };
+  aiAnalysis: {
+    title: string;
+    deterministicTitle: string;
+    technicalTitle: string;
+    fundamentalTitle: string;
+    generateButton: string;
+    generating: string;
+    lockedMessage: string;
+    unavailableMessage: string;
+    cachedNote: string;
+    technicalDisclaimer: string;
+    fundamentalDisclaimer: string;
+    bistUnsupported: string;
   };
 }

@@ -10,6 +10,7 @@ import {
 import { formatChange, formatMarketCap, formatPrice, signColor } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
+import { AIAnalysisPanel } from "./AIAnalysisPanel";
 import { FundamentalsPanel } from "./FundamentalsPanel";
 import { PriceChartWebView } from "./PriceChartWebView";
 import { ScoreBadge } from "./ScoreBadge";
@@ -53,7 +54,7 @@ export function StockOverviewScreen({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
-  const [tab, setTab] = useState<"overview" | "fundamentals" | "technical">("overview");
+  const [tab, setTab] = useState<"overview" | "fundamentals" | "technical" | "ai">("overview");
   const [showDelayDisclosure, setShowDelayDisclosure] = useState(false);
 
   useEffect(() => {
@@ -148,6 +149,11 @@ export function StockOverviewScreen({
             {messages.stock.technicalTab}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => setTab("ai")}>
+          <Text style={[styles.tabLabel, tab === "ai" && styles.tabLabelActive]}>
+            {messages.stock.aiTab}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {tab === "overview" && (
@@ -220,6 +226,7 @@ export function StockOverviewScreen({
 
       {tab === "fundamentals" && <FundamentalsPanel symbol={symbol} exchange={exchange} />}
       {tab === "technical" && <PriceChartWebView symbol={symbol} exchange={exchange} />}
+      {tab === "ai" && <AIAnalysisPanel symbol={symbol} exchange={exchange} />}
 
       <Text style={styles.disclaimer}>{messages.common.disclaimer}</Text>
     </ScrollView>

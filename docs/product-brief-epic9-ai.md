@@ -58,3 +58,37 @@ PRD §9'daki mevcut açık soru, bu epic ile birlikte somut ve daha acil hale ge
 2. Regülasyon riski (yukarıya bkz.) için hukuki görüş alınmalı — yatırımcı sunumundan önce.
 3. Finnhub `company-news` endpoint erişimi ve LLM sağlayıcı/maliyet seçimi netleştirilmeli (mimari kararı, `docs/architecture.md`'ye işlenmeli).
 4. Epic 1-8 (Faz 1 MVP) tamamlanana kadar Epic 9 geliştirmesi başlamaz.
+
+## 2026-09-18 Güncellemesi: Kapsam Somutlaştırıldı
+
+Epic 1-8 (Faz 1 MVP, Story 8.2 hariç — bkz. not aşağıda) tamamlandıktan sonra kullanıcı, Epic 9'un kapsamını üç ayrı, açıkça etiketlenmiş "görüş" olarak somutlaştırdı: (a) bir görüntü-tabanlı (pretrained CV) modelle teknik/grafik okuması, (b) bir LLM API'siyle temel analiz yorumu, (c) mevcut kural bazlı skorun (Story 3.6/3.7, zaten üretimde) Al/Nötr/Sat çıktısı — üçü aynı panelde, birbirinden ayrı ve karşılaştırılabilir şekilde sunulacak. **Story 8.2 (gerçek premium satın alma akışı) hâlâ kullanıcının kendi ödeme sağlayıcı hesabını kurmasını bekliyor** — Epic 9, Story 8.1'in (entitlement altyapısı) üzerine kuruluyor, satın alma akışına bağımlı değil.
+
+### (a) Teknik Analiz AI — Model Seçimi
+
+Kullanıcı, `hisse_ai_repo_karsilastirma_raporu.pdf` adlı bir karşılaştırma raporu getirdi (4 aday: huseinzol05/Stock-Prediction-Models, Omar-Karimov/ChartScanAI, foduucom/stockmarket-pattern-detection-yolov8, pecu/FinancialVision) ve en kullanılabilir olanın seçilip entegre edilmesini istedi. Canlı araştırma (lisans + teknik doğrulama, WebFetch ile) sonucunda:
+
+| Aday | Lisans | Karar |
+|---|---|---|
+| huseinzol05/Stock-Prediction-Models | belirsiz, Temmuz 2023'te arşivlenmiş | Elendi — bağımlılık uyumsuzluğu, "kur-çalıştır" değil |
+| foduucom/stockmarket-pattern-detection-yolov8 (Hugging Face) | **belirtilmemiş** ("lisans için geliştiricilerle iletişime geçin") | Elendi — ticari/yatırımcıya açık bir üründe kaynağı belirsiz lisanslı model gömmek hukuki risk; ayrıca belirli bir ekran görüntüsü bölgesine (683×768) özel eğitilmiş, mAP@0.5 = 0.614 (orta doğruluk) |
+| **Omar-Karimov/ChartScanAI** | **MIT** | **Seçildi** — ticari kullanım serbest, hazır ağırlıklar repo içinde, eğitim verisi **mplfinance ile üretilmiş** candlestick görüntüleri (bizim de kendi OHLC verimizden görüntü üretirken kullanacağımız kütüphaneyle birebir aynı — dağılım uyumsuzluğu riski düşük) |
+| pecu/FinancialVision | araştırma odaklı | Elendi — tek bir entegre edilebilir uygulama değil |
+
+**Bilinen sınırlama:** ChartScanAI görece küçük bir toplulukla (157 yıldız) destekleniyor, resmi doğruluk metriği yayınlanmamış; çıktısı yalnızca ikili "Buy"/"Sell" sınıflandırması (isimli formasyon değil). Bu model "deneysel/gösterge niteliğinde" konumlandırılacak — mevcut "yatırım tavsiyesi değildir" dil politikasına tabi, deterministik skordan (Story 3.6/3.7) ayrı ve açıkça etiketlenmiş bir ikinci görüş olarak sunulacak (iki görüşün uyumu/uyumsuzluğu kullanıcıya şeffaf gösterilir).
+
+### (b) Temel Analiz AI — Sağlayıcı Seçimi
+
+Kullanıcı önce "Claude'un finans skill'i" adlı bir API'den bahsetti; bu isimde, doğrudan çağrılabilir ayrı bir Anthropic ürünü doğrulanamadı. Bunun yerine **Anthropic Claude API** (console.anthropic.com, ayrı bir hesap ve pay-as-you-go faturalama gerektiriyor — claude.ai Pro aboneliği API erişimi içermiyor), kendi yazacağımız bir "finansal analist" sistem prompt'uyla kullanılacak; RAG zemini uygulamanın kendi hesapladığı temel verisi (F/K, ROE, borç/özsermaye, sektör kıyaslaması, geçmiş finansal performans — Epic 2 çıktısı) olacak.
+
+### (c) Deterministik Analiz
+
+Yeni geliştirme gerekmiyor — `app/scoring.py`'deki `compute_score()` (Story 3.6/3.7) zaten 0-100 skor + Al/Nötr/Sat etiketi + "yatırım tavsiyesi değildir" ibaresi üretiyor. Bu, üçüncü panel olarak (a) ve (b)'nin yanına yeniden sunulacak.
+
+### Mimari Kararlar
+
+- **Celery/Redis kullanılmayacak** — mimaride planlanmış olsa da (AD-8) hiçbir story bugüne kadar bunu kurmadı, her şey istek-anında hesaplanıyor; bu tutarlılık korunuyor.
+- **Global önbellek** (`ai_reports` tablosu, sembol+borsa+rapor-türü bazlı, TTL'li) — kullanıcı bazlı değil, LLM/CV maliyetini kontrol etmek için.
+- **Ağır CV bağımlılığı (ultralytics/torch/mplfinance) tembel yüklenecek** — yalnızca teknik AI uç noktasına ilk istek geldiğinde, process-level singleton olarak.
+- **Entitlement genişletmesi**: `Entitlement.ai_reports: bool`, backend'de zorlanıyor (403) — Story 8.1'in gelişmiş-indikatör kilidinden farklı olarak, burada gerçek para/CPU maliyeti olduğu için yalnızca istemci tarafı gizleme yeterli değil.
+
+Detaylı uygulama planı: bkz. Story 9.1 (`docs/stories/story-9.1.md`, artık "Temel Analiz AI Raporu") ve Story 9.2 (`docs/stories/story-9.2.md`, artık "Teknik Analiz AI Raporu — CV Modeli").

@@ -1,85 +1,96 @@
 ---
-title: "Story 9.1: Serbest Formatlı AI Hisse Yorumu"
+title: "Story 9.1: Temel Analiz AI Raporu"
 epic: "Epic 9 — AI Destekli Yorum ve Örüntü Tanıma"
 story_id: "9.1"
-status: planned
+status: in-progress
 created: 2026-09-16
-updated: 2026-09-16
-author: Mary (BMAD Business Analyst)
-based_on: ["docs/PRD.md §5.11", "docs/epics.md §13", "docs/product-brief-epic9-ai.md"]
-depends_on: ["2.1", "8.1"]
+updated: 2026-09-18
+author: Mary (BMAD Business Analyst) & Bob (BMAD Scrum Master) — Serdar Ulaş Budak ile birlikte
+based_on: ["docs/PRD.md §5.11", "docs/epics.md §13", "docs/product-brief-epic9-ai.md §\"2026-09-18 Güncellemesi\""]
+depends_on: ["2.1", "2.2", "2.3", "8.1"]
 ---
 
-# Story 9.1: Serbest Formatlı AI Hisse Yorumu
+# Story 9.1: Temel Analiz AI Raporu
 
 ## Kullanıcı Hikayesi
 
 As a **kullanıcı (premium)**,
-I want hisse detay sayfasında, o hisseyle ilgili güncel haberlere dayanan bir AI yorumu okumak,
-So that sadece sayılara bakmadan hissenin güncel bağlamını hızlıca anlayabileyim.
+I want hisse detay sayfasında, uygulamanın kendi temel verisine dayanan bir AI temel analiz raporu okumak,
+So that sayıları tek tek yorumlamadan hissenin temel görünümünü hızlıca anlayabileyim.
 
 *(Kaynak: `docs/epics.md` §13, Epic 9 — Story 9.1; PRD FR-100.)*
 
 ## Bağlam
 
-> **Ön koşul:** Epic 1-8 (Faz 1 MVP) tamamlanmadan bu story'ye başlanmaz — hem premium/freemium altyapısı (Epic 8) hem de temel veri katmanı (Epic 2) buna bağımlı.
+Bu story, 2026-09-16'da yazılan orijinal taslağın ("Serbest Formatlı AI Hisse Yorumu" — haber bazlı genel yorum) yerine, kullanıcının 2026-09-18'de somutlaştırdığı kapsamla değiştirildi: artık özel olarak **temel analiz** odaklı, ayrı ve açıkça etiketlenmiş bir rapor. Hisse detay sayfasında bu, Story 9.2'nin teknik AI raporu ve mevcut deterministik skorun (Story 3.6/3.7) yanında üçüncü bir panel olarak gösterilecek.
 
-Bu, projenin **ilk LLM entegrasyonu**. Şimdiye kadarki tüm veri akışı deterministik (Finnhub/Twelve Data'dan geçirilen sayısal veri, kural bazlı sinyal/skor motoru). Bu story ile birlikte iki yeni bağımlılık sınıfı giriyor:
+Bu, projenin **ilk LLM entegrasyonu**. Sağlayıcı kararı verildi: **Anthropic Claude API** (kullanıcı kararı — "Claude'un finans skill'i" adlı ayrı bir ürün doğrulanamadı, bunun yerine Claude API'si kendi yazacağımız bir "finansal analist" sistem prompt'uyla kullanılacak). Kullanıcının console.anthropic.com'da **ayrı bir hesap** açıp API anahtarı alması gerekiyor — claude.ai Pro aboneliği ($20/ay) API erişimi içermiyor, ayrı pay-as-you-go faturalama gerektiriyor.
 
-- **Haber verisi:** Backend'de şu an hiçbir haber/sentiment kaynağı yok. Finnhub'ın `company-news` endpoint'inin mevcut abonelik planında dahil olup olmadığı doğrulanmamış — geliştirme başlamadan önce netleştirilmeli (bkz. Görev 1).
-- **LLM sağlayıcı:** Hangi sağlayıcı/model kullanılacağı (maliyet, gecikme, Türkçe/İngilizce kalite) henüz seçilmedi — bu story'nin ilk teknik görevi bu seçimi netleştirmek.
+**Neden grounding zorunlu:** Karar gerekçesi `docs/product-brief-epic9-ai.md`'de detaylandırıldı — özetle, kendi verimiz olmadan (salt LLM eğitim verisiyle) üretilen bir yorum hem güncelliğini kaybeder hem de halüsinasyon/"yatırım tavsiyesi" riski taşır. Bu yüzden AC'lerde temel veri yetersizse rapor **üretilmez**, "yeterli veri yok" gösterilir.
 
-**Neden grounding zorunlu:** Karar gerekçesi `docs/product-brief-epic9-ai.md`'de detaylandırıldı — özetle, haber verisi olmadan (salt LLM eğitim verisiyle) üretilen bir yorum hem güncelliğini kaybeder hem de halüsinasyon/"yatırım tavsiyesi" riski taşır. Bu yüzden AC'lerde haber bulunamazsa yorum **üretilmez**, "yeterli veri yok" gösterilir — sessiz/riskli bir fallback yok.
+**Haber verisi kapsam dışı:** Orijinal taslaktaki Finnhub `company-news` entegrasyonu bu story'den çıkarıldı — temel analiz raporu yalnızca uygulamanın kendi hesapladığı sayısal temel veriye (Epic 2 çıktısı) dayanıyor, haber grounding'i gerektirmiyor. (İleride ayrı bir genişleme olarak değerlendirilebilir, bu story'nin kapsamında değil.)
 
-**BIST kapsamı:** Mevcut mimari kararla tutarlı olarak (Story 1.4'ten beri), BIST için canlı haber/temel veri kaynağı yok. Bu story kapsamında BIST için de "veri yok" uyarısı döner — ayrı bir BIST haber kaynağı bu story'nin kapsamı dışında.
+**BIST kapsamı:** Mevcut mimari kararla tutarlı olarak (Story 1.4'ten beri), BIST için canlı temel veri kaynağı yok. Bu story kapsamında BIST için "veri yok" uyarısı döner.
 
 ## Kapsam
 
-- **Backend:** Finnhub `company-news` entegrasyonu (yeni bir modül veya `fundamentals.py`'ye ek); LLM sağlayıcı entegrasyonu (RAG — haber başlıkları/özetleri + `fundamentals`/`score` verisi prompt'a enjekte edilir); `GET /fundamentals/ai-comment` (veya benzeri) uç noktası; premium erişim kontrolü (Epic 8 entitlement kontrolüyle aynı desen).
-- **Web/Mobil:** Hisse detay sayfasında "AI Yorumu" bölümü (premium kilit durumu dahil).
+- **Backend:**
+  - Yeni migration: `ai_reports` tablosu (`symbol`, `exchange`, `report_type`, `content` jsonb, `generated_at`) — sembol+borsa+rapor-türü bazlı **global önbellek** (kullanıcı bazlı değil; aynı hisseye bakan farklı kullanıcılar aynı raporu paylaşır, LLM API maliyetini kontrol eder).
+  - `app/config.py`'ye `ANTHROPIC_API_KEY` ayarı (mevcut `FINNHUB_API_KEY` deseniyle aynı).
+  - `app/entitlements.py`'deki `Entitlement` modeline `ai_reports: bool` alanı (free: `false`, premium: `true`).
+  - Yeni `app/ai_fundamental.py`: `app/fundamentals.py`'den (Story 2.1-2.3) zemin verisi toplama → Anthropic Messages API'sine `httpx.AsyncClient` ile istek (SDK yok, mevcut Finnhub/Twelve Data deseniyle tutarlı) → önbellek okuma/yazma (TTL: 24 saat).
+  - `GET /symbols/ai-report/fundamental` uç noktası: entitlement kontrolü (403 free kullanıcıda), önbellek varsa döndür, yoksa üret+kaydet+döndür, veri yetersizse "yeterli veri yok".
+- **Web/Mobil:** Hisse detay sayfasında "Temel Analiz AI Raporu" paneli (Story 9.2'nin teknik paneli ve mevcut skor rozetiyle birlikte, ortak bir "AI Analiz" bölümünde); "Rapor Oluştur" butonu (otomatik değil, açık istek — LLM çağrısı gecikme/maliyet taşıdığı için); premium kilit durumu (Story 8.1'deki kilit deseniyle aynı).
 
 **Kapsam dışı:**
-- Tarama, portföy, ana ekran yerleşimleri (yalnızca hisse detay sayfası — bkz. `docs/product-brief-epic9-ai.md` §3).
-- Sohbet/chat arayüzü (değerlendirildi, bu fazda seçilmedi).
-- BIST için haber kaynağı entegrasyonu.
+- Haber grounding'i (Finnhub `company-news`) — orijinal taslaktan çıkarıldı, bu story kapsamında değil.
+- Tarama, portföy, ana ekran yerleşimleri (yalnızca hisse detay sayfası).
+- Sohbet/chat arayüzü.
+- BIST için temel veri kaynağı entegrasyonu.
 
 ## Görevler
 
-1. **[Karar/Mimari]** LLM sağlayıcı seçimi (maliyet/gecikme/dil kalitesi karşılaştırması) — `docs/architecture.md`'ye işlenmeli. ☐
-2. **[Karar]** Finnhub mevcut plan seviyesinde `company-news` erişimi teyit edilmeli; yoksa plan yükseltme/alternatif kaynak kararı. ☐
-3. **[Backend]** Haber çekme + RAG prompt oluşturma modülü. ☐
-4. **[Backend]** `GET /fundamentals/ai-comment` (ya da eşdeğeri) uç noktası: premium kontrolü, haber yoksa "yeterli veri yok", BIST için uyarı. ☐
-5. **[Backend]** Testler: haber var/yok senaryoları, premium/ücretsiz erişim kontrolü, BIST uyarı davranışı, LLM çağrısı hata durumu (sessiz hata yerine "şu an üretilemiyor"). ☐
-6. **[Web]** Hisse detay sayfasına "AI Yorumu" bölümü + premium kilit UI'ı. ☐
-7. **[Mobil]** Aynı bölüm, mobil bileşen deseniyle (`FundamentalsPanel.tsx` yanına veya ayrı bileşen). ☐
+1. **[Kullanıcı]** Anthropic API anahtarı sağlanmalı (console.anthropic.com, ayrı hesap). ☐ — kullanıcı bu adımı sonraya bıraktı (2026-09-18), canlı doğrulama bu anahtar sağlandığında yapılacak.
+2. **[Backend]** `apps/api/migrations/0009_ai_reports.sql`: `ai_reports` tablosu. ✅ — canlı Supabase'e uygulandı.
+3. **[Backend]** `app/config.py`: `ANTHROPIC_API_KEY`. ✅
+4. **[Backend]** `app/entitlements.py`: `Entitlement.ai_reports` alanı + `get_entitlement()` güncellemesi. ✅
+5. **[Backend]** `app/ai_fundamental.py`: zemin verisi toplama + Anthropic API çağrısı ("finansal analist" sistem prompt'u) + önbellek. ✅ — koda yazıldı, gerçek Anthropic anahtarıyla henüz canlı çağrılmadı.
+6. **[Backend]** `GET /symbols/ai-report/fundamental` uç noktası (`main.py`). ✅ — 403 davranışı canlı doğrulandı (bkz. DoD).
+7. **[Backend]** Testler: veri var/yok senaryoları, premium/ücretsiz erişim kontrolü (403), BIST uyarısı, LLM çağrısı hata durumu, önbellekten dönme senaryosu — hepsi mock'lu (gerçek API çağrısı test ortamında yapılmaz). ✅
+8. **[Web]** Hisse detay sayfasına "AI Analiz" bölümü içinde "Temel Analiz AI Raporu" paneli + kilit UI'ı + "Rapor Oluştur" butonu. ✅
+9. **[Mobil]** Aynı panel, `StockOverviewScreen`'de. ✅
 
 ## Kabul Kriterleri
 
-**AC1 — Yorum üretimi**
-- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "AI Yorumu" bölümüne gelirse, **Then** Finnhub `company-news` verisi ve uygulamanın kendi temel/teknik verileri zemine alınarak üretilmiş serbest formatlı bir yorum gösterilir (FR-100).
+**AC1 — Rapor üretimi**
+- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "Temel Analiz AI Raporu"nu talep ederse, **Then** Anthropic Claude API'sine, uygulamanın kendi temel verisi zemine alınarak (RAG) üretilmiş bir rapor gösterilir (FR-100).
 
-**AC2 — Premium kilidi**
-- **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı bölüme gelirse, **Then** özellik kilitli gösterilir ve premium yükseltme teklifiyle karşılaşır (FR-080).
+**AC2 — Premium kilidi (backend zorlamalı)**
+- **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı bölüme gelirse, **Then** özellik kilitli gösterilir ve premium yükseltme teklifiyle karşılaşır (FR-080); **And** aynı isteği doğrudan API'ye yapsa bile backend 403 döner (yalnızca istemci tarafı gizleme yeterli değil — gerçek API maliyeti var).
 
 **AC3 — Veri yoksa üretilmez**
-- **Given** ilgili hisse için güncel haber bulunamazsa, **When** yorum üretilmeye çalışılırsa, **Then** "yeterli güncel veri yok" durumu gösterilir; haber olmadan bir yorum üretilmez.
+- **Given** ilgili hisse için temel veri yetersizse (örn. BIST), **When** rapor üretilmeye çalışılırsa, **Then** "yeterli veri yok" durumu gösterilir; veri olmadan bir rapor üretilmez.
 
-**AC4 — Şeffaflık ve sorumluluk reddi**
-- **And** yorumun altında sabit olarak "yatırım tavsiyesi değildir" ibaresi ve haber kaynağı/tarih bilgisi yer alır (NFR-3, NFR-7).
+**AC4 — Şeffaflık, sorumluluk reddi ve maliyet kontrolü**
+- **And** raporun altında sabit olarak "yatırım tavsiyesi değildir" ibaresi yer alır.
+- **And** aynı sembol için art arda gelen istekler LLM API'sini her seferinde tetiklemez — 24 saatlik TTL'li global önbellekten döner.
 
 ## Definition of Done
 
-- [ ] AC1–AC4 karşılanıyor ve doğrulandı.
-- [ ] LLM sağlayıcı seçimi ve maliyet tahmini `docs/architecture.md`'ye işlendi.
-- [ ] Finnhub `company-news` erişimi teyit edildi (plan yeterli veya yükseltildi).
-- [ ] Backend testleri yeşil + ruff temiz.
-- [ ] Web: typecheck, lint, build yeşil.
-- [ ] Mobil: typecheck, lint, Metro bundle yeşil.
-- [ ] Regülasyon riski (bkz. `docs/product-brief-epic9-ai.md` §"Yatırımcı Sunumundan Önce Kapatılması Gereken Risk") için hukuki teyit alındı.
-- [ ] Gerçek tarayıcıda/cihazda görsel-etkileşim doğrulaması yapıldı.
+- [x] AC1, AC3, AC4 koda yazıldı ve mock'lu testlerle doğrulandı; AC2 (premium kilidi) canlı doğrulandı.
+- [x] Migration canlı Supabase'e uygulandı.
+- [x] Backend testleri yeşil + ruff temiz (281/281 test).
+- [x] Web: typecheck, lint, build yeşil.
+- [x] Mobil: typecheck, lint, Metro bundle yeşil.
+- [ ] **Gerçek Anthropic API anahtarıyla canlı uçtan uca doğrulandı** (rapor üretimi + ikinci istekte önbellekten dönme) — **açık madde**, kullanıcı Anthropic API anahtarını sağladığında yapılacak (2026-09-18'de bilinçli olarak sonraya bırakıldı).
+- [x] **Ücretsiz katman kullanıcısıyla 403 doğrulandı** — taze bir Supabase kullanıcısıyla gerçek JWT üzerinden canlı çağrıldı, doğru Türkçe mesajla 403 alındı.
+- [ ] Regülasyon riski (bkz. `docs/product-brief-epic9-ai.md` §"Yatırımcı Sunumundan Önce Kapatılması Gereken Risk") için hukuki teyit — yatırımcı sunumundan önce, bu story'nin geliştirme aşamasını bloklamıyor.
+- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 
-- **Maliyet kontrolü:** Yorumlar istek-anında değil, kısa bir TTL ile önbelleğe alınmalı (örn. saatlik) — aynı hisseye art arda gelen istekler her seferinde LLM çağrısı tetiklememeli. Story 4.1'deki işlem-içi TTL önbellek deseni (`_fundamentals_cache`) örnek alınabilir.
-- **Prompt/veri sızıntısı riski:** Prompt'a yalnızca haber başlığı/özeti + uygulamanın kendi hesapladığı sayısal veriler enjekte edilmeli; kullanıcıya özel veri (portföy, not) bu story kapsamında prompt'a dahil edilmez.
-- **Hata davranışı:** LLM sağlayıcı hatası/timeout durumunda sessiz hata yerine mevcut desenle tutarlı ("veri şu an güncellenemiyor" tarzı) bir uyarı gösterilmeli (NFR-2).
+- **Maliyet kontrolü:** Global önbellek (kullanıcı bazlı değil) — Story 4.1'deki işlem-içi TTL önbellek deseninden farklı olarak, burada kalıcı bir DB tablosu kullanılıyor çünkü TTL (24 saat) tek bir isteğin ömründen çok daha uzun.
+- **SDK yok:** Anthropic Messages API'si `httpx.AsyncClient` ile doğrudan çağrılacak — Finnhub/Twelve Data ile aynı desen, yeni bir SDK bağımlılığı eklenmiyor.
+- **Celery/Redis kullanılmıyor:** Mimaride planlanmış olsa da (AD-8) hiçbir story bugüne kadar bunu kurmadı; rapor üretimi senkron, istek-anında.
+- **Prompt/veri sızıntısı riski:** Prompt'a yalnızca uygulamanın kendi hesapladığı sayısal temel veriler enjekte edilmeli; kullanıcıya özel veri (portföy, not) bu story kapsamında prompt'a dahil edilmez.
+- **Hata davranışı:** LLM sağlayıcı hatası/timeout durumunda sessiz hata yerine mevcut desenle tutarlı ("veri şu an sağlanamıyor" tarzı) bir uyarı gösterilmeli.

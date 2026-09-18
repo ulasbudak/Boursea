@@ -24,6 +24,7 @@ class Entitlement(BaseModel):
     portfolio_limit: int | None
     advanced_indicators: bool
     realtime_data: bool
+    ai_reports: bool
 
 
 class EntitlementLimitError(Exception):
@@ -49,6 +50,7 @@ def get_entitlement(user_id: str) -> Entitlement:
             portfolio_limit=None,
             advanced_indicators=True,
             realtime_data=True,
+            ai_reports=True,
         )
     return Entitlement(
         tier="free",
@@ -58,6 +60,7 @@ def get_entitlement(user_id: str) -> Entitlement:
         portfolio_limit=FREE_PORTFOLIO_LIMIT,
         advanced_indicators=False,
         realtime_data=False,
+        ai_reports=False,
     )
 
 
@@ -105,4 +108,11 @@ def enforce_portfolio_limit(user_id: str) -> None:
         raise EntitlementLimitError(
             f"Ücretsiz katmanda en fazla {entitlement.portfolio_limit} portföy "
             "oluşturabilirsin. Sınırsız için premium'a geç."
+        )
+
+
+def enforce_ai_reports_access(user_id: str) -> None:
+    if not get_entitlement(user_id).ai_reports:
+        raise EntitlementLimitError(
+            "AI analiz raporları yalnızca premium katmanda kullanılabilir. Premium'a geç."
         )

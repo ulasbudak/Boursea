@@ -527,31 +527,37 @@ So that gerçek zamanlı veri ve gelişmiş özelliklere erişebileyim.
 
 > **Ön koşul:** Epic 1-8 (Faz 1 MVP) tamamlanmış olmalı. Karar gerekçesi, değerlendirilip elenen alternatifler ve açık risk için bkz. `docs/product-brief-epic9-ai.md`.
 
-### Story 9.1: Serbest Formatlı AI Hisse Yorumu
+> **2026-09-18 güncellemesi:** Kullanıcı, Epic 9'un kapsamını somutlaştırdı — hisse detay sayfasında üç ayrı, açıkça etiketlenmiş görüş: (a) Story 9.2'nin CV modeliyle teknik/grafik okuması, (b) Story 9.1'in LLM ile ürettiği temel analiz raporu, (c) mevcut kural bazlı skorun (Story 3.6/3.7, zaten üretimde) Al/Nötr/Sat çıktısı. Gerekçe ve model/sağlayıcı seçimi için bkz. `docs/product-brief-epic9-ai.md` §"2026-09-18 Güncellemesi".
+
+### Story 9.1: Temel Analiz AI Raporu
+
+- [ ] **Devam ediyor** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.1.md`**. Backend (`app/ai_fundamental.py` + `GET /symbols/ai-report/fundamental` — Anthropic Claude API'sine `httpx` ile çağrı, Epic 2'nin temel verisiyle RAG, sembol bazlı global önbellek), web/mobil (AI Analiz sekmesinde "Rapor Oluştur" paneli + premium kilidi) uygulandı; testler (mock'lu) yeşil. Ücretsiz katman 403'ü canlı doğrulandı. **Açık madde:** gerçek Anthropic API anahtarı henüz sağlanmadı, rapor üretiminin gerçek LLM çağrısıyla uçtan uca doğrulanması bekliyor.
 
 As a **kullanıcı (premium)**,
-I want hisse detay sayfasında, o hisseyle ilgili güncel haberlere dayanan bir AI yorumu okumak,
-So that sadece sayılara bakmadan hissenin güncel bağlamını hızlıca anlayabileyim.
+I want hisse detay sayfasında, uygulamanın kendi temel verisine dayanan bir AI temel analiz raporu okumak,
+So that sayıları tek tek yorumlamadan hissenin temel görünümünü hızlıca anlayabileyim.
 
 **Acceptance Criteria:**
 
-- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "AI Yorumu" bölümüne gelirse, **Then** Finnhub `company-news` verisi ve uygulamanın kendi temel/teknik verileri zemine alınarak (RAG) üretilmiş serbest formatlı bir yorum gösterilir (FR-100).
-- **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı bölüme gelirse, **Then** özellik kilitli gösterilir ve premium yükseltme teklifiyle karşılaşır (FR-080).
-- **Given** ilgili hisse için güncel haber bulunamazsa, **When** yorum üretilmeye çalışılırsa, **Then** "yeterli güncel veri yok" durumu gösterilir; haber olmadan genel/halüsinasyon riski taşıyan bir yorum üretilmez.
-- **And** yorumun altında sabit olarak "yatırım tavsiyesi değildir" ibaresi ve haber kaynağı/tarih bilgisi (şeffaflık için) yer alır (NFR-3, NFR-7).
+- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "Temel Analiz AI Raporu"nu talep ederse, **Then** Anthropic Claude API'sine, uygulamanın kendi hesapladığı temel verisi (F/K, ROE, borç/özsermaye, sektör kıyaslaması, geçmiş finansal performans) zemine alınarak (RAG) üretilmiş bir rapor gösterilir (FR-100).
+- **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı bölüme gelirse, **Then** özellik kilitli gösterilir ve premium yükseltme teklifiyle karşılaşır (FR-080); backend de aynı isteği 403 ile reddeder.
+- **Given** ilgili hisse için temel veri yetersizse (örn. BIST — canlı temel veri kaynağı yok), **When** rapor üretilmeye çalışılırsa, **Then** "yeterli veri yok" durumu gösterilir; veri olmadan genel/halüsinasyon riski taşıyan bir rapor üretilmez.
+- **And** raporun altında sabit olarak "yatırım tavsiyesi değildir" ibaresi yer alır; rapor sembol+borsa bazlı önbelleğe alınır (kullanıcı bazlı değil), LLM API maliyetini kontrol etmek için.
 
-### Story 9.2: Deterministik Grafik Örüntü Tespiti
+### Story 9.2: Teknik Analiz AI Raporu — CV Modeli
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.2.md`**. PDF karşılaştırma raporundaki 4 adaydan ChartScanAI'nin YOLOv8 modeli seçildi (MIT lisans + mplfinance eğitim verisi uyumu, GitHub API/LICENSE ile canlı doğrulandı); backend (`app/ai_technical.py` — mplfinance ile grafik görüntüsü üretimi, lazy-loaded model, `GET /symbols/ai-report/technical`), web/mobil (AI Analiz sekmesi, mevcut deterministik skorla birlikte üç panel) uygulandı ve doğrulandı. **Gerçek AAPL/MSFT verisiyle canlı uçtan uca doğrulandı** (gerçek model ağırlığı, gerçek mum verisi, önbellek ve ücretsiz katman 403'ü dahil).
 
 As a **aktif trader**,
-I want fiyat grafiğinde trend çizgisi, destek/direnç seviyeleri ve klasik formasyonların otomatik tespit edildiğini görmek,
-So that manuel çizim yapmadan grafikteki önemli seviyeleri/örüntüleri hızlıca fark edebileyim.
+I want fiyat grafiğimin bir görüntü-tanıma modeliyle okunduğu bir teknik AI raporu görmek,
+So that grafiği manuel yorumlamadan modelin "okumasını" diğer görüşlerle (temel AI, deterministik skor) karşılaştırabileyim.
 
 **Acceptance Criteria:**
 
-- **Given** bir hissenin teknik verisi, **When** kural bazlı örüntü tanıma algoritması çalıştırılırsa, **Then** tespit edilen trend çizgisi/destek-direnç seviyeleri ve klasik formasyonlar (üçgen, omuz-baş-omuz vb.) grafik üzerinde işaretlenir (FR-101).
-- **Given** bir bulgu listelenir, **When** kullanıcı bulguya bakarsa, **Then** bulgu "örüntü/sinyal bulgusu" olarak, mevcut sinyal motoruyla (FR-024) tutarlı bir dille sunulur; "AI trading stratejisi" veya "öneri" ifadesi kullanılmaz.
-- **Given** yeterli veri/net bir örüntü yoksa, **When** tespit çalıştırılırsa, **Then** "belirgin bir örüntü tespit edilmedi" durumu gösterilir, hatalı/zorlama bir bulgu üretilmez.
-- **And** bu story'nin çıktısı kural bazlı/deterministiktir; geçmiş veriyle eğitilmiş bir ML modeli (FR-102/FR-025) bu epic'in kapsamında değildir, ayrı bir gelecek fazda ele alınacaktır.
+- **Given** bir hissenin mum verisi, **When** kullanıcı "Teknik Analiz AI Raporu"nu talep ederse, **Then** candle verisinden üretilen bir grafik görüntüsü, önceden eğitilmiş bir CV modeliyle (ChartScanAI/YOLOv8, MIT lisanslı) okunur ve sonuç, deterministik skordan **ayrı ve açıkça etiketlenmiş** bir "modelin okuması" olarak sunulur (FR-101).
+- **Given** bir bulgu gösterilir, **When** kullanıcı bulguya bakarsa, **Then** bulgu "grafik modelinin okuması/bulgusu" dilinde sunulur; "AI trading stratejisi" veya "öneri" ifadesi kullanılmaz; modelin deneysel/gösterge niteliğinde olduğu belirtilir.
+- **Given** ücretsiz katmandaki bir kullanıcı, **When** rapor talep ederse, **Then** özellik kilitli gösterilir; backend isteği 403 ile reddeder (CPU maliyeti nedeniyle yalnızca istemci tarafı gizleme yeterli değil).
+- **And** rapor sembol+borsa bazlı önbelleğe alınır; gerçek bir eğitim/ML altyapısı (FR-102/FR-025 — kendi verimizle eğitilmiş bir model) bu story'nin kapsamında değildir, ayrı bir gelecek fazda ele alınacaktır.
 
 ---
 

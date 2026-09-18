@@ -8,6 +8,7 @@ export type Entitlement = {
   portfolio_limit: number | null;
   advanced_indicators: boolean;
   realtime_data: boolean;
+  ai_reports: boolean;
 };
 
 export async function fetchEntitlement(): Promise<Entitlement> {

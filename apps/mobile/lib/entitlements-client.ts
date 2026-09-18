@@ -8,6 +8,7 @@ export type Entitlement = {
   portfolio_limit: number | null;
   advanced_indicators: boolean;
   realtime_data: boolean;
+  ai_reports: boolean;
 };
 
 async function authFetch(path: string, init: RequestInit = {}): Promise<Response> {

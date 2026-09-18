@@ -3,6 +3,8 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.ai_fundamental import AIReportUnavailableError, FundamentalAIReport, get_fundamental_report
+from app.ai_technical import TechnicalAIReport, get_technical_report
 from app.alerts import (
     AlertNotFoundError,
     PriceAlert,
@@ -18,6 +20,7 @@ from app.db import check_database_connection
 from app.entitlements import (
     Entitlement,
     EntitlementLimitError,
+    enforce_ai_reports_access,
     enforce_alert_limit,
     enforce_portfolio_limit,
     enforce_signal_alert_limit,
@@ -317,6 +320,54 @@ async def get_symbol_score(symbol: str, exchange: str) -> ScoreResponse:
         raise HTTPException(status_code=400, detail="exchange must be BIST or US")
 
     return {"score": score, "warnings": warnings}
+
+
+FundamentalAIReportResponse = dict[str, FundamentalAIReport | list[str] | None]
+
+
+@app.get("/symbols/ai-report/fundamental")
+async def get_fundamental_ai_report_endpoint(
+    symbol: str, exchange: str, claims: dict = Depends(get_current_claims)
+) -> FundamentalAIReportResponse:
+    try:
+        enforce_ai_reports_access(claims["sub"])
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
+
+    warnings: list[str] = []
+    report: FundamentalAIReport | None = None
+    try:
+        report = await get_fundamental_report(symbol, exchange)
+    except AIReportUnavailableError as exc:
+        warnings.append(str(exc))
+    except psycopg.Error:
+        warnings.append("AI rapor verisi şu an sağlanamıyor.")
+
+    return {"report": report, "warnings": warnings}
+
+
+TechnicalAIReportResponse = dict[str, TechnicalAIReport | list[str] | None]
+
+
+@app.get("/symbols/ai-report/technical")
+async def get_technical_ai_report_endpoint(
+    symbol: str, exchange: str, claims: dict = Depends(get_current_claims)
+) -> TechnicalAIReportResponse:
+    try:
+        enforce_ai_reports_access(claims["sub"])
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
+
+    warnings: list[str] = []
+    report: TechnicalAIReport | None = None
+    try:
+        report = await get_technical_report(symbol, exchange)
+    except AIReportUnavailableError as exc:
+        warnings.append(str(exc))
+    except psycopg.Error:
+        warnings.append("AI rapor verisi şu an sağlanamıyor.")
+
+    return {"report": report, "warnings": warnings}
 
 
 ScreenerResponse = dict[str, list[ScreenerResult] | list[str]]

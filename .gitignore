@@ -17,3 +17,6 @@ node_modules/
 # env files
 .env
 .env.local
+
+# downloaded ML model weights (Story 9.2 — fetched at first request, not committed)
+apps/api/app/models/
