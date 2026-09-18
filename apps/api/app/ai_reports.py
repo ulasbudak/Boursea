@@ -8,6 +8,7 @@ Also holds the shared Gemini API call (`call_gemini`) — every AI report module
 prompt, so the HTTP plumbing lives here once. Uses a Google AI Studio API key
 (https://aistudio.google.com/apikey), not Vertex AI."""
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -19,6 +20,12 @@ from app.db import get_connection
 
 GEMINI_TIMEOUT_SECONDS = 30.0
 GEMINI_MAX_OUTPUT_TOKENS = 1024
+# Free-tier Google AI Studio keys routinely get a transient 503 ("model
+# overloaded") or 429 (rate limited) under load — neither reflects a real
+# problem with the request, so retry a couple of times before giving up.
+GEMINI_RETRY_STATUS_CODES = {429, 503}
+GEMINI_MAX_ATTEMPTS = 3
+GEMINI_RETRY_BACKOFF_SECONDS = 1.5
 
 
 class AIReportUnavailableError(Exception):
@@ -42,28 +49,41 @@ async def call_gemini(
     owns_client = client is None
     http_client = client or httpx.AsyncClient(timeout=GEMINI_TIMEOUT_SECONDS)
     try:
-        response = await http_client.post(
-            url,
-            headers={
-                "x-goog-api-key": settings.google_api_key,
-                "content-type": "application/json",
-            },
-            json={
-                "systemInstruction": {"parts": [{"text": system_prompt}]},
-                "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
-                "generationConfig": {
-                    "maxOutputTokens": GEMINI_MAX_OUTPUT_TOKENS,
-                    # gemini-3.6-flash reasons by default, which burns most of
-                    # maxOutputTokens on invisible "thoughts" before writing any
-                    # report text — disable it, these reports don't need it.
-                    "thinkingConfig": {"thinkingBudget": 0},
-                },
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-    except httpx.HTTPError as exc:
-        raise AIReportUnavailableError(f"Gemini request failed: {exc}") from exc
+        payload = None
+        for attempt in range(1, GEMINI_MAX_ATTEMPTS + 1):
+            try:
+                response = await http_client.post(
+                    url,
+                    headers={
+                        "x-goog-api-key": settings.google_api_key,
+                        "content-type": "application/json",
+                    },
+                    json={
+                        "systemInstruction": {"parts": [{"text": system_prompt}]},
+                        "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+                        "generationConfig": {
+                            "maxOutputTokens": GEMINI_MAX_OUTPUT_TOKENS,
+                            # gemini-3.6-flash reasons by default, which burns most of
+                            # maxOutputTokens on invisible "thoughts" before writing any
+                            # report text — disable it, these reports don't need it.
+                            "thinkingConfig": {"thinkingBudget": 0},
+                        },
+                    },
+                )
+                response.raise_for_status()
+                payload = response.json()
+                break
+            except httpx.HTTPStatusError as exc:
+                if (
+                    exc.response.status_code not in GEMINI_RETRY_STATUS_CODES
+                    or attempt == GEMINI_MAX_ATTEMPTS
+                ):
+                    raise AIReportUnavailableError(f"Gemini request failed: {exc}") from exc
+                await asyncio.sleep(GEMINI_RETRY_BACKOFF_SECONDS * attempt)
+            except httpx.HTTPError as exc:
+                if attempt == GEMINI_MAX_ATTEMPTS:
+                    raise AIReportUnavailableError(f"Gemini request failed: {exc}") from exc
+                await asyncio.sleep(GEMINI_RETRY_BACKOFF_SECONDS * attempt)
     finally:
         if owns_client:
             await http_client.aclose()

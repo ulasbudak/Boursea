@@ -145,6 +145,48 @@ async def test_raises_when_google_api_key_missing(monkeypatch):
         await get_fundamental_report("AAPL", "US")
 
 
+@pytest.mark.anyio
+async def test_call_gemini_retries_on_transient_503(monkeypatch):
+    monkeypatch.setattr(ai_reports.asyncio, "sleep", lambda *_: _noop_sleep())
+
+    calls = {"count": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["count"] += 1
+        if calls["count"] < 3:
+            return httpx.Response(503, json={"error": {"message": "model overloaded"}})
+        return _gemini_response()
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        text = await ai_reports.call_gemini("system", "user", client=http_client)
+
+    assert text == "Test temel analiz raporu."
+    assert calls["count"] == 3
+
+
+@pytest.mark.anyio
+async def test_call_gemini_does_not_retry_non_transient_errors(monkeypatch):
+    monkeypatch.setattr(ai_reports.asyncio, "sleep", lambda *_: _noop_sleep())
+
+    calls = {"count": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["count"] += 1
+        return httpx.Response(400, json={"error": {"message": "bad request"}})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        with pytest.raises(AIReportUnavailableError):
+            await ai_reports.call_gemini("system", "user", client=http_client)
+
+    assert calls["count"] == 1
+
+
+async def _noop_sleep():
+    return None
+
+
 def test_get_cached_report_ignores_stale_rows(monkeypatch):
     from contextlib import contextmanager
 
