@@ -423,6 +423,8 @@ So that uygulamayı açık tutmadan haberdar olabileyim.
 
 ### Story 6.1: Portföy Oluşturma ve Pozisyon Ekleme
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-6.1.md`**. Backend (`app/portfolios.py` + `portfolios`/`positions` tabloları — alışta ağırlıklı ortalama maliyet, satışta adet düşürme/yetersiz miktar kontrolü), web (`/portfolio` sayfası, satır-içi işlem formu) ve mobil (`PortfolioScreen`) uygulandı. Canlı Supabase + Finnhub ile uçtan uca doğrulandı (ortalama maliyet 100→150 hesaplaması dahil).
+
 As a **kullanıcı**,
 I want sahip olduğum hisseleri adet ve maliyet fiyatıyla portföyüme eklemek,
 So that gerçek yatırımlarımı uygulama üzerinden takip edebileyim.
@@ -435,6 +437,8 @@ So that gerçek yatırımlarımı uygulama üzerinden takip edebileyim.
 
 ### Story 6.2: Portföy Değeri ve Kâr/Zarar Hesaplama
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-6.2.md`**. `value_portfolios()`: sembol-başına önbellekli canlı fiyat (Finnhub), piyasa değeri/gerçekleşmemiş kâr-zarar; fiyatı alınamayan pozisyonlar (BIST veya API hatası) toplamdan hariç tutulur, sıfırmış gibi dahil edilmez. Uygulandı ve canlı doğrulandı.
+
 As a **kullanıcı**,
 I want portföyümün anlık toplam değerini ve pozisyon bazlı kâr/zararımı görmek,
 So that yatırım performansımı takip edebileyim.
@@ -445,6 +449,8 @@ So that yatırım performansımı takip edebileyim.
 - **Given** bir pozisyonun güncel fiyatı çekilemezse, **When** hesaplama yapılırsa, **Then** o pozisyon "veri güncellenemiyor" olarak işaretlenir, toplam yanlış gösterilmez.
 
 ### Story 6.3: Çoklu Portföy Desteği
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-6.3.md`**. Şema Story 6.1'de baştan çoklu-portföyü destekleyecek şekilde tasarlandı (watchlist'teki "baştan çoğul" kararıyla tutarlı); web/mobil kullanıcının tüm portföylerini kart listesi olarak gösteriyor. **Epic 6 (Portföy Takibi) bu story ile tamamlandı.**
 
 As a **kullanıcı**,
 I want birden fazla portföy (örn. "ABD hisseleri", "BIST uzun vade") oluşturmak,

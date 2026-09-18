@@ -9,6 +9,7 @@ import { StockOverviewScreen } from "./StockOverviewScreen";
 import { SettingsScreen } from "./SettingsScreen";
 import { ScreenerScreen } from "./ScreenerScreen";
 import { WatchlistScreen } from "./WatchlistScreen";
+import { PortfolioScreen } from "./PortfolioScreen";
 import { AlertsScreen } from "./AlertsScreen";
 import { SignalAlertsScreen } from "./SignalAlertsScreen";
 import { CompareScreen } from "./CompareScreen";
@@ -27,6 +28,7 @@ export function HomeScreen({ session }: { session: Session }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showScreener, setShowScreener] = useState(false);
   const [showWatchlist, setShowWatchlist] = useState(false);
+  const [showPortfolio, setShowPortfolio] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showSignalAlerts, setShowSignalAlerts] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
@@ -63,6 +65,14 @@ export function HomeScreen({ session }: { session: Session }) {
     return (
       <SafeAreaView style={styles.container}>
         <WatchlistScreen onBack={() => setShowWatchlist(false)} onSelectResult={setSelectedStock} />
+      </SafeAreaView>
+    );
+  }
+
+  if (showPortfolio) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <PortfolioScreen onBack={() => setShowPortfolio(false)} />
       </SafeAreaView>
     );
   }
@@ -112,6 +122,10 @@ export function HomeScreen({ session }: { session: Session }) {
 
       <TouchableOpacity style={styles.navCard} onPress={() => setShowWatchlist(true)}>
         <Text style={styles.navCardText}>{messages.watchlist.title}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.navCard} onPress={() => setShowPortfolio(true)}>
+        <Text style={styles.navCardText}>{messages.portfolio.title}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navCard} onPress={() => setShowAlerts(true)}>

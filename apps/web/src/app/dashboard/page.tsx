@@ -8,6 +8,7 @@ import {
   Radio,
   Settings as SettingsIcon,
   SlidersHorizontal,
+  Wallet,
 } from "lucide-react";
 import { messages } from "@trendus/shared";
 import { createClient } from "@/lib/supabase/server";
@@ -82,6 +83,15 @@ export default async function DashboardPage() {
               <Bookmark size={18} />
             </div>
             <span className="text-sm font-medium text-text-primary">{t.watchlist.title}</span>
+          </Link>
+          <Link
+            href="/portfolio"
+            className="group flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg hover:shadow-black/20"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-hover text-text-secondary">
+              <Wallet size={18} />
+            </div>
+            <span className="text-sm font-medium text-text-primary">{t.portfolio.title}</span>
           </Link>
           <Link
             href="/alerts"

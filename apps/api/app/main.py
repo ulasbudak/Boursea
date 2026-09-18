@@ -43,6 +43,19 @@ from app.market_data import (
 from app.notifications import NotificationSettings
 from app.notifications import get_settings_for_user as get_notification_settings_for_user
 from app.notifications import upsert_settings_for_user as upsert_notification_settings
+from app.portfolios import (
+    InsufficientQuantityError,
+    Portfolio,
+    PortfolioNotFoundError,
+    Position,
+    PositionNotFoundError,
+    add_transaction,
+    create_portfolio,
+    delete_portfolio,
+    delete_position,
+    list_portfolios,
+    value_portfolios,
+)
 from app.saved_screens import (
     SavedScreen,
     SavedScreenNotFoundError,
@@ -672,3 +685,110 @@ async def get_comparison(symbols: str) -> ComparisonResponse:
     results = await compare_symbols(entries)
     warnings = [warning for entry in results for warning in entry.warnings]
     return {"results": results, "warnings": warnings}
+
+
+class CreatePortfolioRequest(BaseModel):
+    name: str
+
+
+class AddTransactionRequest(BaseModel):
+    symbol: str
+    exchange: str
+    name: str | None = None
+    quantity: float
+    price: float
+    side: str
+
+
+def _portfolios_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="Portföy verisi şu an sağlanamıyor.")
+
+
+PortfoliosResponse = dict[str, list[Portfolio] | list[str]]
+
+
+@app.get("/portfolios")
+async def get_portfolios(claims: dict = Depends(get_current_claims)) -> PortfoliosResponse:
+    try:
+        portfolios = list_portfolios(claims["sub"])
+    except psycopg.Error as exc:
+        raise _portfolios_unavailable() from exc
+    valued, warnings = await value_portfolios(portfolios)
+    return {"portfolios": valued, "warnings": warnings}
+
+
+@app.post("/portfolios", status_code=201)
+def post_portfolio(
+    body: CreatePortfolioRequest, claims: dict = Depends(get_current_claims)
+) -> Portfolio:
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+    try:
+        return create_portfolio(claims["sub"], name)
+    except psycopg.Error as exc:
+        raise _portfolios_unavailable() from exc
+
+
+@app.delete("/portfolios/{portfolio_id}", status_code=204)
+def delete_portfolio_endpoint(
+    portfolio_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        delete_portfolio(claims["sub"], portfolio_id)
+    except PortfolioNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Portfolio not found") from exc
+    except psycopg.Error as exc:
+        raise _portfolios_unavailable() from exc
+    return Response(status_code=204)
+
+
+@app.post("/portfolios/{portfolio_id}/positions", status_code=201)
+def post_position(
+    portfolio_id: str, body: AddTransactionRequest, claims: dict = Depends(get_current_claims)
+) -> Position:
+    exchange = body.exchange.strip().upper()
+    if exchange not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    side = body.side.strip().lower()
+    if side not in ("buy", "sell"):
+        raise HTTPException(status_code=400, detail="side must be buy or sell")
+    symbol = body.symbol.strip()
+    if not symbol:
+        raise HTTPException(status_code=400, detail="symbol is required")
+    if body.quantity <= 0:
+        raise HTTPException(status_code=400, detail="quantity must be positive")
+    if body.price <= 0:
+        raise HTTPException(status_code=400, detail="price must be positive")
+    try:
+        return add_transaction(
+            claims["sub"],
+            portfolio_id,
+            symbol=symbol,
+            exchange=exchange,
+            name=body.name,
+            quantity=body.quantity,
+            price=body.price,
+            side=side,
+        )
+    except PortfolioNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Portfolio not found") from exc
+    except InsufficientQuantityError as exc:
+        raise HTTPException(
+            status_code=400, detail="cannot sell more than the current position quantity"
+        ) from exc
+    except psycopg.Error as exc:
+        raise _portfolios_unavailable() from exc
+
+
+@app.delete("/portfolios/{portfolio_id}/positions/{position_id}", status_code=204)
+def delete_position_endpoint(
+    portfolio_id: str, position_id: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    try:
+        delete_position(claims["sub"], portfolio_id, position_id)
+    except PositionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Position not found") from exc
+    except psycopg.Error as exc:
+        raise _portfolios_unavailable() from exc
+    return Response(status_code=204)
