@@ -21,6 +21,10 @@ import {
   type SnapshotPoint,
 } from "../lib/simulations-client";
 
+type SymbolResult = { symbol: string; name: string; exchange: string };
+
+const SYMBOL_SEARCH_DEBOUNCE_MS = 300;
+
 function ToggleOption({
   styles,
   active,
@@ -332,6 +336,49 @@ function PlaceOrderForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [suggestions, setSuggestions] = useState<SymbolResult[]>([]);
+  const [searchingSymbol, setSearchingSymbol] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const trimmed = symbol.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setSearchingSymbol(true);
+      try {
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+        const response = await fetch(
+          `${apiUrl}/symbols/search?q=${encodeURIComponent(trimmed)}`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) throw new Error("Search request failed");
+        const data: { results: SymbolResult[] } = await response.json();
+        setSuggestions(data.results);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setSearchingSymbol(false);
+      }
+    }, SYMBOL_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [symbol]);
+
+  function selectSuggestion(result: SymbolResult) {
+    setSymbol(result.symbol);
+    setExchange(result.exchange === "BIST" ? "BIST" : "US");
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
   async function handleSubmit() {
     const parsedQuantity = Number(quantity);
     if (!symbol.trim() || parsedQuantity <= 0) return;
@@ -355,14 +402,40 @@ function PlaceOrderForm({
   return (
     <View style={styles.form}>
       <Text style={styles.formTitle}>{t.formTitle}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={t.symbolPlaceholder}
-        placeholderTextColor={colors.textTertiary}
-        value={symbol}
-        onChangeText={setSymbol}
-        autoCapitalize="characters"
-      />
+      <View>
+        <TextInput
+          style={styles.input}
+          placeholder={t.symbolPlaceholder}
+          placeholderTextColor={colors.textTertiary}
+          value={symbol}
+          onChangeText={(value) => {
+            setSymbol(value);
+            setShowSuggestions(true);
+            if (!value.trim()) setSuggestions([]);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+        {searchingSymbol && <ActivityIndicator style={styles.symbolSearching} color={colors.accent} />}
+        {showSuggestions && suggestions.length > 0 && (
+          <View style={styles.suggestionList}>
+            {suggestions.slice(0, 6).map((result) => (
+              <TouchableOpacity
+                key={`${result.exchange}-${result.symbol}`}
+                style={styles.suggestionRow}
+                onPress={() => selectSuggestion(result)}
+              >
+                <Text style={styles.exchangeBadge}>{result.exchange}</Text>
+                <Text style={styles.suggestionSymbol}>{result.symbol}</Text>
+                <Text style={styles.suggestionName} numberOfLines={1}>
+                  {result.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
       <View style={styles.toggleRow}>
         <ToggleOption
           styles={styles}
@@ -619,6 +692,36 @@ function makeStyles(colors: ThemeColors) {
     },
     toggleOptionTextActive: {
       color: colors.accentText,
+    },
+    symbolSearching: {
+      marginTop: spacing[1],
+      alignSelf: "flex-start",
+    },
+    suggestionList: {
+      marginTop: spacing[1],
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceElevated,
+      overflow: "hidden",
+    },
+    suggestionRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[2],
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[2],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSubtle,
+    },
+    suggestionSymbol: {
+      fontWeight: "700",
+      color: colors.textPrimary,
+    },
+    suggestionName: {
+      flexShrink: 1,
+      color: colors.textSecondary,
+      fontSize: 12,
     },
   });
 }

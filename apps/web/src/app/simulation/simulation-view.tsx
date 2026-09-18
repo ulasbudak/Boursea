@@ -19,6 +19,10 @@ import {
   type SnapshotPoint,
 } from "@/lib/simulations-client";
 
+type SymbolResult = { symbol: string; name: string; exchange: string };
+
+const SYMBOL_SEARCH_DEBOUNCE_MS = 300;
+
 function DailyPnlChart({ points, locale, noData }: { points: SnapshotPoint[]; locale: Locale; noData: string }) {
   const values = points.map((p) => p.pnl_abs);
   const maxValue = values.length ? Math.max(...values, 0) : 0;
@@ -358,6 +362,49 @@ function PlaceOrderForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [suggestions, setSuggestions] = useState<SymbolResult[]>([]);
+  const [searchingSymbol, setSearchingSymbol] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const trimmed = symbol.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setSearchingSymbol(true);
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const response = await fetch(
+          `${apiUrl}/symbols/search?q=${encodeURIComponent(trimmed)}`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) throw new Error("Search request failed");
+        const data: { results: SymbolResult[] } = await response.json();
+        setSuggestions(data.results);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setSearchingSymbol(false);
+      }
+    }, SYMBOL_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [symbol]);
+
+  function selectSuggestion(result: SymbolResult) {
+    setSymbol(result.symbol);
+    setExchange(result.exchange);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const parsedQuantity = Number(quantity);
@@ -383,15 +430,44 @@ function PlaceOrderForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">{t.formTitle}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Field>
+        <Field className="relative">
           <Label htmlFor="sim-symbol">{t.symbolLabel}</Label>
           <Input
             id="sim-symbol"
             value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSymbol(value);
+              setShowSuggestions(true);
+              if (!value.trim()) setSuggestions([]);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder={t.symbolPlaceholder}
+            autoComplete="off"
             required
           />
+          {searchingSymbol && (
+            <p className="absolute top-full mt-1 text-xs text-text-tertiary">{t.symbolSearching}</p>
+          )}
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute top-full z-10 mt-1 flex w-full max-w-xs flex-col divide-y divide-border-subtle overflow-hidden rounded-md border border-border-default bg-surface-elevated shadow-xl shadow-black/40">
+              {suggestions.map((result) => (
+                <li key={`${result.exchange}-${result.symbol}`}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectSuggestion(result)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-hover"
+                  >
+                    <Badge>{result.exchange}</Badge>
+                    <strong className="font-semibold text-text-primary">{result.symbol}</strong>
+                    <span className="truncate text-text-secondary">{result.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Field>
         <Field>
           <Label htmlFor="sim-exchange">{t.exchangeLabel}</Label>

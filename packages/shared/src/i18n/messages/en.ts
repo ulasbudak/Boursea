@@ -344,6 +344,7 @@ export const en: Messages = {
     formTitle: "New order",
     symbolLabel: "Symbol",
     symbolPlaceholder: "e.g. AAPL",
+    symbolSearching: "Searching…",
     exchangeLabel: "Exchange",
     exchangeUs: "US",
     exchangeBist: "BIST",

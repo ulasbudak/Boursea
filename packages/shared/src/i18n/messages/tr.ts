@@ -344,6 +344,7 @@ export const tr: Messages = {
     formTitle: "Yeni emir",
     symbolLabel: "Sembol",
     symbolPlaceholder: "örn. AAPL",
+    symbolSearching: "Aranıyor…",
     exchangeLabel: "Borsa",
     exchangeUs: "ABD",
     exchangeBist: "BIST",
