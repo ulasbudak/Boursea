@@ -385,6 +385,7 @@ def test_post_portfolio_endpoint_rejects_blank_name():
 
 def test_post_portfolio_endpoint_creates(monkeypatch):
     created = Portfolio(id="f1", name="New", created_at=NOW, positions=[])
+    monkeypatch.setattr(main, "enforce_portfolio_limit", lambda user_id: None)
     monkeypatch.setattr(main, "create_portfolio", lambda user_id, name: created)
 
     response = client.post("/portfolios", json={"name": "New"})

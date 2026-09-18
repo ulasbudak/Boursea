@@ -30,6 +30,7 @@ export function AddToWatchlistButton({
   const [watchlists, setWatchlists] = useState<Watchlist[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [newListName, setNewListName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -77,6 +78,7 @@ export function AddToWatchlistButton({
   async function toggle(watchlist: Watchlist) {
     const existing = itemFor(watchlist);
     setBusyId(watchlist.id);
+    setError(null);
     try {
       if (existing) {
         await removeWatchlistItem(watchlist.id, existing.id);
@@ -84,6 +86,8 @@ export function AddToWatchlistButton({
         await addWatchlistItem(watchlist.id, { symbol, exchange, name });
       }
       await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusyId(null);
     }
@@ -94,11 +98,14 @@ export function AddToWatchlistButton({
     const listName = newListName.trim();
     if (!listName) return;
     setBusyId("__new__");
+    setError(null);
     try {
       const created = await createWatchlist(listName);
       await addWatchlistItem(created.id, { symbol, exchange, name });
       setNewListName("");
       await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusyId(null);
     }
@@ -149,6 +156,8 @@ export function AddToWatchlistButton({
               );
             })}
           </ul>
+
+          {error && <p className="mt-2 text-xs text-negative">{error}</p>}
 
           <form onSubmit={handleCreateAndAdd} className="mt-2 flex gap-1.5 border-t border-border-subtle pt-2">
             <Input

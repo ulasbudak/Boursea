@@ -272,8 +272,8 @@ function AddTransactionForm({
         price: parsedPrice,
         side,
       });
-    } catch {
-      setError(t.loadError);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.loadError);
     } finally {
       setSaving(false);
     }

@@ -15,6 +15,15 @@ from app.auth import get_current_claims
 from app.comparison import MAX_COMPARISON_SYMBOLS, ComparisonEntry, compare_symbols
 from app.config import get_settings
 from app.db import check_database_connection
+from app.entitlements import (
+    Entitlement,
+    EntitlementLimitError,
+    enforce_alert_limit,
+    enforce_portfolio_limit,
+    enforce_signal_alert_limit,
+    enforce_watchlist_item_limit,
+    get_entitlement,
+)
 from app.fundamentals import (
     FundamentalsSnapshot,
     FundamentalsUnavailableError,
@@ -26,6 +35,7 @@ from app.fundamentals import (
     get_us_historical_performance,
     get_us_sector_comparison,
 )
+from app.highlights import Highlight, get_highlights
 from app.market_data import (
     TIMEFRAMES,
     CandlePoint,
@@ -40,6 +50,7 @@ from app.market_data import (
     search_bist_symbols,
     search_us_symbols,
 )
+from app.notes import StockNote, delete_note, get_note, upsert_note
 from app.notifications import NotificationSettings
 from app.notifications import get_settings_for_user as get_notification_settings_for_user
 from app.notifications import upsert_settings_for_user as upsert_notification_settings
@@ -405,9 +416,12 @@ def post_watchlist_item(
     if not symbol:
         raise HTTPException(status_code=400, detail="symbol is required")
     try:
+        enforce_watchlist_item_limit(claims["sub"])
         return add_item(
             claims["sub"], watchlist_id, symbol=symbol, exchange=exchange, name=body.name
         )
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
     except WatchlistNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Watchlist not found") from exc
     except psycopg.Error as exc:
@@ -467,6 +481,7 @@ def post_alert(
     if body.threshold <= 0:
         raise HTTPException(status_code=400, detail="threshold must be positive")
     try:
+        enforce_alert_limit(claims["sub"])
         return create_alert(
             claims["sub"],
             symbol=symbol,
@@ -475,6 +490,8 @@ def post_alert(
             direction=direction,
             threshold=body.threshold,
         )
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
     except psycopg.Error as exc:
         raise _alerts_unavailable() from exc
 
@@ -567,6 +584,7 @@ def post_signal_alert(
     if not symbol:
         raise HTTPException(status_code=400, detail="symbol is required")
     try:
+        enforce_signal_alert_limit(claims["sub"])
         return create_signal_alert(
             claims["sub"],
             symbol=symbol,
@@ -575,6 +593,8 @@ def post_signal_alert(
             rule_id=rule_id,
             timeframe=timeframe,
         )
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
     except psycopg.Error as exc:
         raise _signal_alerts_unavailable() from exc
 
@@ -725,7 +745,10 @@ def post_portfolio(
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
     try:
+        enforce_portfolio_limit(claims["sub"])
         return create_portfolio(claims["sub"], name)
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
     except psycopg.Error as exc:
         raise _portfolios_unavailable() from exc
 
@@ -792,3 +815,71 @@ def delete_position_endpoint(
     except psycopg.Error as exc:
         raise _portfolios_unavailable() from exc
     return Response(status_code=204)
+
+
+HighlightsResponse = dict[str, list[Highlight] | list[str]]
+
+
+@app.get("/highlights")
+async def get_highlights_endpoint(claims: dict = Depends(get_current_claims)) -> HighlightsResponse:
+    interest_sectors = (claims.get("user_metadata") or {}).get("interest_sectors") or []
+    highlights, warnings = await get_highlights(interest_sectors)
+    return {"highlights": highlights, "warnings": warnings}
+
+
+class UpsertNoteRequest(BaseModel):
+    symbol: str
+    exchange: str
+    note: str
+
+
+def _notes_unavailable() -> HTTPException:
+    return HTTPException(status_code=503, detail="Not verisi şu an sağlanamıyor.")
+
+
+@app.get("/notes")
+def get_note_endpoint(
+    symbol: str, exchange: str, claims: dict = Depends(get_current_claims)
+) -> StockNote | None:
+    exchange_filter = exchange.strip().upper()
+    if exchange_filter not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    try:
+        return get_note(claims["sub"], symbol, exchange_filter)
+    except psycopg.Error as exc:
+        raise _notes_unavailable() from exc
+
+
+@app.put("/notes")
+def put_note_endpoint(
+    body: UpsertNoteRequest, claims: dict = Depends(get_current_claims)
+) -> StockNote:
+    exchange = body.exchange.strip().upper()
+    if exchange not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    note = body.note.strip()
+    if not note:
+        raise HTTPException(status_code=400, detail="note is required")
+    try:
+        return upsert_note(claims["sub"], body.symbol, exchange, note)
+    except psycopg.Error as exc:
+        raise _notes_unavailable() from exc
+
+
+@app.delete("/notes", status_code=204)
+def delete_note_endpoint(
+    symbol: str, exchange: str, claims: dict = Depends(get_current_claims)
+) -> Response:
+    exchange_filter = exchange.strip().upper()
+    if exchange_filter not in ("US", "BIST"):
+        raise HTTPException(status_code=400, detail="exchange must be US or BIST")
+    try:
+        delete_note(claims["sub"], symbol, exchange_filter)
+    except psycopg.Error as exc:
+        raise _notes_unavailable() from exc
+    return Response(status_code=204)
+
+
+@app.get("/entitlements")
+def get_entitlements_endpoint(claims: dict = Depends(get_current_claims)) -> Entitlement:
+    return get_entitlement(claims["sub"])

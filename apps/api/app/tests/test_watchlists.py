@@ -227,6 +227,7 @@ def test_post_watchlist_item_endpoint_success(monkeypatch):
     item = WatchlistItem(
         id="i1", symbol="AAPL", exchange="US", name="Apple Inc", note=None, added_at=NOW
     )
+    monkeypatch.setattr(main, "enforce_watchlist_item_limit", lambda user_id: None)
     monkeypatch.setattr(
         main, "add_item", lambda user_id, watchlist_id, *, symbol, exchange, name: item
     )

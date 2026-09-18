@@ -13,6 +13,7 @@ import { PortfolioScreen } from "./PortfolioScreen";
 import { AlertsScreen } from "./AlertsScreen";
 import { SignalAlertsScreen } from "./SignalAlertsScreen";
 import { CompareScreen } from "./CompareScreen";
+import { Highlights } from "./Highlights";
 
 type SymbolResult = {
   symbol: string;
@@ -120,6 +121,9 @@ export function HomeScreen({ session }: { session: Session }) {
         <SearchBox onSelectResult={setSelectedStock} />
       </View>
 
+      <Text style={styles.sectionLabel}>{messages.highlights.title}</Text>
+      <Highlights onSelectResult={setSelectedStock} />
+
       <TouchableOpacity style={styles.navCard} onPress={() => setShowWatchlist(true)}>
         <Text style={styles.navCardText}>{messages.watchlist.title}</Text>
       </TouchableOpacity>
@@ -172,6 +176,12 @@ function makeStyles(colors: ThemeColors) {
     subtitle: {
       color: colors.textSecondary,
       fontSize: 13,
+    },
+    sectionLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      color: colors.textTertiary,
     },
     link: {
       color: colors.accent,

@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { signOut } from "./actions";
 import { SearchBox } from "./search-box";
+import { Highlights } from "./highlights";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -68,6 +69,13 @@ export default async function DashboardPage() {
         <Card className="shadow-lg shadow-black/20">
           <SearchBox messages={t.search} />
         </Card>
+      </section>
+
+      <section>
+        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-tertiary">
+          {t.highlights.title}
+        </p>
+        <Highlights messages={t.highlights} locale={locale} />
       </section>
 
       <section>

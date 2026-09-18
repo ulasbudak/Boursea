@@ -26,6 +26,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { IconInput, Input } from "@/components/ui/input";
 import { ToggleChip } from "@/components/ui/toggle-chip";
+import { fetchEntitlement } from "@/lib/entitlements-client";
 import { SignalList } from "./signal-list";
 
 type Candle = {
@@ -90,6 +91,7 @@ export function PriceChart({
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [activeTool, setActiveTool] = useState<DrawingTool>("none");
   const [pendingPoint, setPendingPoint] = useState<{ time: number; price: number } | null>(null);
+  const [advancedIndicatorsLocked, setAdvancedIndicatorsLocked] = useState(false);
 
   const t = messages;
   const coreIndicatorLabels: Record<string, string> = {
@@ -108,6 +110,24 @@ export function PriceChart({
     if (!normalized) return advanced;
     return advanced.filter((d) => d.name.toLowerCase().includes(normalized));
   }, [search]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialLoad() {
+      try {
+        const entitlement = await fetchEntitlement();
+        if (!cancelled) setAdvancedIndicatorsLocked(!entitlement.advanced_indicators);
+      } catch {
+        // Best-effort — advanced indicators stay unlocked if the entitlement can't be fetched.
+      }
+    }
+
+    initialLoad();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -455,31 +475,37 @@ export function PriceChart({
         <details className="mt-3">
           <summary className="cursor-pointer text-xs font-medium text-accent">{t.chart.advancedLabel}</summary>
           <div className="mt-3">
-            <IconInput
-              icon={<Search size={16} />}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t.chart.searchPlaceholder}
-              aria-label={t.chart.advancedLabel}
-            />
-            {advancedResults.length === 0 && (
-              <p className="mt-2 text-xs text-text-tertiary">{t.chart.noSearchResults}</p>
-            )}
-            <ul className="mt-2 flex flex-col divide-y divide-border-subtle">
-              {advancedResults.map((def) => (
-                <AdvancedIndicatorRow
-                  key={def.id}
-                  id={def.id}
-                  name={def.name}
-                  defaultParams={def.defaultParams}
-                  disabled={isActive(def.id)}
-                  periodLabel={t.chart.periodLabel}
-                  addLabel={t.chart.addButton}
-                  onAdd={addAdvancedIndicator}
+            {advancedIndicatorsLocked ? (
+              <p className="text-xs text-text-tertiary">{t.billing.advancedIndicatorsLocked}</p>
+            ) : (
+              <>
+                <IconInput
+                  icon={<Search size={16} />}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t.chart.searchPlaceholder}
+                  aria-label={t.chart.advancedLabel}
                 />
-              ))}
-            </ul>
+                {advancedResults.length === 0 && (
+                  <p className="mt-2 text-xs text-text-tertiary">{t.chart.noSearchResults}</p>
+                )}
+                <ul className="mt-2 flex flex-col divide-y divide-border-subtle">
+                  {advancedResults.map((def) => (
+                    <AdvancedIndicatorRow
+                      key={def.id}
+                      id={def.id}
+                      name={def.name}
+                      defaultParams={def.defaultParams}
+                      disabled={isActive(def.id)}
+                      periodLabel={t.chart.periodLabel}
+                      addLabel={t.chart.addButton}
+                      onAdd={addAdvancedIndicator}
+                    />
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         </details>
 

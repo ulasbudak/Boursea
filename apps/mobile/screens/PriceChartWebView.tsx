@@ -12,6 +12,7 @@ import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { ALL_INDICATORS, drawingsStorageKey, findIndicator, type Drawing } from "@trendus/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
+import { fetchEntitlement } from "../lib/entitlements-client";
 import { SignalList } from "./SignalList";
 
 type Candle = {
@@ -243,6 +244,7 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [activeTool, setActiveTool] = useState<DrawingTool>("none");
   const [pendingPoint, setPendingPoint] = useState<{ time: number; price: number } | null>(null);
+  const [advancedIndicatorsLocked, setAdvancedIndicatorsLocked] = useState(false);
 
   const coreIndicatorLabels: Record<string, string> = {
     sma: messages.chart.smaLabel,
@@ -268,6 +270,24 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
 
     resetReadyState();
   }, [chartHtml]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialLoad() {
+      try {
+        const entitlement = await fetchEntitlement();
+        if (!cancelled) setAdvancedIndicatorsLocked(!entitlement.advanced_indicators);
+      } catch {
+        // Best-effort — advanced indicators stay unlocked if the entitlement can't be fetched.
+      }
+    }
+
+    initialLoad();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -467,27 +487,35 @@ export function PriceChartWebView({ symbol, exchange }: { symbol: string; exchan
 
       {showAdvanced && (
         <View style={styles.advancedPanel}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={messages.chart.searchPlaceholder}
-            placeholderTextColor={colors.textTertiary}
-            value={search}
-            onChangeText={setSearch}
-          />
-          {advancedResults.length === 0 && <Text style={styles.noData}>{messages.chart.noSearchResults}</Text>}
-          {advancedResults.map((def) => (
-            <AdvancedIndicatorRow
-              key={def.id}
-              id={def.id}
-              name={def.name}
-              defaultParams={def.defaultParams}
-              disabled={isActive(def.id)}
-              periodLabel={messages.chart.periodLabel}
-              addLabel={messages.chart.addButton}
-              onAdd={addAdvancedIndicator}
-              colors={colors}
-            />
-          ))}
+          {advancedIndicatorsLocked ? (
+            <Text style={styles.noData}>{messages.billing.advancedIndicatorsLocked}</Text>
+          ) : (
+            <>
+              <TextInput
+                style={styles.searchInput}
+                placeholder={messages.chart.searchPlaceholder}
+                placeholderTextColor={colors.textTertiary}
+                value={search}
+                onChangeText={setSearch}
+              />
+              {advancedResults.length === 0 && (
+                <Text style={styles.noData}>{messages.chart.noSearchResults}</Text>
+              )}
+              {advancedResults.map((def) => (
+                <AdvancedIndicatorRow
+                  key={def.id}
+                  id={def.id}
+                  name={def.name}
+                  defaultParams={def.defaultParams}
+                  disabled={isActive(def.id)}
+                  periodLabel={messages.chart.periodLabel}
+                  addLabel={messages.chart.addButton}
+                  onAdd={addAdvancedIndicator}
+                  colors={colors}
+                />
+              ))}
+            </>
+          )}
         </View>
       )}
 

@@ -262,6 +262,7 @@ def test_post_signal_alert_rejects_invalid_timeframe():
 
 
 def test_post_signal_alert_creates(monkeypatch):
+    monkeypatch.setattr(main, "enforce_signal_alert_limit", lambda user_id: None)
     monkeypatch.setattr(main, "create_signal_alert", lambda user_id, **kwargs: make_alert())
 
     response = client.post(

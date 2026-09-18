@@ -60,7 +60,10 @@ export async function addWatchlistItem(
     method: "POST",
     body: JSON.stringify(item),
   });
-  if (!response.ok) throw new Error("Failed to add item");
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "Failed to add item");
+  }
   return response.json();
 }
 

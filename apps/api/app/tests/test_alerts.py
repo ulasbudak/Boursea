@@ -260,6 +260,7 @@ def test_post_alert_endpoint_rejects_non_positive_threshold():
 
 
 def test_post_alert_endpoint_creates(monkeypatch):
+    monkeypatch.setattr(main, "enforce_alert_limit", lambda user_id: None)
     monkeypatch.setattr(main, "create_alert", lambda user_id, **kwargs: make_alert())
 
     response = client.post(

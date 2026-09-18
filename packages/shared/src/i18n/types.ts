@@ -323,4 +323,40 @@ export interface Messages {
     columnValue: string;
     columnPnl: string;
   };
+  personalization: {
+    interestSectorsTitle: string;
+    interestSectorsHint: string;
+  };
+  highlights: {
+    title: string;
+    loading: string;
+    loadError: string;
+    empty: string;
+  };
+  notes: {
+    title: string;
+    placeholder: string;
+    saveButton: string;
+    saving: string;
+    deleteButton: string;
+    savedLabel: string;
+  };
+  billing: {
+    title: string;
+    freeLabel: string;
+    premiumLabel: string;
+    upgradeButton: string;
+    comingSoon: string;
+    watchlistLimitLabel: string;
+    alertLimitLabel: string;
+    signalAlertLimitLabel: string;
+    portfolioLimitLabel: string;
+    unlimitedLabel: string;
+    advancedIndicatorsLabel: string;
+    realtimeDataLabel: string;
+    lockedLabel: string;
+    unlockedLabel: string;
+    delayedDataDisclosure: string;
+    advancedIndicatorsLocked: string;
+  };
 }

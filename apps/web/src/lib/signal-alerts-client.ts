@@ -49,7 +49,10 @@ export async function createSignalAlert(alert: {
     method: "POST",
     body: JSON.stringify(alert),
   });
-  if (!response.ok) throw new Error("Failed to create signal alert");
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "Failed to create signal alert");
+  }
   return response.json();
 }
 

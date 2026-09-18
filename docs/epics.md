@@ -467,6 +467,8 @@ So that farklı yatırım stratejilerimi ayrı ayrı takip edebileyim.
 
 ### Story 7.1: İlgi Profili ve Öne Çıkanlar
 
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-7.1.md`**. Yeni tablo yok — `interest_sectors` Story 1.3'teki dil tercihi kararıyla aynı desende Supabase `user_metadata`'da saklanıyor (JWT claim'i olarak backend'e ulaşıyor). Backend (`app/highlights.py` + `GET /highlights` — screener'ın iki-aşamalı desenini kullanan "en çok hareket edenler"), web (`/settings` sektör seçici + `/dashboard` "Öne Çıkanlar") ve mobil aynı şekilde uygulandı. Gerçek Finnhub verisiyle canlı doğrulandı.
+
 As a **kullanıcı**,
 I want ilgilendiğim sektör/hisseleri işaretlemek,
 So that ana ekranda bana uygun öne çıkan hisseleri görebileyim.
@@ -477,6 +479,8 @@ So that ana ekranda bana uygun öne çıkan hisseleri görebileyim.
 - **Given** kayıtlı ilgi profili, **When** kullanıcı ana ekranı açarsa, **Then** seçilen sektörlerden kural bazlı olarak öne çıkan (örn. günün en çok hareket edenleri) hisseler gösterilir.
 
 ### Story 7.2: Hisseye Kişisel Not Ekleme
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-7.2.md`**. Backend (`app/notes.py` + `stock_notes` tablosu, tekil `ON CONFLICT DO UPDATE` upsert deseni), web ve mobil (hisse detay sayfasında `StockNoteCard`) uygulandı. Canlı Supabase'e uçtan uca doğrulandı. **Epic 7 (Kişiselleştirme) bu story ile tamamlandı.**
 
 As a **kullanıcı**,
 I want izlediğim bir hisseye kendi notumu eklemek,
@@ -492,6 +496,8 @@ So that o hisseyle ilgili düşüncelerimi/kararlarımı hatırlayabileyim.
 ## 12. Epic 8: Abonelik ve Monetizasyon (Freemium)
 
 ### Story 8.1: Ücretsiz/Premium Katman Ayrımının Uygulanması
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-8.1.md`**. Yeni `entitlements` tablosu (satır yoksa varsayılan `free`); backend (`app/entitlements.py` + dört `enforce_*_limit` fonksiyonu, `GET /entitlements`, dört oluşturma uç noktasına 403 enforcement), web/mobil ("Planım" kartı `/settings`'te, hisse detayında veri gecikmesi uyarısı, gelişmiş indikatör bölümünde kilit mesajı, 403 mesajlarının UI'da gösterilmesi) uygulandı ve doğrulandı. **Story 8.2 (gerçek satın alma/RevenueCat) kullanıcının kendi ödeme sağlayıcı hesaplarını kurmasını bekliyor, bilinçli olarak kapsam dışı bırakıldı.**
 
 As a **ücretsiz kullanıcı**,
 I want hangi özelliklerin ücretsiz hangilerinin premium olduğunu net şekilde görmek,

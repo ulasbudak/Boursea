@@ -42,6 +42,7 @@ export function CreateSignalAlertButton({
   const [timeframe, setTimeframe] = useState<(typeof TIMEFRAMES)[number]>("daily");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -97,9 +98,12 @@ export function CreateSignalAlertButton({
   async function handleSave() {
     if (!ruleId) return;
     setSaving(true);
+    setError(null);
     try {
       await createSignalAlert({ symbol, exchange, name, rule_id: ruleId, timeframe });
       await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -201,6 +205,8 @@ export function CreateSignalAlertButton({
               ))}
             </View>
 
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
             <TouchableOpacity
               style={[styles.saveButton, (!ruleId || saving) && styles.buttonDisabled]}
               disabled={!ruleId || saving}
@@ -294,6 +300,10 @@ function makeStyles(colors: ThemeColors) {
       color: colors.warning,
       fontSize: 11,
       marginTop: spacing[1],
+    },
+    errorText: {
+      color: colors.negative,
+      fontSize: 12,
     },
     ruleList: {
       maxHeight: 160,

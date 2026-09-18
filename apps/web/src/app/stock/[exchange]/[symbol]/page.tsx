@@ -10,6 +10,8 @@ import { ScoreBadge } from "./score-badge";
 import { AddToWatchlistButton } from "./add-to-watchlist-button";
 import { CreatePriceAlertButton } from "./create-price-alert-button";
 import { CreateSignalAlertButton } from "./create-signal-alert-button";
+import { StockNoteCard } from "./stock-note-card";
+import { DataDelayDisclosure } from "./data-delay-disclosure";
 
 type StockOverview = {
   symbol: string;
@@ -97,6 +99,8 @@ export default async function StockDetailPage({
     <div className="flex flex-col gap-4">
       <ScoreBadge exchange={exchange} symbol={symbol} messages={t} />
 
+      <DataDelayDisclosure messages={t.billing} />
+
       {fetchFailed && <p className="text-sm text-negative">{t.common.dataUnavailable}</p>}
       {!fetchFailed &&
         warnings.map((warning) => (
@@ -117,6 +121,8 @@ export default async function StockDetailPage({
           </dl>
         </div>
       )}
+
+      <StockNoteCard symbol={symbol.toUpperCase()} exchange={exchange.toUpperCase()} messages={t.notes} />
     </div>
   );
 

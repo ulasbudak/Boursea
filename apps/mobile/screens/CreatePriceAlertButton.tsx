@@ -37,6 +37,7 @@ export function CreatePriceAlertButton({
   const [threshold, setThreshold] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -72,10 +73,13 @@ export function CreatePriceAlertButton({
     const value = Number(threshold);
     if (!value || value <= 0) return;
     setSaving(true);
+    setError(null);
     try {
       await createAlert({ symbol, exchange, name, direction, threshold: value });
       setThreshold("");
       await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -176,6 +180,8 @@ export function CreatePriceAlertButton({
               onChangeText={setThreshold}
             />
 
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
             <TouchableOpacity
               style={[styles.saveButton, (!threshold || saving) && styles.buttonDisabled]}
               disabled={!threshold || saving}
@@ -262,6 +268,10 @@ function makeStyles(colors: ThemeColors) {
       color: colors.warning,
       fontSize: 11,
       marginTop: spacing[1],
+    },
+    errorText: {
+      color: colors.negative,
+      fontSize: 12,
     },
     directionRow: {
       flexDirection: "row",

@@ -35,7 +35,10 @@ export async function createAlert(alert: {
     method: "POST",
     body: JSON.stringify(alert),
   });
-  if (!response.ok) throw new Error("Failed to create alert");
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "Failed to create alert");
+  }
   return response.json();
 }
 

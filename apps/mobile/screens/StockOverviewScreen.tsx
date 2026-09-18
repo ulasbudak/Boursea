@@ -16,6 +16,8 @@ import { ScoreBadge } from "./ScoreBadge";
 import { AddToWatchlistButton } from "./AddToWatchlistButton";
 import { CreatePriceAlertButton } from "./CreatePriceAlertButton";
 import { CreateSignalAlertButton } from "./CreateSignalAlertButton";
+import { StockNoteCard } from "./StockNoteCard";
+import { fetchEntitlement } from "../lib/entitlements-client";
 
 type StockOverview = {
   symbol: string;
@@ -52,6 +54,25 @@ export function StockOverviewScreen({
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [tab, setTab] = useState<"overview" | "fundamentals" | "technical">("overview");
+  const [showDelayDisclosure, setShowDelayDisclosure] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialLoad() {
+      try {
+        const entitlement = await fetchEntitlement();
+        if (!cancelled) setShowDelayDisclosure(!entitlement.realtime_data);
+      } catch {
+        // Best-effort — no disclosure shown if the entitlement can't be fetched.
+      }
+    }
+
+    initialLoad();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -133,6 +154,10 @@ export function StockOverviewScreen({
         <>
           <ScoreBadge symbol={symbol} exchange={exchange} />
 
+          {showDelayDisclosure && (
+            <Text style={styles.delayDisclosure}>{messages.billing.delayedDataDisclosure}</Text>
+          )}
+
           {loading && <ActivityIndicator color={colors.accent} />}
 
           {!loading && fetchFailed && (
@@ -188,6 +213,8 @@ export function StockOverviewScreen({
               </View>
             </View>
           )}
+
+          <StockNoteCard symbol={symbol.toUpperCase()} exchange={exchange.toUpperCase()} />
         </>
       )}
 
@@ -243,6 +270,11 @@ function makeStyles(colors: ThemeColors) {
     },
     warning: {
       color: colors.warning,
+      marginBottom: spacing[2],
+    },
+    delayDisclosure: {
+      fontSize: 11,
+      color: colors.textTertiary,
       marginBottom: spacing[2],
     },
     card: {

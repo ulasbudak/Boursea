@@ -29,3 +29,12 @@ export async function setLocale(locale: string) {
 
   revalidatePath("/", "layout");
 }
+
+export async function setInterestSectors(sectors: string[]) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims) return;
+
+  await supabase.auth.updateUser({ data: { interest_sectors: sectors } });
+  revalidatePath("/", "layout");
+}
