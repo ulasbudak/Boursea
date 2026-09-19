@@ -22,8 +22,17 @@ export type TechnicalAIReport = {
   cached: boolean;
 };
 
+export type CombinedAIReport = {
+  symbol: string;
+  exchange: string;
+  report: string;
+  generated_at: string;
+  cached: boolean;
+};
+
 type FundamentalResponse = { report: FundamentalAIReport | null; warnings: string[] };
 type TechnicalResponse = { report: TechnicalAIReport | null; warnings: string[] };
+type CombinedResponse = { report: CombinedAIReport | null; warnings: string[] };
 
 async function fetchReport<T>(path: string, symbol: string, exchange: string): Promise<T> {
   const response = await authFetch(
@@ -48,4 +57,11 @@ export async function fetchTechnicalAIReport(
   exchange: string
 ): Promise<TechnicalResponse> {
   return fetchReport("/symbols/ai-report/technical", symbol, exchange);
+}
+
+export async function fetchCombinedAIReport(
+  symbol: string,
+  exchange: string
+): Promise<CombinedResponse> {
+  return fetchReport("/symbols/ai-report/combined", symbol, exchange);
 }

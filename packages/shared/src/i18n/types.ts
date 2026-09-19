@@ -408,6 +408,7 @@ export interface Messages {
   aiAnalysis: {
     title: string;
     deterministicTitle: string;
+    combinedTitle: string;
     technicalTitle: string;
     fundamentalTitle: string;
     generateButton: string;
@@ -416,6 +417,7 @@ export interface Messages {
     lockedMessage: string;
     unavailableMessage: string;
     cachedNote: string;
+    combinedDisclaimer: string;
     technicalDisclaimer: string;
     fundamentalDisclaimer: string;
     bistUnsupported: string;

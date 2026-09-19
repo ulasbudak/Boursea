@@ -3,6 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.ai_combined import CombinedAIReport, get_combined_report
 from app.ai_fundamental import AIReportUnavailableError, FundamentalAIReport, get_fundamental_report
 from app.ai_technical import TechnicalAIReport, get_technical_report
 from app.alerts import (
@@ -380,6 +381,30 @@ async def get_technical_ai_report_endpoint(
     report: TechnicalAIReport | None = None
     try:
         report = await get_technical_report(symbol, exchange)
+    except AIReportUnavailableError as exc:
+        warnings.append(str(exc))
+    except psycopg.Error:
+        warnings.append("AI rapor verisi şu an sağlanamıyor.")
+
+    return {"report": report, "warnings": warnings}
+
+
+CombinedAIReportResponse = dict[str, CombinedAIReport | list[str] | None]
+
+
+@app.get("/symbols/ai-report/combined")
+async def get_combined_ai_report_endpoint(
+    symbol: str, exchange: str, claims: dict = Depends(get_current_claims)
+) -> CombinedAIReportResponse:
+    try:
+        enforce_ai_reports_access(claims["sub"])
+    except EntitlementLimitError as exc:
+        raise HTTPException(status_code=403, detail=exc.message) from exc
+
+    warnings: list[str] = []
+    report: CombinedAIReport | None = None
+    try:
+        report = await get_combined_report(symbol, exchange)
     except AIReportUnavailableError as exc:
         warnings.append(str(exc))
     except psycopg.Error:

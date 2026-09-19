@@ -411,6 +411,7 @@ export const tr: Messages = {
   aiAnalysis: {
     title: "AI Analiz",
     deterministicTitle: "Deterministik Skor",
+    combinedTitle: "Ortak Değerlendirme",
     technicalTitle: "Teknik Analiz AI Raporu",
     fundamentalTitle: "Temel Analiz AI Raporu",
     generateButton: "Rapor Oluştur",
@@ -419,6 +420,8 @@ export const tr: Messages = {
     lockedMessage: "AI analiz raporları premium'a özel.",
     unavailableMessage: "Rapor şu an oluşturulamıyor.",
     cachedNote: "Bu rapor daha önce oluşturuldu, önbellekten gösteriliyor.",
+    combinedDisclaimer:
+      "Temel ve teknik raporların yapay zeka tarafından sentezlenmiş özetidir — yatırım tavsiyesi değildir.",
     technicalDisclaimer:
       "Üçüncü taraf, deneysel bir modelin okumasıdır — yatırım tavsiyesi değildir.",
     fundamentalDisclaimer: "Yapay zeka tarafından üretilmiştir — yatırım tavsiyesi değildir.",
