@@ -35,12 +35,21 @@ type TechnicalResponse = { report: TechnicalAIReport | null; warnings: string[] 
 type CombinedResponse = { report: CombinedAIReport | null; warnings: string[] };
 
 async function fetchReport<T>(path: string, symbol: string, exchange: string): Promise<T> {
-  const response = await authFetch(
-    `${path}?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(exchange)}`
-  );
+  let response: Response;
+  try {
+    response = await authFetch(
+      `${path}?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(exchange)}`
+    );
+  } catch {
+    // A network-level failure (timeout, connection drop) throws the browser's own
+    // exception here (e.g. Safari's literal "Load failed") — never let that raw,
+    // unlocalized string reach the UI; callers fall back to their own message when
+    // this Error has no detail.
+    throw new Error();
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.detail ?? "Failed to load AI report");
+    throw new Error(body?.detail);
   }
   return response.json();
 }

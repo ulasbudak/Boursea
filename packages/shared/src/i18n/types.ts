@@ -410,6 +410,7 @@ export interface Messages {
     deterministicTitle: string;
     combinedTitle: string;
     technicalTitle: string;
+    technicalGeneratingHint: string;
     fundamentalTitle: string;
     generateButton: string;
     generating: string;

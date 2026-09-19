@@ -413,6 +413,7 @@ export const tr: Messages = {
     deterministicTitle: "Deterministik Skor",
     combinedTitle: "Ortak Değerlendirme",
     technicalTitle: "Teknik Analiz AI Raporu",
+    technicalGeneratingHint: "Grafik modeli çalışıyor, bu biraz daha uzun sürebilir…",
     fundamentalTitle: "Temel Analiz AI Raporu",
     generateButton: "Rapor Oluştur",
     generating: "Rapor oluşturuluyor…",

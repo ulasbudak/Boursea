@@ -413,6 +413,7 @@ export const en: Messages = {
     deterministicTitle: "Deterministic Score",
     combinedTitle: "Combined Assessment",
     technicalTitle: "Technical Analysis AI Report",
+    technicalGeneratingHint: "The chart model is running, this can take a bit longer…",
     fundamentalTitle: "Fundamental Analysis AI Report",
     generateButton: "Generate Report",
     generating: "Generating report…",

@@ -47,7 +47,7 @@ function CombinedReportCard({
     } catch (err) {
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : t.unavailableMessage,
+        message: err instanceof Error && err.message ? err.message : t.unavailableMessage,
       });
     }
   }
@@ -113,7 +113,7 @@ function FundamentalReportCard({
     } catch (err) {
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : t.unavailableMessage,
+        message: err instanceof Error && err.message ? err.message : t.unavailableMessage,
       });
     }
   }
@@ -179,7 +179,7 @@ function TechnicalReportCard({
     } catch (err) {
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : t.unavailableMessage,
+        message: err instanceof Error && err.message ? err.message : t.unavailableMessage,
       });
     }
   }
@@ -197,6 +197,7 @@ function TechnicalReportCard({
       {state.status === "loading" && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-text-tertiary">{t.generating}</p>
+          <p className="text-xs text-text-tertiary">{t.technicalGeneratingHint}</p>
           <TextBlockSkeleton />
         </div>
       )}
