@@ -22,8 +22,17 @@ export type TechnicalAIReport = {
   cached: boolean;
 };
 
+export type CombinedAIReport = {
+  symbol: string;
+  exchange: string;
+  report: string;
+  generated_at: string;
+  cached: boolean;
+};
+
 type FundamentalResponse = { report: FundamentalAIReport | null; warnings: string[] };
 type TechnicalResponse = { report: TechnicalAIReport | null; warnings: string[] };
+type CombinedResponse = { report: CombinedAIReport | null; warnings: string[] };
 
 async function authFetch(path: string): Promise<Response> {
   const { data } = await supabase.auth.getSession();
@@ -39,12 +48,20 @@ async function authFetch(path: string): Promise<Response> {
 }
 
 async function fetchReport<T>(path: string, symbol: string, exchange: string): Promise<T> {
-  const response = await authFetch(
-    `${path}?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(exchange)}`
-  );
+  let response: Response;
+  try {
+    response = await authFetch(
+      `${path}?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(exchange)}`
+    );
+  } catch {
+    // A network-level failure (timeout, connection drop) throws React Native's own
+    // exception here — never let that raw, unlocalized string reach the UI; callers
+    // fall back to their own message when this Error has no detail.
+    throw new Error();
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.detail ?? "Failed to load AI report");
+    throw new Error(body?.detail);
   }
   return response.json();
 }
@@ -61,4 +78,11 @@ export async function fetchTechnicalAIReport(
   exchange: string
 ): Promise<TechnicalResponse> {
   return fetchReport("/symbols/ai-report/technical", symbol, exchange);
+}
+
+export async function fetchCombinedAIReport(
+  symbol: string,
+  exchange: string
+): Promise<CombinedResponse> {
+  return fetchReport("/symbols/ai-report/combined", symbol, exchange);
 }

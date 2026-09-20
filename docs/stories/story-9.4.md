@@ -5,7 +5,7 @@ story_id: "9.4"
 status: done
 created: 2026-09-20
 updated: 2026-09-20
-author: "Claude (retroaktif olarak belgelendi — kod 2026-09-19'da, bu story dosyası açılmadan yazılmıştı)"
+author: "Claude (retroaktif olarak belgelendi — kod 2026-09-19'da, bu story dosyası açılmadan yazılmıştı; mobil görev #7 aynı gün, bu dosya açıldıktan sonra tamamlandı)"
 based_on: ["docs/stories/story-9.1.md", "docs/stories/story-9.2.md", "commit 8244f9d", "commit 352bea3"]
 depends_on: ["9.1", "9.2"]
 ---
@@ -37,9 +37,15 @@ Aynı gün (2026-09-19), AI Analiz sekmesindeki ağ hatası mesajlaşması da d�
 - **Web:** AI Analiz sekmesinde yeni `CombinedReportCard` — sekme sırası **birleşik → teknik → temel → deterministik skor** olacak şekilde yeniden düzenlendi (önceden deterministik skor en üstteydi). Aynı "Rapor Oluştur" tetikleme deseni.
   - `ai-reports-client.ts::fetchReport()`: ağ seviyesi hatalar artık boş bir `Error()` fırlatıyor (ham tarayıcı mesajı yerine); çağıran kartlar bu durumda kendi genel "veri şu an sağlanamıyor" mesajına düşüyor. Teknik rapor kartına "bu daha uzun sürebilir" ipucu eklendi.
 
+**Mobil (2026-09-20'de tamamlandı, bu story dosyasının açılmasından sonra):**
+- `apps/mobile/lib/ai-reports-client.ts`: `CombinedAIReport` tipi + `fetchCombinedAIReport()` eklendi; `fetchReport()`'a web'in `352bea3` düzeltmesiyle aynı ağ-hatası normalizasyonu taşındı (React Native'in `fetch`'i de bağlantı hatasında ham bir exception fırlatıyor, mobil bu sınıfa açıktı).
+- `apps/mobile/screens/AIAnalysisPanel.tsx`: mevcut generic `ReportCard<T>` bileşeni üçüncü kez (birleşik rapor için) kullanıldı — web'deki gibi üç ayrı bileşen kopyalanmadı. Panel sırası web ile eşitlendi: birleşik → teknik → temel → deterministik skor. `ReportCard`'a opsiyonel `generatingHint` prop'u eklendi, yalnızca teknik kartta `t.technicalGeneratingHint` ile kullanıldı.
+- **Yan bulgu:** `ReportCard`'ın hata yakalama bloğu (`err instanceof Error ? err.message : ...`) mesaj boşluğunu kontrol etmiyordu — web'in `352bea3`'te düzelttiği tam sınıf hata mobilde de vardı (yeni boş `Error()` fırlatma yoluyla tetiklenebilirdi). `err instanceof Error && err.message ? ...` olarak düzeltildi, web'le birebir aynı.
+- i18n: yeni anahtar gerekmedi — `combinedTitle`/`combinedDisclaimer`/`technicalGeneratingHint` zaten `packages/shared`'da mevcuttu (workspace paketi ortak).
+
 **Kapsam dışı / bilinen eksik:**
-- **Mobil** — bu story'nin kodu yalnızca `apps/web` dosyalarını değiştirdi (`ai-analysis-panel.tsx`, `ai-reports-client.ts`); mobil `StockOverviewScreen`'de birleşik rapor paneli **yok**. Story 9.1/9.2 mobilde vardı, bu üçüncüsü şimdilik web-only — mobil kullanıcılar temel ve teknik raporu görüyor ama sentez panelini göremiyor.
 - `GET /symbols/ai-report/combined` uç noktası için otomatik test suite'inde ayrı bir HTTP-seviyesi test yok (yalnızca `app/ai_combined.py::get_combined_report()` için 3 birim testi var, `app/tests/test_ai_combined.py`); bu revizyonda (2026-09-20) elle/canlı doğrulandı (bkz. DoD) ama otomatik teste eklenmedi.
+- Mobil tarafta gerçek cihaz/simülatör görsel doğrulaması yapılmadı (bkz. DoD) — bu, projede zaten tekrarlanan, kullanıcının kendisinin yapması gereken bir açık madde ([[project_theme_system]]'de de aynı sınırlama not edilmiş).
 
 ## Görevler
 
@@ -49,7 +55,7 @@ Aynı gün (2026-09-19), AI Analiz sekmesindeki ağ hatası mesajlaşması da d�
 4. **[Backend]** Testler: `app/tests/test_ai_combined.py` (önbellekten dönme, cache-miss'te ikisini de üretme, alt rapor hatasının yukarı yayılması) — 3 test, mock'lu. ✅ — endpoint/403 seviyesinde otomatik test yok, ama 2026-09-20'de canlı gerçek kullanıcılarla elle doğrulandı (bkz. DoD).
 5. **[Web]** `CombinedReportCard` + sekme sırası değişikliği (`ai-analysis-panel.tsx`). ✅
 6. **[Web]** Ağ hatası normalizasyonu (`ai-reports-client.ts::fetchReport`) + teknik rapor için "uzun sürebilir" ipucu. ✅ — commit `352bea3`.
-7. **[Mobil]** Aynı panel, `StockOverviewScreen`'de. ☐ — **yapılmadı**, bu story'nin açık maddesi.
+7. **[Mobil]** Aynı panel, `StockOverviewScreen`'de (`AIAnalysisPanel.tsx` üzerinden). ✅ — 2026-09-20'de tamamlandı.
 
 ## Kabul Kriterleri
 
@@ -74,11 +80,12 @@ Aynı gün (2026-09-19), AI Analiz sekmesindeki ağ hatası mesajlaşması da d�
 - [x] `0012` migration'ının canlı Supabase'e uygulandığı doğrulandı (2026-09-20 — `ai_reports_report_type_check` kısıtı sorgulanarak).
 - [x] Backend testleri yeşil + ruff temiz (316/316, 2026-09-20 itibarıyla — bu story'nin kendi testleri dahil).
 - [x] Web: typecheck, lint, build yeşil (2026-09-20'de doğrulandı, bu story'nin dosyaları dahil genel proje taraması ile).
-- [ ] Mobil panel yapılmadığı için mobil doğrulama N/A (bkz. Kapsam dışı — mobil gap).
-- [ ] Gerçek tarayıcıda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] Mobil: typecheck, lint yeşil; Metro bundle yeşil (778 modül, 2026-09-20).
+- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 
 - **Neden ayrı bir tablo değil:** `ai_reports` zaten sembol+borsa+rapor-türü bazlı genel bir önbellek şeması; `combined` yalnızca `report_type` check kısıtına eklenen üçüncü bir değer, yeni bir migration şeması gerekmedi.
 - **Eşzamanlılık:** `asyncio.gather(get_fundamental_report(...), get_technical_report(...))` — ikisi de kendi içinde önbellek kontrolü yaptığından, ikisi de zaten önbellekteyse bu adım gecikme eklemez; ikisi de soğuksa iki LLM/CV çağrısı paralel çalışır (sıralı değil).
 - **Retroaktif belgeleme notu:** Bu story dosyası, kodun yazılmasından bir gün sonra (2026-09-20) açıldı — [[project_bmad_workflow]] anısında işaretlenen "son 4 özellik BMAD sürecinin dışında kalmış" bulgusunun bir parçası. Buradaki AC/Görev/DoD, koddan geriye doğru çıkarıldı; ileriye dönük bir tasarım kararı değil.
+- **Mobilin web'den daha DRY olması:** Web, üç neredeyse özdeş bileşen (`CombinedReportCard`/`TechnicalReportCard`/`FundamentalReportCard`) kopyalayarak yazıldı; mobil ise baştan beri tek bir generic `ReportCard<T extends { report: string; cached: boolean }>` bileşenini üç farklı `fetcher` ile kullanıyordu. Mobil tarafı genişletirken bu deseni bozmadık — web'i mobile kopyalamak yerine, mobilin zaten sahip olduğu generic bileşene üçüncü bir kullanım eklendi.

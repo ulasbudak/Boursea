@@ -4,8 +4,10 @@ import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { fetchEntitlement } from "../lib/entitlements-client";
 import {
+  fetchCombinedAIReport,
   fetchFundamentalAIReport,
   fetchTechnicalAIReport,
+  type CombinedAIReport,
   type FundamentalAIReport,
   type TechnicalAIReport,
 } from "../lib/ai-reports-client";
@@ -21,10 +23,12 @@ function ReportCard<T extends { report: string; cached: boolean }>({
   title,
   disclaimer,
   fetcher,
+  generatingHint,
 }: {
   title: string;
   disclaimer: string;
   fetcher: () => Promise<{ report: T | null; warnings: string[] }>;
+  generatingHint?: string;
 }) {
   const { messages } = useLocale();
   const t = messages.aiAnalysis;
@@ -44,7 +48,7 @@ function ReportCard<T extends { report: string; cached: boolean }>({
     } catch (err) {
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : t.unavailableMessage,
+        message: err instanceof Error && err.message ? err.message : t.unavailableMessage,
       });
     }
   }
@@ -57,7 +61,12 @@ function ReportCard<T extends { report: string; cached: boolean }>({
           <Text style={styles.buttonText}>{t.generateButton}</Text>
         </TouchableOpacity>
       )}
-      {state.status === "loading" && <Text style={styles.hint}>{t.generating}</Text>}
+      {state.status === "loading" && (
+        <>
+          <Text style={styles.hint}>{t.generating}</Text>
+          {generatingHint && <Text style={styles.hint}>{generatingHint}</Text>}
+        </>
+      )}
       {state.status === "error" && <Text style={styles.error}>{state.message}</Text>}
       {state.status === "loaded" && (
         <>
@@ -116,10 +125,17 @@ export function AIAnalysisPanel({ symbol, exchange }: { symbol: string; exchange
 
   return (
     <View style={{ gap: spacing[3] }}>
-      <ScoreBadge symbol={symbol} exchange={exchange} />
+      <ReportCard
+        title={t.combinedTitle}
+        disclaimer={t.combinedDisclaimer}
+        fetcher={(): Promise<{ report: CombinedAIReport | null; warnings: string[] }> =>
+          fetchCombinedAIReport(symbol, exchange)
+        }
+      />
       <ReportCard
         title={t.technicalTitle}
         disclaimer={t.technicalDisclaimer}
+        generatingHint={t.technicalGeneratingHint}
         fetcher={(): Promise<{ report: TechnicalAIReport | null; warnings: string[] }> =>
           fetchTechnicalAIReport(symbol, exchange)
         }
@@ -131,6 +147,10 @@ export function AIAnalysisPanel({ symbol, exchange }: { symbol: string; exchange
           fetchFundamentalAIReport(symbol, exchange)
         }
       />
+      <View>
+        <Text style={styles.title}>{t.deterministicTitle}</Text>
+        <ScoreBadge symbol={symbol} exchange={exchange} />
+      </View>
     </View>
   );
 }
