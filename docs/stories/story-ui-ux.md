@@ -4,7 +4,7 @@ epic: "Cross-cutting — tüm epic'lerin ekranlarını kapsar (Epic 1–8); ayr�
 story_id: "UI.1"
 status: done
 created: 2026-09-15
-updated: 2026-09-18
+updated: 2026-09-19
 author: "Sally (BMAD UX Designer), Bob (BMAD Scrum Master) & Amelia (BMAD Developer)"
 based_on: ["docs/PRD.md", "docs/architecture.md", "docs/epics.md §2.4"]
 ---
@@ -45,6 +45,9 @@ Kapsam gereği **tüm ekranları tek seferde yeniden tasarlamak yerine**, bu sto
 
 **Bu PR'da tamamlanan (görev 11):**
 - Mobil `FundamentalsPanel`, `ScoreBadge`, `SignalList`, `HistoricalPerformanceChart`, `PriceChartWebView` — Tasarım Sistemi Spesifikasyonu §2'ye uygun şekilde `useTheme()`/`makeStyles(colors)` desenine taşındı; `PriceChartWebView`'ın gömülü `lightweight-charts` HTML'i artık mevcut temanın (`positive`/`negative`/`accent`/`warning`/`border*`/`text*`) renklerini kullanıyor.
+
+**Retroaktif olarak eklendi (görev 12, 2026-09-19, commit `e9a180e`):**
+- Web kök sayfası (`/`) — bu story'nin ilk sürümünde gözden kaçmış, `create-next-app` iskeletinin değiştirilmemiş haliyle kalmıştı (bkz. Teknik Notlar). Login sayfasının görsel diliyle (Logo, ambient glow, accent CTA) yeniden kuruldu, kullanılmayan `page.module.css` kaldırıldı.
 
 **Kapsam dışı (bu depoda henüz yok):**
 - Mobil tarafta manuel tema değiştirici (web'deki `/settings` tema toggle'ının mobil karşılığı) — mobil şu an yalnızca `useColorScheme()` sistem tercihini izliyor.
@@ -106,6 +109,7 @@ Bu bölüm, dağınık `Teknik Notlar` bilgisini tek bir bağlayıcı spesifikas
 9. **[Mobil]** `ScreenerScreen`, `SearchBox`, `StockOverviewScreen`, `SettingsScreen`, `AuthScreen`'i yeni tema sistemine taşı. ✅
 10. **[Web]** Manuel tema değiştirici (dark/light toggle) UI elemanı ekle; `localStorage` + `[data-theme]` ile kalıcı hale getir. ✅
 11. **[Mobil]** `FundamentalsPanel`, `ScoreBadge`, `SignalList`, `HistoricalPerformanceChart`, `PriceChartWebView`'ı yeni tema sistemine taşı (Tasarım Sistemi Spesifikasyonu §2'deki kart/rozet/grafik kalıplarına uygun); `PriceChartWebView`'ın gömülü grafik HTML'ine tema renklerini enjekte et. ✅
+12. **[Web]** `/` (kök) sayfasını yeni sisteme taşı. ✅ — retroaktif olarak eklendi (bkz. Teknik Notlar); 2026-09-19'da commit `e9a180e` ile, ayrı bir story açılmadan yapılmıştı.
 
 ## Kabul Kriterleri
 
@@ -129,7 +133,8 @@ Bu bölüm, dağınık `Teknik Notlar` bilgisini tek bir bağlayıcı spesifikas
 - [x] `packages/shared` typecheck yeşil.
 - [x] Web: typecheck, lint, `next build` yeşil; Tailwind çıktısında token tabanlı utility'ler (`bg-accent` vb.) derlenmiş olarak doğrulandı.
 - [x] Mobil: typecheck, lint, Metro bundle yeşil (695 modül).
-- [x] Görevler #7–11 tamamlandı (bkz. yukarı, "Sonraki/Bu PR'da tamamlanan").
+- [x] Görevler #7–12 tamamlandı (bkz. yukarı, "Sonraki/Bu PR'da tamamlanan/Retroaktif olarak eklendi").
+- [x] Web: `/` sayfası için typecheck, lint, `next build` yeşil (görev 12, 2026-09-19).
 - [x] Gerçek bir tarayıcıda görsel doğrulama — 2026-09-18'de headless Chromium (Playwright) ile, gerçek bir test hesabıyla (kullanıcı tarafından sağlandı) giriş yapılarak `next build && next start` (production build) üzerinde koyu + açık modda (emulated `prefers-color-scheme`) doğrulandı: `/login`, `/dashboard`, `/screener`, `/settings`, `/stock/US/AAPL` (Genel Bakış + Teknik sekmeleri, gömülü `lightweight-charts` mum grafiği dahil). Tüm ekranlar her iki modda da doğru renklendi, kontrast okunabilir, kazanç/kayıp ve boğa/ayı renklendirmesi tutarlıydı; regresyon bulunmadı.
   - **Not:** İlk denemede `next dev` üzerinde grafik/sinyaller bazen boş görünüyordu — kök neden React Strict Mode'un geliştirme modunda efekti iki kez çalıştırıp ilk `AbortController` tabanlı isteği iptal etmesiydi (bkz. `FundamentalsPanel`/`ScoreBadge`/`price-chart.tsx`'teki ortak `useEffect` + `AbortController` deseni). Production build'de (`next start`) bu çift-çalıştırma olmadığından sorun tekrarlanmadı — gerçek kullanıcıları etkilemeyen, yalnızca dev sunucusuna özgü bir durum, kod değişikliği gerekmedi.
   - **Kapsam dışı kalan:** Mobil tarafta gerçek bir simülatör/cihazda `PriceChartWebView`'ın doğrulanması hâlâ yapılmadı (bu oturumda yalnızca web tarayıcı otomasyonu kullanıldı, mobil taraf için Expo local `.env` de yapılandırılmamış); bu, kullanıcı bir simülatör/cihazla kendisi doğrulamak isterse ayrıca ele alınabilir.
@@ -140,3 +145,4 @@ Bu bölüm, dağınık `Teknik Notlar` bilgisini tek bir bağlayıcı spesifikas
 - **Web:** Tailwind v4 CSS-native `@theme` bloğu kullanılıyor (JS config dosyası yok). Renk utility'leri (`bg-canvas`, `text-accent` vb.) runtime CSS değişkenlerine (`--tk-*`) map'leniyor, böylece `prefers-color-scheme` veya ileride eklenecek bir `data-theme` toggle'ı derleme zamanı değil çalışma zamanında tema değiştirebiliyor.
 - **Mobil:** `userInterfaceStyle: "automatic"` olmadan `useColorScheme()` sistem temasını doğru yansıtmıyordu (önceden `"light"` ile kilitliydi) — bu değişiklik olmadan dark mode hiç tetiklenmezdi.
 - **Neden Tailwind (JS-in-CSS değil):** Proje zaten Next.js App Router + Server Components kullanıyor; Tailwind'in build-time utility yaklaşımı ek runtime/hydration maliyeti getirmiyor ve `packages/shared` token'larıyla CSS custom property köprüsü üzerinden birebir eşleşiyor.
+- **Görev 12 — kök sayfanın gözden kaçma nedeni:** Bu story'nin ilk taramasında (görev 1-11) `/` hiçbir zaman "en çok görülen giriş noktası" olarak ele alınmadı çünkü gerçek kullanıcı akışı doğrudan `/login`'e yönleniyor; ama `/` yine de canlıda erişilebilir kalıyordu ve `create-next-app` iskeletinin varsayılan `--background`/`--foreground` CSS değişkenleri karanlık modda ikisi de `#000`'a çözümleniyordu, üstüne `page.tsx` içeriği metin rengini ayarlayan class'lara sarılmamıştı — sayfa neredeyse tamamen boş görünüyordu. 2026-09-19'da fark edilip `e9a180e` ile düzeltildi; bu tür "hiç ziyaret edilmeyen ama var olan" sayfaların tema denetiminden atlanabileceği bir örnek olarak not düşülüyor.

@@ -573,6 +573,21 @@ So that hangi sektörlerin/hisselerin öne çıktığını zaman içinde takip e
 - **Given** ücretsiz katmandaki bir kullanıcı, **When** dashboard'u açarsa, **Then** bülten bölümü kilitli gösterilir; backend isteği 403 ile reddeder.
 - **And** her bültenin sonunda "yatırım tavsiyesi değildir" ibaresi yer alır; seçilen sektörde puanlanabilir hisse yoksa o gün için hatalı bir satır kaydedilmez.
 
+### Story 9.4: Birleşik Değerlendirme AI Raporu
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.4.md`**. Kod 2026-09-19'da (`8244f9d`, `352bea3`) yazıldı, bu story dosyası 2026-09-20'de retroaktif olarak açıldı. Story 9.1/9.2'nin temel ve teknik raporlarını okuyup uyumlu/çelişkili olduklarını özetleyen üçüncü bir AI raporu (`app/ai_combined.py` + `GET /symbols/ai-report/combined`, mevcut `ai_reports` tablosuna üçüncü bir `report_type` olarak eklendi); web'de AI Analiz sekmesi sırası birleşik → teknik → temel → deterministik skor olarak değişti. Aynı gün AI Analiz kartlarındaki ham ağ hatası mesajları da düzeltildi. Testler (316/316) yeşil, ruff temiz, migration canlı Supabase'e uygulandığı ve ücretsiz katman 403'ü 2026-09-20'de doğrulandı. **Gerçek Gemini API anahtarıyla canlı uçtan uca doğrulandı.** **Bilinen eksik: mobilde birleşik rapor paneli yok** (yalnızca web).
+
+As a **kullanıcı (premium)**,
+I want hisse detay sayfasındaki AI Analiz sekmesinde, temel ve teknik raporların uyumlu mu çelişkili mi olduğunu özetleyen tek bir görüş görmek,
+So that iki ayrı raporu kendim karşılaştırmak zorunda kalmadan hızlıca genel tabloyu anlayabileyim.
+
+**Acceptance Criteria:**
+
+- **Given** premium bir kullanıcı, **When** "Ortak Değerlendirme"yi talep ederse, **Then** temel ve teknik raporlar (hazır değillerse önce üretilir) okunarak bir Gemini sentezi gösterilir.
+- **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı isteği yaparsa, **Then** backend 403 döner.
+- **And** raporun altında "yatırım tavsiyesi değildir" ibaresi yer alır; sentez 5 saatlik TTL ile önbelleğe alınır.
+- **And** ağ seviyesi bir hata oluşursa, kullanıcıya tarayıcının ham hata metni değil uygulamanın kendi "veri şu an sağlanamıyor" mesajı gösterilir.
+
 ---
 
 ## 14. Epic 10: Alım-Satım Simülasyonu (Paper Trading)
@@ -593,6 +608,20 @@ So that gerçek para riskine girmeden stratejimi test edip zaman içindeki perfo
 - **Given** bir alım emrinin maliyeti mevcut nakit bakiyesini aşıyorsa, **When** emir verilirse, **Then** emir reddedilir ve nakit/pozisyon değişmez. Aynı şekilde elde tutulan miktarı aşan bir satım emri de reddedilir.
 - **Given** bir simülasyon, **When** kullanıcı zaman içindeki performansına bakarsa, **Then** günlük toplam değer (nakit + pozisyon değeri) ve kâr/zarar geçmişi gösterilir; geçmiş günlerin kayıtları bir daha değişmez, yalnızca bugünün kaydı güncellenir.
 - **And** yalnızca ABD hisseleri desteklenir (BIST için canlı fiyat kaynağı yok); ücretsiz katman 1 simülasyonla sınırlıdır, premium sınırsızdır.
+
+### Story 10.2: Simülasyon Emir Formunda Sembol Otomatik Tamamlama
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-10.2.md`**. Kod 2026-09-19'da (`cd19c44`) yazıldı, bu story dosyası 2026-09-20'de retroaktif olarak açıldı. Emir formunun çıplak sembol metin girişine, dashboard/karşılaştırma ekranlarında zaten var olan debounce'lu `/symbols/search` öneri listesi eklendi (web + mobil); bir öneriye tıklamak sembol ve borsayı birlikte doldurur. Backend değişikliği yok — mevcut arama uç noktası yeni bir yüzeyden tüketildi.
+
+As a **kullanıcı**,
+I want simülasyon emir formundaki sembol alanına yazarken öneri listesi görmek,
+So that tam sembol kodunu ezbere bilmeden doğru sembolü ve borsayı seçebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** emir formundaki sembol alanı, **When** kullanıcı yazmaya başlarsa, **Then** 300ms sonra öneri listesi gösterilir.
+- **Given** öneri listesi açık, **When** kullanıcı bir sonuca tıklarsa, **Then** sembol ve borsa alanları birlikte doldurulur.
+- **And** yarışan aramalar (`AbortController`) iptal edilir, eski bir sonuç güncel yazıyı ezmez.
 
 ---
 
