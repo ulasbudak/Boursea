@@ -109,7 +109,10 @@ def test_compute_score_includes_consensus_and_rationale():
 
     assert result is not None
     assert result.consensus.total <= 6
-    assert result.consensus.bullish + result.consensus.bearish + result.consensus.neutral == result.consensus.total
+    assert (
+        result.consensus.bullish + result.consensus.bearish + result.consensus.neutral
+        == result.consensus.total
+    )
     assert str(result.value) in result.rationale
     assert result.label in result.rationale
     assert "yatırım tavsiyesi değildir" in result.rationale
@@ -224,7 +227,9 @@ def test_score_endpoint_returns_bist_none_with_warning():
 
 def test_score_endpoint_returns_computed_score_for_us(monkeypatch):
     async def fake_compute_us_score(symbol: str):
-        return compute_score(STRONG_FUNDAMENTALS, make_candles([100.0 + i * 0.2 for i in range(260)]))
+        return compute_score(
+            STRONG_FUNDAMENTALS, make_candles([100.0 + i * 0.2 for i in range(260)])
+        )
 
     monkeypatch.setattr(main, "compute_us_score", fake_compute_us_score)
 

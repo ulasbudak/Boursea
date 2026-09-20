@@ -167,9 +167,21 @@ def _compute_consensus(candles: list[CandlePoint]) -> TechnicalConsensus:
     sma50 = _sma(closes, 50)
     sma200 = _sma(closes, 200)
     if sma50 and sma200 and sma50[-1] is not None and sma200[-1] is not None:
-        biases.append("bullish" if sma50[-1] > sma200[-1] else "bearish" if sma50[-1] < sma200[-1] else "neutral")
+        biases.append(
+            "bullish"
+            if sma50[-1] > sma200[-1]
+            else "bearish"
+            if sma50[-1] < sma200[-1]
+            else "neutral"
+        )
     if sma20 and sma50 and sma20[-1] is not None and sma50[-1] is not None:
-        biases.append("bullish" if sma20[-1] > sma50[-1] else "bearish" if sma20[-1] < sma50[-1] else "neutral")
+        biases.append(
+            "bullish"
+            if sma20[-1] > sma50[-1]
+            else "bearish"
+            if sma20[-1] < sma50[-1]
+            else "neutral"
+        )
 
     bands = _bollinger_bands(closes, 20, 2.0)
     latest_bands = bands[-1] if bands else None
@@ -216,17 +228,19 @@ def _build_rationale(
 
     parts = [f"Özet skor {value}/100 ({label})."]
     if top_fundamental is not None and top_fundamental.points > 0:
-        parts.append(
-            f"Temel tarafta en güçlü katkı: {top_fundamental.name} ({top_fundamental.points:.0f}/{top_fundamental.max_points:.0f}p)."
-        )
+        contribution = f"{top_fundamental.points:.0f}/{top_fundamental.max_points:.0f}p"
+        parts.append(f"Temel tarafta en güçlü katkı: {top_fundamental.name} ({contribution}).")
     if consensus.total > 0:
-        parts.append(f"Teknik göstergelerin {consensus.bullish}/{consensus.total} kadarı şu an yükseliş yönünde.")
+        bullish_ratio = f"{consensus.bullish}/{consensus.total}"
+        parts.append(f"Teknik göstergelerin {bullish_ratio} kadarı şu an yükseliş yönünde.")
     parts.append("Bu değerlendirme kural bazlı bir özettir, yatırım tavsiyesi değildir.")
 
     return " ".join(parts)
 
 
-def compute_score(fundamentals: FundamentalsSnapshot | None, candles: list[CandlePoint]) -> StockScore | None:
+def compute_score(
+    fundamentals: FundamentalsSnapshot | None, candles: list[CandlePoint]
+) -> StockScore | None:
     if not _has_usable_fundamentals(fundamentals) or len(candles) < MIN_CANDLES_FOR_TECHNICAL:
         return None
 
@@ -249,7 +263,9 @@ def compute_score(fundamentals: FundamentalsSnapshot | None, candles: list[Candl
     value = round(total)
     label = _label_for(value)
     rationale = _build_rationale(value, label, factors, consensus)
-    return StockScore(value=value, label=label, factors=factors, consensus=consensus, rationale=rationale)
+    return StockScore(
+        value=value, label=label, factors=factors, consensus=consensus, rationale=rationale
+    )
 
 
 def compute_bist_score() -> StockScore | None:
@@ -267,10 +283,14 @@ async def compute_us_score(symbol: str) -> StockScore | None:
         fundamentals_result, FundamentalsUnavailableError
     ):
         raise fundamentals_result
-    if isinstance(candles_result, Exception) and not isinstance(candles_result, MarketDataUnavailableError):
+    if isinstance(candles_result, Exception) and not isinstance(
+        candles_result, MarketDataUnavailableError
+    ):
         raise candles_result
 
-    fundamentals = fundamentals_result if isinstance(fundamentals_result, FundamentalsSnapshot) else None
+    fundamentals = (
+        fundamentals_result if isinstance(fundamentals_result, FundamentalsSnapshot) else None
+    )
     candles = candles_result if isinstance(candles_result, list) else []
 
     return compute_score(fundamentals, candles)

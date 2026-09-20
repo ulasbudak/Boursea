@@ -2,9 +2,9 @@
 title: "Story 9.3: Günlük Sektör Bülteni"
 epic: "Epic 9 — AI Destekli Yorum ve Örüntü Tanıma"
 story_id: "9.3"
-status: in-progress
+status: done
 created: 2026-09-19
-updated: 2026-09-19
+updated: 2026-09-20
 author: Bob (BMAD Scrum Master) & Amelia (BMAD Developer)
 based_on: ["docs/PRD.md §5.11", "docs/epics.md §13", "docs/product-brief-epic9-ai.md"]
 depends_on: ["7.1", "8.1", "9.1"]
@@ -30,14 +30,14 @@ Story 9.1/9.2'nin `ai_reports` tablosu **tek-satır upsert-cache** deseni (sembo
 
 **Hisse seçimi:** Seçilen sektördeki hisseler, mevcut kural bazlı skor motoruyla (`app/scoring.py`'nin `compute_us_score()`, Story 3.6/3.7) eşzamanlı olarak puanlanır (Story 7.1'in Highlights'ındaki iki aşamalı desen: statik `us_universe.json`'ı sektöre göre filtrele → yalnızca o alt küme için canlı veri çek), en yüksek 5 puanlı hisse "görece iyi hisseler" olarak seçilir.
 
-**Anlatı:** Story 9.1'in Anthropic Claude API entegrasyonu (artık `app/ai_reports.py::call_anthropic()` olarak paylaşılan bir yardımcı fonksiyon) yeni bir "bülten editörü" sistem prompt'uyla tekrar kullanıldı — yalnızca verilen skor/etiket verisine dayanan, Türkçe bir bülten metni üretir.
+**Anlatı:** Story 9.1'in LLM entegrasyonu (artık `app/ai_reports.py::call_gemini()` olarak paylaşılan bir yardımcı fonksiyon; 2026-09-19'da Anthropic'ten Gemini'ye geçirildi, bkz. `docs/stories/story-9.1.md` Bağlam) yeni bir "bülten editörü" sistem prompt'uyla tekrar kullanıldı — yalnızca verilen skor/etiket verisine dayanan, Türkçe bir bülten metni üretir.
 
 ## Kapsam
 
 - **Backend:**
   - `apps/api/migrations/0010_sector_bulletins.sql` — `sector_bulletins` tablosu (append-only, `bulletin_date unique`).
-  - `app/ai_reports.py`'ye `call_anthropic()` eklendi (Story 9.1'in `_call_anthropic()`'inden genelleştirildi, artık hem `app/ai_fundamental.py` hem `app/bulletins.py` kullanıyor).
-  - `app/bulletins.py` (yeni): sektör rotasyonu, sektör-içi eşzamanlı skorlama, Anthropic çağrısı, append-only kaydetme (eşzamanlı istek çakışmasına karşı `ON CONFLICT (bulletin_date) DO NOTHING` + geri okuma).
+  - `app/ai_reports.py`'ye `call_gemini()` eklendi (Story 9.1'in özel Anthropic çağrısından genelleştirildi, 2026-09-19'da Gemini'ye geçirildi, artık hem `app/ai_fundamental.py` hem `app/bulletins.py` kullanıyor).
+  - `app/bulletins.py` (yeni): sektör rotasyonu, sektör-içi eşzamanlı skorlama, Gemini çağrısı, append-only kaydetme (eşzamanlı istek çakışmasına karşı `ON CONFLICT (bulletin_date) DO NOTHING` + geri okuma).
   - `GET /bulletins` uç noktası: entitlement kontrolü (mevcut `ai_reports` bayrağı, yeni bir alan eklenmedi), bugünün bülteni yoksa üretir, tüm arşivi (son 30 kayıt) döndürür.
 - **Web/Mobil:** Dashboard'a (Highlights'ın altına) yeni bir "Bülten" bölümü — sayfa açılışında otomatik yüklenir (Highlights gibi, buton arkasına gizlenmez — kullanıcıya özel değil, günde bir kez üretilen paylaşılan içerik), premium kilit durumu.
 
@@ -49,7 +49,7 @@ Story 9.1/9.2'nin `ai_reports` tablosu **tek-satır upsert-cache** deseni (sembo
 ## Görevler
 
 1. **[Backend]** `apps/api/migrations/0010_sector_bulletins.sql`. ✅ — canlı Supabase'e uygulandı.
-2. **[Backend]** `app/ai_reports.py::call_anthropic()` — Story 9.1'in Anthropic çağrısı genelleştirildi, `app/ai_fundamental.py` bu yeni paylaşılan fonksiyona geçirildi (regresyon yok, testler yeşil). ✅
+2. **[Backend]** `app/ai_reports.py::call_gemini()` — Story 9.1'in LLM çağrısı genelleştirildi, `app/ai_fundamental.py` bu yeni paylaşılan fonksiyona geçirildi (regresyon yok, testler yeşil). ✅
 3. **[Backend]** `app/bulletins.py`: sektör rotasyonu, skorlama, anlatı üretimi, append-only kayıt. ✅
 4. **[Backend]** `GET /bulletins` uç noktası (`main.py`). ✅
 5. **[Backend]** Testler: rotasyonun deterministik olduğu ve bir yıl içinde tüm sektörleri kapsadığı, mevcut bülten varsa yeniden üretilmediği, aday yoksa hata, üretim+kayıt akışı, eşzamanlı ekleme çakışması, 403/401 — hepsi mock'lu. ✅ (290/290 test yeşil, ruff temiz.)
@@ -77,13 +77,13 @@ Story 9.1/9.2'nin `ai_reports` tablosu **tek-satır upsert-cache** deseni (sembo
 - [x] Web: typecheck, lint, build yeşil.
 - [x] Mobil: typecheck, lint, Metro bundle yeşil.
 - [x] **Ücretsiz katman kullanıcısıyla 403 doğrulandı** — canlı, gerçek JWT üzerinden.
-- [x] **Sektör rotasyonu + gerçek hisse skorlama canlı doğrulandı** — premium kullanıcıyla `GET /bulletins` çağrıldığında (Anthropic anahtarı henüz yok) pipeline sektör seçip gerçek Finnhub/Twelve Data verisiyle o sektördeki hisseleri skorladı, yalnızca son adımda ("ANTHROPIC_API_KEY is not configured") temiz bir uyarıyla durdu — 500 hatası yok, hatalı bir satır kaydedilmedi.
-- [ ] **Gerçek Anthropic API anahtarıyla tam uçtan uca doğrulandı** (bugünün bülteni üretimi + ikinci istekte aynı `bulletin_date`'in tekrar üretilmediği) — **açık madde**, Story 9.1 ile aynı, kullanıcı anahtarı sağladığında yapılacak.
+- [x] **Sektör rotasyonu + gerçek hisse skorlama canlı doğrulandı** — premium kullanıcıyla `GET /bulletins` çağrıldığında (LLM anahtarı henüz yoktu) pipeline sektör seçip gerçek Finnhub/Twelve Data verisiyle o sektördeki hisseleri skorladı, yalnızca son adımda ("ANTHROPIC_API_KEY is not configured") temiz bir uyarıyla durdu — 500 hatası yok, hatalı bir satır kaydedilmedi.
+- [x] **Gerçek Gemini API anahtarıyla tam uçtan uca doğrulandı** (2026-09-20 — `get_or_create_todays_bulletin()`: ilk çağrı bugün için yeni bir bülten üretip Communication Services sektöründe kaydetti, ikinci çağrı aynı `created_at` ile aynı satırı döndürdü, ikinci bir satır eklenmedi).
 - [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 
-- **Maliyet/gecikme:** Günün ilk isteği, sektördeki her aday hisse için (~5-20 sembol, `MAX_CONCURRENT_SCORING=15` eşzamanlılık sınırıyla) `compute_us_score()` + bir Anthropic çağrısı yapıyor — birkaç saniye sürebilir. Sonraki tüm istekler DB'den anında okur. Story 9.1/9.2'nin "Rapor Oluştur" butonlu desenin aksine, bu bölüm sayfa açılışında otomatik yükleniyor çünkü kullanıcıya özel değil (günde bir kez üretilen paylaşılan içerik).
+- **Maliyet/gecikme:** Günün ilk isteği, sektördeki her aday hisse için (~5-20 sembol, `MAX_CONCURRENT_SCORING=15` eşzamanlılık sınırıyla) `compute_us_score()` + bir Gemini çağrısı yapıyor — birkaç saniye sürebilir. Sonraki tüm istekler DB'den anında okur. Story 9.1/9.2'nin "Rapor Oluştur" butonlu desenin aksine, bu bölüm sayfa açılışında otomatik yükleniyor çünkü kullanıcıya özel değil (günde bir kez üretilen paylaşılan içerik).
 - **Eşzamanlı istek çakışması:** Günün ilk birkaç dakikasında iki kullanıcı aynı anda dashboard'u açarsa, her ikisi de "bugünün bülteni yok" görüp üretime başlayabilir. `sector_bulletins.bulletin_date`'in `unique` kısıtı + `INSERT ... ON CONFLICT (bulletin_date) DO NOTHING` bunu güvenli hale getiriyor: kaybeden istek, kazananın yazdığı satırı geri okuyup onu döndürüyor (test: `test_save_bulletin_handles_concurrent_insert_race`).
 - **Yetkilendirme genişletmesi yok:** Yeni bir entitlement alanı eklenmedi — mevcut `Entitlement.ai_reports` bayrağı (Story 8.1) tekrar kullanıldı, bülten de kavramsal olarak bir AI raporu.
-- **Kod paylaşımı:** `app/ai_reports.py::call_anthropic()`, Story 9.1'in başlangıçta `app/ai_fundamental.py` içine özel yazılmış Anthropic çağrısının genelleştirilmiş hali — artık iki farklı sistem prompt'uyla (temel analiz, bülten editörü) iki farklı modülden çağrılıyor.
+- **Kod paylaşımı:** `app/ai_reports.py::call_gemini()`, Story 9.1'in başlangıçta `app/ai_fundamental.py` içine özel yazılmış (ve 2026-09-19'da Anthropic'ten Gemini'ye geçirilmiş) LLM çağrısının genelleştirilmiş hali — artık iki farklı sistem prompt'uyla (temel analiz, bülten editörü) iki farklı modülden çağrılıyor.

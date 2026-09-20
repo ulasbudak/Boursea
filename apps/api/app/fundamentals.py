@@ -131,7 +131,9 @@ async def get_us_fundamentals(
     return FundamentalsSnapshot(
         symbol=symbol.upper(),
         exchange="US",
-        pe_ratio=_first_present(metric, "peBasicExclExtraTTM", "peExclExtraTTM", "peNormalizedAnnual"),
+        pe_ratio=_first_present(
+            metric, "peBasicExclExtraTTM", "peExclExtraTTM", "peNormalizedAnnual"
+        ),
         pb_ratio=_first_present(metric, "pbAnnual", "pbQuarterly", "pb"),
         roe=_first_present(metric, "roeTTM", "roeRfy", "roeAnnual", "roe"),
         roa=_first_present(metric, "roaTTM", "roaRfy", "roaAnnual", "roa"),
@@ -141,10 +143,15 @@ async def get_us_fundamentals(
             metric, "currentDividendYieldTTM", "dividendYieldIndicatedAnnual", "dividendYield5Y"
         ),
         debt_to_equity=_first_present(
-            metric, "totalDebt/totalEquityAnnual", "totalDebt/totalEquityQuarterly", "totalDebtToEquity"
+            metric,
+            "totalDebt/totalEquityAnnual",
+            "totalDebt/totalEquityQuarterly",
+            "totalDebtToEquity",
         ),
         gross_margin=_first_present(metric, "grossMarginTTM", "grossMarginAnnual", "grossMargin"),
-        net_margin=_first_present(metric, "netProfitMarginTTM", "netProfitMarginAnnual", "netMargin"),
+        net_margin=_first_present(
+            metric, "netProfitMarginTTM", "netProfitMarginAnnual", "netMargin"
+        ),
         ebitda_margin=_first_present(metric, "ebitdaMarginTTM", "ebitdaMargin"),
         free_cash_flow=_first_present(metric, "freeCashFlowTTM", "freeCashFlowAnnual"),
         market_cap=market_cap * 1_000_000 if market_cap else None,
@@ -266,7 +273,9 @@ def _build_data_points(series_bucket: dict, limit: int) -> list[HistoricalDataPo
     for period in most_recent_periods:
         revenue = revenue_by_period.get(period)
         net_margin = net_margin_by_period.get(period)
-        net_income = revenue * net_margin if revenue is not None and net_margin is not None else None
+        net_income = (
+            revenue * net_margin if revenue is not None and net_margin is not None else None
+        )
         points.append(
             HistoricalDataPoint(
                 period=period,
@@ -316,4 +325,6 @@ async def get_us_historical_performance(
     if not annual and not quarterly:
         raise FundamentalsUnavailableError(f"No historical data points for symbol {symbol}")
 
-    return HistoricalPerformance(symbol=symbol.upper(), exchange="US", annual=annual, quarterly=quarterly)
+    return HistoricalPerformance(
+        symbol=symbol.upper(), exchange="US", annual=annual, quarterly=quarterly
+    )

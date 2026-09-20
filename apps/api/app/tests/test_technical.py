@@ -90,7 +90,7 @@ def test_stochastic_within_bounds_and_null_before_warmup():
 
 
 def test_evaluate_signals_detects_bollinger_breakout_up():
-    # Flat, low-volatility period keeps the bands tight; a sharp jump then breaks above the upper band.
+    # Flat, low-volatility period keeps the bands tight; a sharp jump then breaks above the band.
     closes = [100.0] * 25 + [130.0] * 5
     candles = make_candles(closes)
 

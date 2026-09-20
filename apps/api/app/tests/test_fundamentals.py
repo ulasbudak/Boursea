@@ -20,9 +20,7 @@ client = TestClient(main.app)
 
 @pytest.fixture(autouse=True)
 def patch_settings(monkeypatch):
-    monkeypatch.setattr(
-        fundamentals, "get_settings", lambda: Settings(finnhub_api_key="test-key")
-    )
+    monkeypatch.setattr(fundamentals, "get_settings", lambda: Settings(finnhub_api_key="test-key"))
 
 
 @pytest.fixture
@@ -168,7 +166,9 @@ def test_fundamentals_endpoint_bist_has_no_sector_comparison():
 @pytest.mark.anyio
 async def test_get_peer_symbols_excludes_self_and_caps_list():
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json=["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NFLX", "ORCL", "IBM", "CSCO"])
+        return httpx.Response(
+            200, json=["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NFLX", "ORCL", "IBM", "CSCO"]
+        )
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as http_client:
@@ -279,12 +279,8 @@ def test_get_bist_historical_performance_returns_empty_series():
 
 @pytest.mark.anyio
 async def test_get_us_historical_performance_derives_net_income_and_caps_periods():
-    annual_entries = [
-        {"period": f"{2015 + i}-12-31", "v": 10.0 + i} for i in range(8)
-    ]
-    net_margin_entries = [
-        {"period": f"{2015 + i}-12-31", "v": 0.2} for i in range(8)
-    ]
+    annual_entries = [{"period": f"{2015 + i}-12-31", "v": 10.0 + i} for i in range(8)]
+    net_margin_entries = [{"period": f"{2015 + i}-12-31", "v": 0.2} for i in range(8)]
     eps_entries = [{"period": f"{2015 + i}-12-31", "v": 1.5 + i} for i in range(8)]
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -350,7 +346,9 @@ async def test_get_us_historical_performance_handles_partial_period_data():
 @pytest.mark.anyio
 async def test_get_us_historical_performance_raises_when_no_series_data():
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"series": {"annual": {}, "quarterly": {}}, "symbol": "ZZZZ"})
+        return httpx.Response(
+            200, json={"series": {"annual": {}, "quarterly": {}}, "symbol": "ZZZZ"}
+        )
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as http_client:
@@ -382,7 +380,9 @@ def test_history_endpoint_surfaces_warning_when_us_provider_unavailable(monkeypa
     async def failing_get_us_historical_performance(symbol: str):
         raise FundamentalsUnavailableError("boom")
 
-    monkeypatch.setattr(main, "get_us_historical_performance", failing_get_us_historical_performance)
+    monkeypatch.setattr(
+        main, "get_us_historical_performance", failing_get_us_historical_performance
+    )
 
     response = client.get("/fundamentals/history", params={"symbol": "AAPL", "exchange": "US"})
 

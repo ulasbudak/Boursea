@@ -531,7 +531,7 @@ So that gerçek zamanlı veri ve gelişmiş özelliklere erişebileyim.
 
 ### Story 9.1: Temel Analiz AI Raporu
 
-- [ ] **Devam ediyor** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.1.md`**. Backend (`app/ai_fundamental.py` + `GET /symbols/ai-report/fundamental` — Anthropic Claude API'sine `httpx` ile çağrı, Epic 2'nin temel verisiyle RAG, sembol bazlı global önbellek), web/mobil (AI Analiz sekmesinde "Rapor Oluştur" paneli + premium kilidi) uygulandı; testler (mock'lu) yeşil. Ücretsiz katman 403'ü canlı doğrulandı. **Açık madde:** gerçek Anthropic API anahtarı henüz sağlanmadı, rapor üretiminin gerçek LLM çağrısıyla uçtan uca doğrulanması bekliyor.
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.1.md`**. Backend (`app/ai_fundamental.py` + `GET /symbols/ai-report/fundamental` — Google Gemini API'sine `httpx` ile çağrı (2026-09-19'da Anthropic Claude'dan geçirildi), Epic 2'nin temel verisiyle RAG, sembol bazlı global önbellek), web/mobil (AI Analiz sekmesinde "Rapor Oluştur" paneli + premium kilidi) uygulandı; testler (mock'lu) yeşil. Ücretsiz katman 403'ü canlı doğrulandı. **Gerçek Gemini API anahtarıyla canlı uçtan uca doğrulandı** (2026-09-20 — AAPL için rapor üretimi + ikinci istekte önbellekten dönme).
 
 As a **kullanıcı (premium)**,
 I want hisse detay sayfasında, uygulamanın kendi temel verisine dayanan bir AI temel analiz raporu okumak,
@@ -539,7 +539,7 @@ So that sayıları tek tek yorumlamadan hissenin temel görünümünü hızlıca
 
 **Acceptance Criteria:**
 
-- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "Temel Analiz AI Raporu"nu talep ederse, **Then** Anthropic Claude API'sine, uygulamanın kendi hesapladığı temel verisi (F/K, ROE, borç/özsermaye, sektör kıyaslaması, geçmiş finansal performans) zemine alınarak (RAG) üretilmiş bir rapor gösterilir (FR-100).
+- **Given** premium bir kullanıcı bir hisse detay sayfasını açar, **When** "Temel Analiz AI Raporu"nu talep ederse, **Then** Google Gemini API'sine, uygulamanın kendi hesapladığı temel verisi (F/K, ROE, borç/özsermaye, sektör kıyaslaması, geçmiş finansal performans) zemine alınarak (RAG) üretilmiş bir rapor gösterilir (FR-100).
 - **Given** ücretsiz katmandaki bir kullanıcı, **When** aynı bölüme gelirse, **Then** özellik kilitli gösterilir ve premium yükseltme teklifiyle karşılaşır (FR-080); backend de aynı isteği 403 ile reddeder.
 - **Given** ilgili hisse için temel veri yetersizse (örn. BIST — canlı temel veri kaynağı yok), **When** rapor üretilmeye çalışılırsa, **Then** "yeterli veri yok" durumu gösterilir; veri olmadan genel/halüsinasyon riski taşıyan bir rapor üretilmez.
 - **And** raporun altında sabit olarak "yatırım tavsiyesi değildir" ibaresi yer alır; rapor sembol+borsa bazlı önbelleğe alınır (kullanıcı bazlı değil), LLM API maliyetini kontrol etmek için.
@@ -561,7 +561,7 @@ So that grafiği manuel yorumlamadan modelin "okumasını" diğer görüşlerle 
 
 ### Story 9.3: Günlük Sektör Bülteni
 
-- [ ] **Devam ediyor** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.3.md`**. Kullanıcı isteği (2026-09-19): ana ekranda her gün üstüne yeni bir tane eklenen, hiç silinmeyen bir AI sektör bülteni. Zamanlama kararı: proje boyunca hiç kurulmayan bir cron/Celery altyapısı yerine, istek-anında üretim + append-only arşiv (`sector_bulletins` tablosu, `bulletin_date unique`) — kullanıcı bu tercihi bilerek onayladı. Sektör seçimi `day_of_year % 11` deterministik rotasyonla, hisse seçimi mevcut skor motoruyla (Story 3.6/3.7), anlatı Story 9.1'in artık paylaşılan hale getirilmiş (`app/ai_reports.py::call_anthropic()`) Anthropic entegrasyonuyla. Backend (`app/bulletins.py` + `GET /bulletins`) ve web/mobil (dashboard'da "Bülten" bölümü) uygulandı, testler (290/290) yeşil, ücretsiz katman 403'ü ve sektör-seçim/skorlama boru hattı canlı doğrulandı. **Açık madde:** gerçek Anthropic API anahtarı henüz sağlanmadı, tam uçtan uca (anlatı üretimi dahil) doğrulama bekliyor.
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-9.3.md`**. Kullanıcı isteği (2026-09-19): ana ekranda her gün üstüne yeni bir tane eklenen, hiç silinmeyen bir AI sektör bülteni. Zamanlama kararı: proje boyunca hiç kurulmayan bir cron/Celery altyapısı yerine, istek-anında üretim + append-only arşiv (`sector_bulletins` tablosu, `bulletin_date unique`) — kullanıcı bu tercihi bilerek onayladı. Sektör seçimi `day_of_year % 11` deterministik rotasyonla, hisse seçimi mevcut skor motoruyla (Story 3.6/3.7), anlatı Story 9.1'in artık paylaşılan hale getirilmiş (`app/ai_reports.py::call_gemini()`) Gemini entegrasyonuyla. Backend (`app/bulletins.py` + `GET /bulletins`) ve web/mobil (dashboard'da "Bülten" bölümü) uygulandı, testler (290/290) yeşil, ücretsiz katman 403'ü ve sektör-seçim/skorlama boru hattı canlı doğrulandı. **Gerçek Gemini API anahtarıyla tam uçtan uca doğrulandı** (2026-09-20 — günün bülteni üretimi + ikinci istekte aynı `bulletin_date`'in tekrar üretilmediği).
 
 As a **kullanıcı (premium)**,
 I want ana ekranda her gün yeni eklenen, geçmişi silinmeyen bir AI sektör bülteni görmek,

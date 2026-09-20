@@ -80,6 +80,8 @@ Kullanıcı, `hisse_ai_repo_karsilastirma_raporu.pdf` adlı bir karşılaştırm
 
 Kullanıcı önce "Claude'un finans skill'i" adlı bir API'den bahsetti; bu isimde, doğrudan çağrılabilir ayrı bir Anthropic ürünü doğrulanamadı. Bunun yerine **Anthropic Claude API** (console.anthropic.com, ayrı bir hesap ve pay-as-you-go faturalama gerektiriyor — claude.ai Pro aboneliği API erişimi içermiyor), kendi yazacağımız bir "finansal analist" sistem prompt'uyla kullanılacak; RAG zemini uygulamanın kendi hesapladığı temel verisi (F/K, ROE, borç/özsermaye, sektör kıyaslaması, geçmiş finansal performans — Epic 2 çıktısı) olacak.
 
+> **2026-09-19 güncellemesi:** Sağlayıcı **Google Gemini API**'ye geçirildi (commit `b868efb`, model `gemini-3.6-flash`) — kod artık `app/ai_reports.py::call_gemini()` üzerinden `GOOGLE_API_KEY` ile çalışıyor. Bu bölümdeki Anthropic gerekçesi karar tarihini belgelemek için olduğu gibi bırakıldı; güncel entegrasyon için bkz. `docs/stories/story-9.1.md` Bağlam. RAG zemini (Epic 2'nin temel verisi) ve maliyet-kontrollü önbellek deseni değişmedi.
+
 ### (c) Deterministik Analiz
 
 Yeni geliştirme gerekmiyor — `app/scoring.py`'deki `compute_score()` (Story 3.6/3.7) zaten 0-100 skor + Al/Nötr/Sat etiketi + "yatırım tavsiyesi değildir" ibaresi üretiyor. Bu, üçüncü panel olarak (a) ve (b)'nin yanına yeniden sunulacak.
