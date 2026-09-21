@@ -4,7 +4,7 @@ epic: "Epic 8 — Abonelik ve Monetizasyon (Freemium)"
 story_id: "8.1"
 status: done
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-09-21
 author: Bob (BMAD Scrum Master) & Amelia (BMAD Developer)
 based_on: ["docs/PRD.md", "docs/architecture.md §7", "docs/epics.md §12"]
 depends_on: ["5.1", "5.2", "5.4", "6.1", "6.3"]
@@ -82,3 +82,6 @@ Satın alma akışı olmadığı için şu an sistemde premium'a **yükseltme yo
 - `entitlements` tablosunda satır olmaması = `free` katman (satır yoksa `get_tier()` `"free"` döndürür); Story 8.2 gelene kadar `premium` yazan bir yol yok, bu yüzden premium test etmek şu an yalnızca DB'ye elle satır ekleyerek mümkün (test ortamında yapıldı, canlıda yapılmadı).
 - Premium kullanıcılar için `enforce_*_limit` fonksiyonları ilgili `list_*` fonksiyonunu (watchlist/alert/portfolio listesini veritabanından çekme) hiç çağırmıyor — erken dönüşle gereksiz DB sorgusu engelleniyor.
 - Web ve mobilde gelişmiş indikatör kilidi tamamen istemci tarafı: `/entitlements`'ın `advanced_indicators` alanı okunuyor, ayrı bir backend uç noktası/enforcement yok (indikatör hesaplama zaten istemci tarafı, saf TS — Story 3.2/3.3).
+- **Geçici ürün kararı (2026-09-21):** Story 8.2 (gerçek satın alma akışı) kurulana kadar tüm özellikler herkese ücretsiz açıldı — kullanıcı, ödeme altyapısını kurmadan önce kullanıcı tabanı büyütmeyi tercih etti. `app/entitlements.py::ALL_FEATURES_FREE = True` sabiti, `get_entitlement()`'ın en başında DB'deki `tier`'a hiç bakmadan herkese premium'un aynısını (yeni bir `tier="promo"` değeriyle, "premium" diye yanıltmadan) döndürüyor. Bu story'nin yazdığı **tüm mekanizma korunuyor** — limitler, `enforce_*` fonksiyonları, DB şeması, UI kilit bileşenleri hiçbiri silinmedi, yalnızca `ALL_FEATURES_FREE` bayrağıyla bypass ediliyor. Kapatmak (gerçek freemium'a dönmek) tek satırlık bir değişiklik: `apps/api/app/entitlements.py`'de `ALL_FEATURES_FREE = False` yap. Testler bu bayraktan etkilenmiyor — `app/tests/conftest.py`'deki autouse fixture, test suite'i varsayılan olarak `False`'a sabitliyor (gerçek limit/kilit testleri hâlâ eskisi gibi çalışıyor), yalnızca `test_entitlements.py`'deki 2 yeni test bilinçli olarak `True` yapıp promo davranışını doğruluyor.
+  - Frontend: `Entitlement.tier` tipine üçüncü bir değer (`"promo"`) eklendi (web+mobil `entitlements-client.ts`); `billing-card.tsx` (web) ve `SettingsScreen.tsx` (mobil) "Free Access Period"/"Ücretsiz Erişim Dönemi" rozetini ve bir açıklama notunu ayrı bir dal olarak gösteriyor — "Premium" diye yanıltıcı bir etiket kullanılmadı, gerçek `premium`'dan (satın alınmış) ayırt ediliyor.
+  - Canlı doğrulandı (2026-09-21): `entitlements` tablosunda hiç satırı olmayan bir test kullanıcısıyla `/settings`'te "Free Access Period" rozeti + tüm limitler Unlimited/Unlocked; hisse detayındaki AI Analiz sekmesi (normalde free için kilitli) doğrudan açık göründü.

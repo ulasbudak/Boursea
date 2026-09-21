@@ -146,12 +146,17 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
         <View style={styles.card}>
           <View style={styles.tierRow}>
             <Text style={styles.label}>{messages.billing.title}</Text>
-            <View style={[styles.tierBadge, entitlement.tier === "premium" && styles.tierBadgeActive]}>
-              <Text style={[styles.tierBadgeText, entitlement.tier === "premium" && styles.tierBadgeTextActive]}>
-                {entitlement.tier === "premium" ? messages.billing.premiumLabel : messages.billing.freeLabel}
+            <View style={[styles.tierBadge, entitlement.tier !== "free" && styles.tierBadgeActive]}>
+              <Text style={[styles.tierBadgeText, entitlement.tier !== "free" && styles.tierBadgeTextActive]}>
+                {entitlement.tier === "premium"
+                  ? messages.billing.premiumLabel
+                  : entitlement.tier === "promo"
+                    ? messages.billing.promoLabel
+                    : messages.billing.freeLabel}
               </Text>
             </View>
           </View>
+          {entitlement.tier === "promo" && <Text style={styles.hint}>{messages.billing.promoHint}</Text>}
 
           <View style={styles.billingRow}>
             <Text style={styles.notificationLabel}>{messages.billing.watchlistLimitLabel}</Text>

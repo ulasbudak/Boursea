@@ -498,6 +498,7 @@ So that o hisseyle ilgili düşüncelerimi/kararlarımı hatırlayabileyim.
 ### Story 8.1: Ücretsiz/Premium Katman Ayrımının Uygulanması
 
 - [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-8.1.md`**. Yeni `entitlements` tablosu (satır yoksa varsayılan `free`); backend (`app/entitlements.py` + dört `enforce_*_limit` fonksiyonu, `GET /entitlements`, dört oluşturma uç noktasına 403 enforcement), web/mobil ("Planım" kartı `/settings`'te, hisse detayında veri gecikmesi uyarısı, gelişmiş indikatör bölümünde kilit mesajı, 403 mesajlarının UI'da gösterilmesi) uygulandı ve doğrulandı. **Story 8.2 (gerçek satın alma/RevenueCat) kullanıcının kendi ödeme sağlayıcı hesaplarını kurmasını bekliyor, bilinçli olarak kapsam dışı bırakıldı.**
+- **Güncelleme (2026-09-21):** Kullanıcı, ödeme altyapısı kurulana kadar kullanıcı tabanı büyütmeyi tercih etti — `app/entitlements.py::ALL_FEATURES_FREE` bayrağıyla bu story'nin yazdığı tüm freemium mekanizması (limitler, `enforce_*`, DB şeması, UI kilitleri) korunarak bypass edildi; herkese "Free Access Period" ("Ücretsiz Erişim Dönemi") rozetiyle her şey açıldı, "Premium" diye yanıltıcı bir etiket kullanılmadı. Tek satırlık bir bayrakla geri alınabilir. Detay için bkz. `docs/stories/story-8.1.md` Teknik Notlar.
 
 As a **ücretsiz kullanıcı**,
 I want hangi özelliklerin ücretsiz hangilerinin premium olduğunu net şekilde görmek,
@@ -510,6 +511,8 @@ So that yükseltme yapmadan önce ne kazanacağımı bileyim.
 - **And** erişim kontrolü her zaman backend'in önbelleğe aldığı entitlement durumundan çözülür, istemci kendi kendine "premium'um" diyemez (AD-7).
 
 ### Story 8.2: Premium Abonelik Satın Alma ve Yönetimi
+
+> **Ertelendi (2026-09-21):** Kullanıcı, ödeme altyapısı kurmadan önce tüm özellikleri ücretsiz açıp kullanıcı tabanı büyütmeyi tercih etti (bkz. Story 8.1'in güncellemesi). Bu story, ödeme sağlayıcı hesapları (RevenueCat + Apple Developer Program + Google Play Console) kurulup gerçek monetizasyona geçilmek istendiğinde ele alınacak; şu an aktif bir plan yok.
 
 As a **kullanıcı**,
 I want uygulama içinden premium abone olup aboneliğimi yönetmek,

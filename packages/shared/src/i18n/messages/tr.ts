@@ -393,6 +393,8 @@ export const tr: Messages = {
     title: "Planım",
     freeLabel: "Ücretsiz",
     premiumLabel: "Premium",
+    promoLabel: "Ücretsiz Erişim Dönemi",
+    promoHint: "Tüm özellikler şu anda herkese ücretsiz.",
     upgradeButton: "Premium'a Geç",
     comingSoon: "Satın alma yakında açılacak.",
     watchlistLimitLabel: "İzleme listesi öğesi",

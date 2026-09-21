@@ -17,6 +17,13 @@ FREE_SIGNAL_ALERT_LIMIT = 3
 FREE_PORTFOLIO_LIMIT = 1
 FREE_SIMULATION_LIMIT = 1
 
+# Temporary product decision (2026-09-21): launch with every feature unlocked for every
+# user, deferring Story 8.2 (real purchase flow) until there's a user base worth
+# monetizing. get_entitlement() below short-circuits on this before ever consulting the
+# DB tier. Flip to False (or delete this branch entirely, along with the "promo" tier in
+# Entitlement.tier and its frontend handling) once real billing ships.
+ALL_FEATURES_FREE = True
+
 
 class Entitlement(BaseModel):
     tier: str
@@ -44,6 +51,18 @@ def get_tier(user_id: str) -> str:
 
 
 def get_entitlement(user_id: str) -> Entitlement:
+    if ALL_FEATURES_FREE:
+        return Entitlement(
+            tier="promo",
+            watchlist_item_limit=None,
+            alert_limit=None,
+            signal_alert_limit=None,
+            portfolio_limit=None,
+            simulation_limit=None,
+            advanced_indicators=True,
+            realtime_data=True,
+            ai_reports=True,
+        )
     if get_tier(user_id) == "premium":
         return Entitlement(
             tier="premium",

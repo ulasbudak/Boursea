@@ -390,6 +390,8 @@ export interface Messages {
     title: string;
     freeLabel: string;
     premiumLabel: string;
+    promoLabel: string;
+    promoHint: string;
     upgradeButton: string;
     comingSoon: string;
     watchlistLimitLabel: string;

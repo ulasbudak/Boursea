@@ -101,6 +101,35 @@ def test_get_entitlement_premium_is_unlimited(monkeypatch):
     assert result.ai_reports is True
 
 
+def test_get_entitlement_promo_overrides_free_tier(monkeypatch):
+    monkeypatch.setattr(entitlements, "ALL_FEATURES_FREE", True)
+    monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "free")
+
+    result = entitlements.get_entitlement("user-1")
+
+    assert result.tier == "promo"
+    assert result.watchlist_item_limit is None
+    assert result.alert_limit is None
+    assert result.signal_alert_limit is None
+    assert result.portfolio_limit is None
+    assert result.simulation_limit is None
+    assert result.advanced_indicators is True
+    assert result.realtime_data is True
+    assert result.ai_reports is True
+
+
+def test_get_entitlement_promo_does_not_consult_db_tier(monkeypatch):
+    def fail_get_tier(user_id):
+        raise AssertionError("get_tier should not be called while the promo is active")
+
+    monkeypatch.setattr(entitlements, "ALL_FEATURES_FREE", True)
+    monkeypatch.setattr(entitlements, "get_tier", fail_get_tier)
+
+    result = entitlements.get_entitlement("user-1")
+
+    assert result.tier == "promo"
+
+
 def test_enforce_ai_reports_access_blocks_free(monkeypatch):
     monkeypatch.setattr(entitlements, "get_tier", lambda user_id: "free")
 

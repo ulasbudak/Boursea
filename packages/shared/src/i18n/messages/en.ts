@@ -393,6 +393,8 @@ export const en: Messages = {
     title: "My Plan",
     freeLabel: "Free",
     premiumLabel: "Premium",
+    promoLabel: "Free Access Period",
+    promoHint: "All features are currently free for everyone.",
     upgradeButton: "Upgrade to Premium",
     comingSoon: "Purchases are coming soon.",
     watchlistLimitLabel: "Watchlist items",

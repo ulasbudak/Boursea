@@ -1,7 +1,7 @@
 import { authFetch } from "@/lib/api-client";
 
 export type Entitlement = {
-  tier: "free" | "premium";
+  tier: "free" | "premium" | "promo";
   watchlist_item_limit: number | null;
   alert_limit: number | null;
   signal_alert_limit: number | null;

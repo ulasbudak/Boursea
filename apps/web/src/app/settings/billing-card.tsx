@@ -58,14 +58,19 @@ export function BillingCard({ messages }: { messages: Messages["billing"] }) {
       <div className="mb-3 flex items-center gap-2">
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            entitlement.tier === "premium"
-              ? "bg-accent/15 text-accent"
-              : "bg-surface-hover text-text-secondary"
+            entitlement.tier === "free"
+              ? "bg-surface-hover text-text-secondary"
+              : "bg-accent/15 text-accent"
           }`}
         >
-          {entitlement.tier === "premium" ? t.premiumLabel : t.freeLabel}
+          {entitlement.tier === "premium"
+            ? t.premiumLabel
+            : entitlement.tier === "promo"
+              ? t.promoLabel
+              : t.freeLabel}
         </span>
       </div>
+      {entitlement.tier === "promo" && <p className="mb-3 text-xs text-text-tertiary">{t.promoHint}</p>}
 
       <dl className="flex flex-col divide-y divide-border-subtle">
         {rows.map((row) => (
