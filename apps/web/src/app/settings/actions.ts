@@ -36,5 +36,10 @@ export async function setInterestSectors(sectors: string[]) {
   if (!data?.claims) return;
 
   await supabase.auth.updateUser({ data: { interest_sectors: sectors } });
+  // updateUser() changes auth.users but doesn't rotate this session's access
+  // token, so a server component reading getClaims() right after would still
+  // see the pre-update user_metadata (stale JWT). Force a fresh token now so
+  // the dashboard's Highlights reflects the new sectors on the very next load.
+  await supabase.auth.refreshSession();
   revalidatePath("/", "layout");
 }
