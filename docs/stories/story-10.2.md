@@ -56,7 +56,8 @@ Story 10.1'in emir formu (`PlaceOrderForm`, hem web `simulation-view.tsx` hem mo
 - [x] AC1–AC3 koda yazıldı (kod incelemesiyle doğrulandı; bu davranış için özel bir otomatik test eklenmedi — dashboard/compare'deki aynı desen de test edilmemişti, tutarlı).
 - [x] Web: typecheck, lint, build yeşil (2026-09-20'de genel proje taramasıyla doğrulandı).
 - [x] Mobil: typecheck, lint yeşil (2026-09-20'de genel proje taramasıyla doğrulandı).
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: emir formunun sembol alanına "Apple" yazıldı, 300ms sonra gerçek `/symbols/search` sonuçları (AAPL, APLE, 603020.SS, MLP, …) açılır liste olarak göründü; bir sonuca tıklamak sembol+borsayı doğru doldurdu, emir bu sembolle başarıyla yürütüldü.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

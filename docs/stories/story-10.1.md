@@ -84,7 +84,8 @@ Bu, önceden PRD/epics.md'de hiç bahsedilmemiş, tamamen yeni bir kapsam. Mevcu
 - [x] Mobil: typecheck, lint, Metro bundle yeşil.
 - [x] **Gerçek bir sembolle canlı uçtan uca doğrulandı** — gerçek AAPL fiyatı (336.13) referans alındı, 5 adet alım emri tam bu fiyattan yürütüldü (`avg_cost`/`current_price` birebir eşleşti), nakit bakiyesi doğru düştü (10000 → 8319.35). Bütçeyi aşan alım 400 ile reddedildi; elde tutulandan fazla satım 400 ile reddedildi; BIST emri 503 ile reddedildi. `GET .../history` art arda iki kez çağrılıp aynı `snapshot_date` için aynı satırın güncellendiği (yeni satır eklenmediği) doğrulandı. Test verisi (simülasyon, kademeli cascade ile pozisyon+snapshot dahil) temizlendi.
 - [x] **Ücretsiz katmanda 2. simülasyonun 403 aldığı canlı doğrulandı** — gerçek JWT ile ilk simülasyon 201, ikinci deneme "Ücretsiz katmanda en fazla 1 simülasyon oluşturabilirsin" mesajıyla 403.
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: `/simulation`'da $10.000 bütçeli bir simülasyon oluşturuldu, 2 adet AAPL alım emri gerçek anlık fiyattan (`$336.13`) yürütüldü, nakit bakiyesinin doğru düştüğü ($10.000 → $9.327,74) ve pozisyonun doğru göründüğü doğrulandı.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

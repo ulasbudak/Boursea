@@ -65,7 +65,8 @@ Story 5.2'nin fiyat alarmı deseniyle aynı iskelet (DB tablosu, `evaluate_and_p
 
 - [x] AC1–AC3 karşılanıyor ve doğrulandı (backend: pytest 162/162 yeşil + ruff temiz [yeni/değiştirilen dosyalarda]; web/mobil: typecheck/lint/build).
 - [x] **Canlı uçtan uca doğrulandı:** `signal_alerts` tablosu bu ortamdaki gerçek Supabase projesine uygulandı (Story 5.2'nin aksine bu tablo önceden yoktu, ilk kez burada oluşturuldu). Gerçek bir JWT ile `POST /signal-alerts` (AAPL, rsi_overbought) → `GET /signal-alerts` (gerçek Finnhub günlük mumları üzerinden RSI hesaplanıp kural gerçekten `triggered` oldu, gerçek bir geçmiş tarihte) → BIST alarmı (`unavailable: true` doğrulandı) → temizlik, tekrar boş tabloya dönüldü.
-- [ ] Gerçek tarayıcıda/mobil cihazda görsel/etkileşim doğrulaması — otomasyon aracı yok, kullanıcı denemeli.
+- [x] **Web görsel/etkileşim doğrulaması** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: hisse detayında "Set Signal Alert" açılır formu (kural: "RSI 30 altına düştü", periyot: daily) dolduruldu, kaydedildi; `/signal-alerts` sayfasında doğru göründüğü doğrulandı. Test verisi sonradan temizlendi.
+- [ ] Mobil görsel/etkileşim doğrulaması — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

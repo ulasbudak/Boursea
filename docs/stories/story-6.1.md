@@ -68,7 +68,8 @@ Story 6.2 (değerleme) ve 6.3 (çoklu portföy), bu story ile **aynı PR'da** bi
 - [x] AC1–AC3 karşılanıyor ve doğrulandı (backend: pytest 227/227 yeşil + ruff temiz [yeni dosyalarda]; web: typecheck/lint/build yeşil; mobil: typecheck/lint/Metro bundle [766 modül] yeşil).
 - [x] Migration canlı Supabase'e uygulandı ve doğrulandı.
 - [x] **Canlı uçtan uca doğrulandı:** gerçek bir kullanıcı JWT'siyle tam akış — portföy oluştur → 10 AAPL @ 100 al → 10 AAPL daha @ 200 al (ortalama maliyet 100→150 doğrulandı) → 5 AAPL @ 999 sat (adet 20→15, ortalama maliyet 150'de sabit kaldı doğrulandı) → 100 AAPL satmaya çalış (400 doğrulandı) → pozisyon/portföy sil → temizlik.
-- [ ] Gerçek tarayıcıda/cihazda görsel-etkileşim doğrulaması — bu oturumda tarayıcı/simülatör otomasyon aracı yoktu; kullanıcı `/portfolio` sayfasını ve mobil `PortfolioScreen`'i bizzat denemeli.
+- [x] **Web görsel-etkileşim doğrulaması** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: `/portfolio`'da yeni portföy oluşturma, AAPL için 5 adet @ $330 alım işlemi ekleme doğrulandı — gerçek anlık fiyatla (`$336.13`) toplam değer/kâr-zarar doğru hesaplandı ($1,680.65, +$30.65/+1.9%). Test verisi sonradan temizlendi.
+- [ ] Mobil `PortfolioScreen` doğrulaması — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

@@ -73,7 +73,8 @@ Story 5.1'in kimlik doğrulamalı yazma deseni (`Authorization: Bearer`, `user_i
 - [x] Migration canlı Supabase projesine uygulandı — `price_alerts` tablosu bu ortamdaki gerçek projede zaten mevcuttu (önceki bir oturumdan, boş/kullanılmamış durumda); şema bire bir bu migration dosyasıyla eşleşiyor, doğrulandı.
 - [x] `FINNHUB_API_KEY` olmadan da `/alerts` çökmüyor — ABD alarmları "değerlendirilemiyor" uyarısıyla döner.
 - [x] **Canlı uçtan uca doğrulama (API seviyesinde) yapıldı:** Bu ortamda gerçek `SUPABASE_URL`/`SUPABASE_DB_URL`/`FINNHUB_API_KEY` yapılandırılmış olduğu bulundu. Geçici bir test kullanıcısıyla (`trendus-e2e-test+story52@example.com` — Supabase projesinde kayıtlı kaldı, kullanıcı dilerse Authentication panelinden silebilir) gerçek bir JWT alınıp tam akış canlı `uvicorn` üzerinden test edildi: `POST /alerts` (ABD, "below" — aktif kaldı) → `POST /alerts` (ABD, "above", düşük eşik — gerçek Finnhub fiyatıyla anında `triggered` oldu, `triggered_at` dolduruldu) → `POST /alerts` (BIST — `GET` sonrası `unavailable: true` ile işaretlendi, `active` kaldı, AC4 doğrulandı) → tüm alarmlar silindi, tablo tekrar 0 satıra döndü.
-- [ ] Gerçek tarayıcıda/mobil cihazda **görsel/etkileşim** doğrulaması — bu ortamda tarayıcı/simülatör otomasyon aracı hâlâ yok (API seviyesi dışında); kullanıcı `/alerts` ve hisse detayındaki alarm butonunu (web + mobil) bizzat denemeli.
+- [x] **Web görsel/etkileşim doğrulaması** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: hisse detayında "Set Price Alert" açılır formu (yön + eşik fiyatı) dolduruldu, kaydedildi; `/alerts` sayfasında "AAPL — Rises above 500 — Active" olarak doğru göründüğü doğrulandı. Test verisi sonradan temizlendi.
+- [ ] Mobil görsel/etkileşim doğrulaması — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

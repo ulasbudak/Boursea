@@ -85,7 +85,8 @@ Bu, projenin **ilk LLM entegrasyonu**. Sağlayıcı kararı 2026-09-18'de verild
 - [x] **Gerçek Gemini API anahtarıyla canlı uçtan uca doğrulandı** (2026-09-20 — `get_fundamental_report("AAPL", "US")`: ilk çağrı `cached=False` ile yeni rapor üretti, ikinci çağrı aynı `generated_at` ile `cached=True` döndü).
 - [x] **Ücretsiz katman kullanıcısıyla 403 doğrulandı** — taze bir Supabase kullanıcısıyla gerçek JWT üzerinden canlı çağrıldı, doğru Türkçe mesajla 403 alındı.
 - [ ] Regülasyon riski (bkz. `docs/product-brief-epic9-ai.md` §"Yatırımcı Sunumundan Önce Kapatılması Gereken Risk") için hukuki teyit — yatırımcı sunumundan önce, bu story'nin geliştirme aşamasını bloklamıyor.
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: hisse detayında AI Analiz sekmesinde "Fundamental Analysis AI Report" için "Generate Report" tıklandı, gerçek Gemini çıktısı (F/K, ROE, ROA, marj, geçmiş performans yorumuyla) ve "yatırım tavsiyesi değildir" ibaresi doğru göründü.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

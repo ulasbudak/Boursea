@@ -73,7 +73,8 @@ Satın alma akışı olmadığı için şu an sistemde premium'a **yükseltme yo
 - [x] AC1–AC3 karşılanıyor ve doğrulandı (backend: pytest 262/262 yeşil + ruff temiz; web: typecheck/lint/build yeşil; mobil: typecheck/lint/Metro bundle yeşil).
 - [x] Migration canlı Supabase'e uygulandı.
 - [x] **Canlı uçtan uca doğrulandı:** Taze bir Supabase kullanıcısıyla `GET /entitlements` (varsayılan `free`, doğru limitler) → 3 fiyat alarmı oluşturma (`201` × 3) → 4. alarm `403` + doğru Türkçe mesaj. Test verisi sonrasında temizlendi.
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: `/settings`'teki "My Plan" kartı gerçek bir premium kullanıcıyla açıldı, tüm limitlerin (izleme listesi, alarm, sinyal alarmı, portföy: Unlimited; gelişmiş indikatör, gerçek zamanlı veri, AI raporları: Unlocked) doğru göründüğü doğrulandı.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

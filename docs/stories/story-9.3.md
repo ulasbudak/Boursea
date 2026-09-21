@@ -79,7 +79,8 @@ Story 9.1/9.2'nin `ai_reports` tablosu **tek-satır upsert-cache** deseni (sembo
 - [x] **Ücretsiz katman kullanıcısıyla 403 doğrulandı** — canlı, gerçek JWT üzerinden.
 - [x] **Sektör rotasyonu + gerçek hisse skorlama canlı doğrulandı** — premium kullanıcıyla `GET /bulletins` çağrıldığında (LLM anahtarı henüz yoktu) pipeline sektör seçip gerçek Finnhub/Twelve Data verisiyle o sektördeki hisseleri skorladı, yalnızca son adımda ("ANTHROPIC_API_KEY is not configured") temiz bir uyarıyla durdu — 500 hatası yok, hatalı bir satır kaydedilmedi.
 - [x] **Gerçek Gemini API anahtarıyla tam uçtan uca doğrulandı** (2026-09-20 — `get_or_create_todays_bulletin()`: ilk çağrı bugün için yeni bir bülten üretip Communication Services sektöründe kaydetti, ikinci çağrı aynı `created_at` ile aynı satırı döndürdü, ikinci bir satır eklenmedi).
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: dashboard'daki Bülten bölümünde arşivin (append-only) 3 farklı güne ait gerçek bültenleri (9/19 Utilities, 9/20 Communication Services, 9/21 Technology) doğru sırada ve içerikle gösterdiği doğrulandı; günün ilk isteğinde yeni bültenin (Technology, deterministik rotasyona uygun) canlı üretildiği gözlemlendi.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

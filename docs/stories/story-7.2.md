@@ -58,7 +58,8 @@ Story 7.1'in aksine, bir not `user_metadata`'ya sığmıyor (kullanıcı başın
 - [x] AC1–AC2 karşılanıyor ve doğrulandı (backend: pytest 246/246 yeşil + ruff temiz; web: typecheck/lint/build yeşil; mobil: typecheck/lint/Metro bundle yeşil).
 - [x] Migration canlı Supabase'e uygulandı ve doğrulandı.
 - [x] **Canlı uçtan uca doğrulandı:** `GET /notes` (yok → `null`) → `PUT /notes` (oluştur) → `GET /notes` (kalıcı olduğu doğrulandı) → `PUT /notes` (güncelle, `updated_at` değişti doğrulandı) → `DELETE /notes` (204) → `GET /notes` (tekrar `null`) → yetkisiz istek (401).
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: hisse detayındaki "Personal Note" alanına not yazılıp kaydedildi, "Saving…" durumu ve kaydedilen metnin kalıcı olarak göründüğü doğrulandı.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

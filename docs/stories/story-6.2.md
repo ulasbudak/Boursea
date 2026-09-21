@@ -56,7 +56,8 @@ Story 5.2/5.3'teki "istek-anında değerlendirme" deseni (`evaluate_and_persist`
 
 - [x] AC1–AC2 karşılanıyor ve doğrulandı (bkz. `story-6.1.md` DoD — aynı canlı uçtan uca test bu story'nin değerleme mantığını da kapsıyor: AAPL için gerçek Finnhub fiyatı [337.00] ile market_value=6740, pnl_abs=3740, pnl_pct≈124.67 doğrulandı; GARAN/BIST için `price_unavailable=true` ve toplamdan hariç tutulma doğrulandı).
 - [x] Backend testleri yeşil (`test_value_portfolios_*` — 3 senaryo: fiyat mevcut, fiyat yok, BIST) + ruff temiz.
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: "Add Transaction" formu (sembol/borsa/yön/adet/fiyat) dolduruldu, işlem kaydedildi, portföy tablosunda gerçek anlık fiyatla (AAPL $336.13) doğru satır/toplam göründüğü doğrulandı.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

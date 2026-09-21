@@ -69,7 +69,8 @@ Bu, projenin **ilk kalıcı, kullanıcıya özel yazma işlemi** — şimdiye ka
 - [x] Canlı smoke test: gerçek bir kullanıcı JWT'siyle tüm CRUD akışı (`POST /watchlists` → `POST .../items` → `GET /watchlists` → `DELETE .../items/{id}` → `DELETE /watchlists/{id}`) uçtan uca doğrulandı.
 - [x] Web: typecheck, lint, `next build` yeşil.
 - [x] Mobil: typecheck, lint, Metro bundle (695 modül) yeşil.
-- [ ] Gerçek tarayıcıda/cihazda görsel-etkileşim doğrulaması — bu oturumda tarayıcı/simülatör otomasyon aracı yoktu; kullanıcı `/watchlist`, hisse detayındaki "ekle" akışını (web) ve mobil `WatchlistScreen`/`AddToWatchlistButton`'ı bizzat denemeli.
+- [x] **Web görsel-etkileşim doğrulaması** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile gerçek bir premium test kullanıcısı üzerinden: hisse detayında "Add to watchlist" → yeni liste oluşturma → hisseyi listeye ekleme, ardından `/watchlist` sayfasında listenin ve eklenen AAPL satırının doğru göründüğü doğrulandı. Test verisi sonradan temizlendi.
+- [ ] Mobil `WatchlistScreen`/`AddToWatchlistButton` doğrulaması — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

@@ -86,7 +86,8 @@ PDF'teki 4 adaydan (huseinzol05/Stock-Prediction-Models, Omar-Karimov/ChartScanA
 - [x] **Gerçek bir sembolün grafiğiyle canlı uçtan uca doğrulandı** — yerel API sunucusu + gerçek AAPL/MSFT mum verisi (Twelve Data) + gerçek ChartScanAI model ağırlığıyla `GET /symbols/ai-report/technical` çağrıldı; makul bir çıktı alındı (örn. MSFT için 3 Al/1 Sat, en yüksek güven %68 Sell); ikinci çağrıda önbellekten aynı `generated_at` ile döndüğü doğrulandı.
 - [x] **Ücretsiz katman kullanıcısıyla 403 doğrulandı** — taze bir Supabase kullanıcısı (`ai-reports-smoke`) ile gerçek JWT üzerinden canlı çağrıldı, doğru Türkçe mesajla 403 alındı; ardından `entitlements` tablosuna elle `premium` satırı eklenip aynı kullanıcıyla 200 + gerçek rapor alındığı doğrulandı. Test verisi sonrasında temizlendi.
 - [x] Ürün metinlerinde "tavsiye"/"strateji" dili kullanılmadığı ve model sınırlamasının (deneysel, sınırlı topluluk/metrik) açıkça belirtildiği gözden geçirildi.
-- [ ] Gerçek tarayıcıda/cihazda görsel doğrulama — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: hisse detayında AI Analiz sekmesinde "Technical Analysis AI Report" için "Generate Report" tıklandı, gerçek ChartScanAI çıktısı ("4 Al ve 1 Sat örüntüsü tespit etti... En yüksek güvenli bulgu: Sell (%58 güven)") ve "deneysel/gösterge niteliğinde" uyarısı doğru göründü.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 

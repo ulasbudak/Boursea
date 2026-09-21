@@ -52,7 +52,8 @@ Bu story ayrı bir görev seti gerektirmedi çünkü Story 6.1'in şeması (`por
 
 - [x] AC1–AC2 karşılanıyor ve doğrulandı — canlı smoke test'te tek bir portföy oluşturulup test edildi (bkz. `story-6.1.md`); çoklu-portföy davranışı `list_portfolios`'un birden fazla satırı birleştiren `GROUP BY`-benzeri Python mantığıyla (`portfolios: dict[str, Portfolio]`) test edilerek doğrulandı (`test_list_portfolios_attaches_positions` ve ilişkili testler).
 - [x] Backend testleri yeşil + ruff temiz.
-- [ ] Gerçek kullanıcıda birden fazla portföy oluşturup aralarında gezinme deneyimi — kullanıcı bizzat denemeli.
+- [x] **Web görsel doğrulama** (2026-09-21) — Claude tarafından, headless Chromium (Playwright) ile: aynı kullanıcı için iki ayrı portföy ("Portfolio A", "Portfolio B") oluşturuldu, `/portfolio` sayfasında ikisinin de bağımsız kartlar olarak, birbirini etkilemeden (ayrı işlem/silme aksiyonlarıyla) doğru göründüğü doğrulandı.
+- [ ] Mobil doğrulama — bu ortamda gerçek simülatör/cihaz yok; kullanıcı bizzat denemeli.
 
 ## Teknik Notlar
 
