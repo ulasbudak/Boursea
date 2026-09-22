@@ -1,6 +1,6 @@
 "use client";
 
-import type { Locale, Messages } from "@trendus/shared";
+import type { Locale, Messages } from "@boursea/shared";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import { setLocale } from "./actions";
 

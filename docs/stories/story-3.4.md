@@ -64,5 +64,5 @@ So that kendi analizimi grafik üzerinde işaretleyebileyim.
 
 ## Teknik Notlar
 
-- `localStorage`/`AsyncStorage` anahtarı: `trendus_drawings_{exchange}_{symbol}` — her sembol kendi çizim listesini bağımsız saklar.
+- `localStorage`/`AsyncStorage` anahtarı: `boursea_drawings_{exchange}_{symbol}` — her sembol kendi çizim listesini bağımsız saklar.
 - İki noktalı `LineSeries` yaklaşımı, `lightweight-charts`'ın "yalnızca ardışık veri noktaları arasını çizer" davranışına dayanır; bu davranış Story 3.1-3.3'te zaten kullanılan `setData()` API'siyle aynıdır, yeni bir API yüzeyi gerektirmez.

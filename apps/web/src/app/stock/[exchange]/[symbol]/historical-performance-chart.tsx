@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatRatio, type Locale, type Messages } from "@trendus/shared";
+import { formatRatio, type Locale, type Messages } from "@boursea/shared";
 import { Card } from "@/components/ui/card";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import { Skeleton } from "@/components/ui/skeleton";

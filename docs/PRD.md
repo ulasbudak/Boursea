@@ -1,18 +1,18 @@
 ---
-title: "Trendus (Borsa Takip Uygulaması) - Ürün Gereksinim Dokümanı"
+title: "Boursea (Borsa Takip Uygulaması) - Ürün Gereksinim Dokümanı"
 status: draft
 created: 2026-09-15
 updated: 2026-09-16
 author: Mary (BMAD Business Analyst) — Serdar Ulaş Budak ile birlikte
 ---
 
-# Trendus — PRD
+# Boursea — PRD
 
 *English version: [`docs/PRD.en.md`](PRD.en.md).*
 
 ## 1. Özet ve Vizyon
 
-**Trendus**, Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri, dünyada en yaygın kullanılan **temel analiz (fundamental)** parametreleriyle değerlendiren ve buna ek olarak kapsamlı bir **teknik analiz** deneyimi sunan; web ve mobil platformlarda çalışan bir yatırım araştırma uygulamasıdır.
+**Boursea**, Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri, dünyada en yaygın kullanılan **temel analiz (fundamental)** parametreleriyle değerlendiren ve buna ek olarak kapsamlı bir **teknik analiz** deneyimi sunan; web ve mobil platformlarda çalışan bir yatırım araştırma uygulamasıdır.
 
 Ürün, hem yeni başlayan bireysel yatırımcıya (özet skorlar, anlaşılır metrikler) hem de aktif tradera (geniş indikatör kütüphanesi, tarama/sinyal araçları) hitap eden katmanlı bir deneyim hedefler. Uygulama bir **aracı kurum / brokerage değildir** — alım-satım emri iletmez, sadece araştırma ve karar destek aracı olarak konumlanır.
 

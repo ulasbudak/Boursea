@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { formatChange, formatMarketCap, formatPrice, messages } from "@trendus/shared";
+import { formatChange, formatMarketCap, formatPrice, messages } from "@boursea/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { PageHeader } from "@/components/ui/page-header";

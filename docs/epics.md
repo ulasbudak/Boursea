@@ -1,5 +1,5 @@
 ---
-title: "Trendus (Borsa Takip Uygulaması) - Epic ve Story Backlog"
+title: "Boursea (Borsa Takip Uygulaması) - Epic ve Story Backlog"
 status: draft
 created: 2026-09-15
 updated: 2026-09-16
@@ -7,7 +7,7 @@ author: Bob (BMAD Scrum Master)
 inputDocuments: ["docs/PRD.md", "docs/architecture.md"]
 ---
 
-# Trendus — Epic & Story Backlog
+# Boursea — Epic & Story Backlog
 
 *İngilizce versiyon: [`docs/epics.en.md`](epics.en.md).*
 

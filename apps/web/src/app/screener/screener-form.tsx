@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { RotateCcw, Search } from "lucide-react";
-import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@trendus/shared";
+import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@boursea/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Label, Select } from "@/components/ui/input";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatPrice, formatSignedPercent, type Locale, type Messages } from "@trendus/shared";
+import { formatPrice, formatSignedPercent, type Locale, type Messages } from "@boursea/shared";
 import { Card } from "@/components/ui/card";
 import { Badge, ChangeValue } from "@/components/ui/change-value";
 import { fetchHighlights, type Highlight } from "@/lib/highlights-client";

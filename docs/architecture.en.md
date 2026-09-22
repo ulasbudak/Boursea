@@ -1,5 +1,5 @@
 ---
-title: "Trendus (Stock Tracking App) - System Architecture"
+title: "Boursea (Stock Tracking App) - System Architecture"
 status: draft
 created: 2026-09-15
 updated: 2026-09-15
@@ -9,7 +9,7 @@ language: en
 translationOf: docs/architecture.md
 ---
 
-# Trendus — System Architecture
+# Boursea — System Architecture
 
 *This is the English translation of [`docs/architecture.md`](architecture.md), which remains the source of truth. If the two ever disagree, the Turkish version wins until this file is re-synced.*
 
@@ -280,7 +280,7 @@ flowchart TB
 > Not a binding rule — the real structure supersedes this once code is written.
 
 ```
-trendus/
+boursea/
 ├── apps/
 │   ├── web/          # Next.js
 │   ├── mobile/        # React Native / Expo

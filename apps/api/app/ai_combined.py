@@ -19,7 +19,7 @@ from app.ai_technical import TechnicalAIReport, get_technical_report
 CACHE_TTL_HOURS = 5.0  # matches technical's TTL — the more volatile of the two inputs
 
 SYSTEM_PROMPT = (
-    "Sen Trendus uygulaması için çalışan bir finansal analistsin. Sana bir hissenin temel "
+    "Sen Boursea uygulaması için çalışan bir finansal analistsin. Sana bir hissenin temel "
     "analiz raporu ile grafik örüntü modelinin (teknik) okuması verilecek. Bu ikisini "
     "birleştirerek, Türkçe, 2-3 paragraflık kısa bir özet değerlendirme yaz: temel ve "
     "teknik görünüm aynı yönü mü işaret ediyor yoksa çelişiyor mu, kullanıcının nelere "

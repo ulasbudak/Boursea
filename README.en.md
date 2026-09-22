@@ -1,4 +1,4 @@
-# Trendus
+# Boursea
 
 *This is the English translation of [`README.md`](README.md), which remains the source of truth.*
 

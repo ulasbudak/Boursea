@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 

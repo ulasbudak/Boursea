@@ -13,7 +13,7 @@ based_on: ["docs/PRD.md", "docs/architecture.md", "docs/epics.md §2.4"]
 
 ## Kullanıcı Hikayesi
 
-As a **Trendus kullanıcısı (aktif trader)**,
+As a **Boursea kullanıcısı (aktif trader)**,
 I want uygulamayı uzun süre ekranda tutarken gözü yormayan, finansal verileri (kazanç/kayıp, RSI, skor) net biçimde ayırt edebildiğim, modern ve güvenilir hissettiren bir arayüz,
 So that verilere odaklanabileyim ve uygulamaya güvenerek gerçek para kararları verebileyim.
 
@@ -41,7 +41,7 @@ Kapsam gereği **tüm ekranları tek seferde yeniden tasarlamak yerine**, bu sto
 - `/screener` sayfası ve mobil `ScreenerScreen` yeni sisteme taşındı; ayrıca skorlama motoruyla hizalı varsayılan kriterler (`SUGGESTED_CRITERIA`) eklendi.
 - `/settings` sayfası `Card`/`PageHeader`/`ToggleChip` ile yeniden tasarlandı.
 - Mobil `SearchBox`, `StockOverviewScreen`, `SettingsScreen`, `AuthScreen` `useTheme()`/`makeStyles(colors)` desenine taşındı.
-- Manuel tema değiştirici: `apps/web/src/components/ui/theme-toggle.tsx` (+ `/settings` sayfasında kullanımı), `localStorage` (`trendus-theme` anahtarı) ile kalıcı, `layout.tsx`'teki `beforeInteractive` script'i hydration öncesi `[data-theme]` uygulayarak yanlış temanın kısa süreliğine görünmesini (FOUC) engelliyor.
+- Manuel tema değiştirici: `apps/web/src/components/ui/theme-toggle.tsx` (+ `/settings` sayfasında kullanımı), `localStorage` (`boursea-theme` anahtarı) ile kalıcı, `layout.tsx`'teki `beforeInteractive` script'i hydration öncesi `[data-theme]` uygulayarak yanlış temanın kısa süreliğine görünmesini (FOUC) engelliyor.
 
 **Bu PR'da tamamlanan (görev 11):**
 - Mobil `FundamentalsPanel`, `ScoreBadge`, `SignalList`, `HistoricalPerformanceChart`, `PriceChartWebView` — Tasarım Sistemi Spesifikasyonu §2'ye uygun şekilde `useTheme()`/`makeStyles(colors)` desenine taşındı; `PriceChartWebView`'ın gömülü `lightweight-charts` HTML'i artık mevcut temanın (`positive`/`negative`/`accent`/`warning`/`border*`/`text*`) renklerini kullanıyor.

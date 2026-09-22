@@ -12,7 +12,7 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" }) {
       >
         <TrendingUp size={icon} strokeWidth={2.5} />
       </div>
-      <span className={`${text} font-semibold tracking-tight text-text-primary`}>Trendus</span>
+      <span className={`${text} font-semibold tracking-tight text-text-primary`}>Boursea</span>
     </div>
   );
 }

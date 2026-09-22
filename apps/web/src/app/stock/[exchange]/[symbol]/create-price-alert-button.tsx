@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bell, Trash2 } from "lucide-react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { Button } from "@/components/ui/button";
 import { Field, Label, Select, Input } from "@/components/ui/input";
 import {

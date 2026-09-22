@@ -1,4 +1,4 @@
-// Trendus design tokens — single source of truth for web (Tailwind @theme) and mobile (RN StyleSheet).
+// Boursea design tokens — single source of truth for web (Tailwind @theme) and mobile (RN StyleSheet).
 // Dark is the primary/default surface for a trading app (long screen-time, chart-heavy); light is
 // a fully-supported secondary. Keep web's globals.css and mobile's theme.ts numerically in sync with this file.
 

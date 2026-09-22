@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { Button } from "@/components/ui/button";
 import { TextBlockSkeleton } from "@/components/ui/skeleton";
 import { fetchEntitlement, type Entitlement } from "@/lib/entitlements-client";

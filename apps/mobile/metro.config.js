@@ -6,7 +6,7 @@ const workspaceRoot = path.resolve(projectRoot, "../..");
 
 const config = getDefaultConfig(projectRoot);
 
-// Allow Metro to resolve workspace packages (e.g. @trendus/shared) that live
+// Allow Metro to resolve workspace packages (e.g. @boursea/shared) that live
 // outside apps/mobile in this pnpm monorepo.
 config.watchFolders = [workspaceRoot];
 config.resolver.nodeModulesPaths = [

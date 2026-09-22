@@ -1,6 +1,6 @@
 "use client";
 
-import { ALL_SECTORS, translateSector, type Locale, type Messages } from "@trendus/shared";
+import { ALL_SECTORS, translateSector, type Locale, type Messages } from "@boursea/shared";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import { setInterestSectors } from "./actions";
 

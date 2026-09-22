@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     google_api_key: str = ""
     gemini_model: str = "gemini-3.6-flash"
     resend_api_key: str = ""
-    notification_from_email: str = "Trendus <alerts@trendus.app>"
+    notification_from_email: str = "Boursea <alerts@boursea.app>"
     cors_origins: str = "http://localhost:3000,http://localhost:8081"
 
 

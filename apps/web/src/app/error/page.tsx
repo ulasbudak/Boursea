@@ -1,4 +1,4 @@
-import { messages } from "@trendus/shared";
+import { messages } from "@boursea/shared";
 import { getLocale } from "@/lib/i18n/locale";
 
 export default async function ErrorPage() {

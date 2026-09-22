@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import {
   fetchNotificationSettings,

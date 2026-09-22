@@ -2,7 +2,7 @@ import type { Messages } from "../types";
 
 export const tr: Messages = {
   common: {
-    appName: "Trendus",
+    appName: "Boursea",
     disclaimer: "Bu sayfadaki bilgiler yatırım tavsiyesi değildir.",
     dataUnavailable: "Veri şu an güncellenemiyor.",
     noData: "Veri yok",

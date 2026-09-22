@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ALL_SECTORS, translateSector, type Locale } from "@trendus/shared";
+import { ALL_SECTORS, translateSector, type Locale } from "@boursea/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { supabase } from "../lib/supabase";

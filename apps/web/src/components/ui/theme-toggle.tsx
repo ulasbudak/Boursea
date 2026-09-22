@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { ToggleChip } from "./toggle-chip";
 
 type ThemePreference = "system" | "light" | "dark";
 
-const STORAGE_KEY = "trendus-theme";
+const STORAGE_KEY = "boursea-theme";
 
 function applyTheme(preference: ThemePreference) {
   const root = document.documentElement;

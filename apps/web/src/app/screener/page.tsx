@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { messages } from "@trendus/shared";
+import { messages } from "@boursea/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { PageHeader } from "@/components/ui/page-header";

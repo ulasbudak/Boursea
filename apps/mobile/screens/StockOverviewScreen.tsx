@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatChange, formatMarketCap, formatPrice, signColor } from "@trendus/shared";
+import { formatChange, formatMarketCap, formatPrice, signColor } from "@boursea/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { AIAnalysisPanel } from "./AIAnalysisPanel";

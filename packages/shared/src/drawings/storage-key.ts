@@ -1,4 +1,4 @@
 /** Per-symbol storage key for client-persisted chart drawings (localStorage / AsyncStorage). */
 export function drawingsStorageKey(exchange: string, symbol: string): string {
-  return `trendus_drawings_${exchange.trim().toUpperCase()}_${symbol.trim().toUpperCase()}`;
+  return `boursea_drawings_${exchange.trim().toUpperCase()}_${symbol.trim().toUpperCase()}`;
 }

@@ -1,7 +1,7 @@
 [project]
-name = "trendus-api"
+name = "boursea-api"
 version = "0.1.0"
-description = "Trendus backend API"
+description = "Boursea backend API"
 license = { text = "Proprietary" }
 requires-python = ">=3.11"
 dependencies = [

@@ -15,7 +15,7 @@ translationOf: docs/product-brief-epic9-ai.md
 
 ## Context
 
-This document records the rationale from a discovery discussion about an expansion to be added once the current Phase 1 MVP backlog (Epic 1–8) is complete. Since Trendus is a project that **will be pitched to investors**, the decisions recorded here — especially the regulatory risk — must be resolved before any investor presentation.
+This document records the rationale from a discovery discussion about an expansion to be added once the current Phase 1 MVP backlog (Epic 1–8) is complete. Since Boursea is a project that **will be pitched to investors**, the decisions recorded here — especially the regulatory risk — must be resolved before any investor presentation.
 
 ## Priority Decision
 

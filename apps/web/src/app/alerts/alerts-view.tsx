@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/change-value";
 import { deleteAlert, fetchAlerts, type PriceAlert } from "@/lib/alerts-client";

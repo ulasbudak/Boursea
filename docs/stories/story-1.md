@@ -43,11 +43,11 @@ Bu, backlog'daki **ilk geliştirme adımıdır** — hiçbir story buna bağlı 
 - **And** `apps/api` Python tarafı olduğundan kendi bağımsız bağımlılık yönetimine (`pyproject.toml` + `uv` veya `poetry`) sahiptir; JS monorepo aracının parçası değildir ama aynı repo altında yaşar.
 
 **AC2 — Web uygulaması ayağa kalkar**
-- **Given** `apps/web` dizini, **When** `pnpm --filter web dev` çalıştırılırsa, **Then** Next.js geliştirme sunucusu başlar ve tarayıcıda "Trendus" yazan bir placeholder ana sayfa görüntülenir.
+- **Given** `apps/web` dizini, **When** `pnpm --filter web dev` çalıştırılırsa, **Then** Next.js geliştirme sunucusu başlar ve tarayıcıda "Boursea" yazan bir placeholder ana sayfa görüntülenir.
 - **And** `pnpm --filter web build` hatasız tamamlanır (production build).
 
 **AC3 — Mobil uygulama ayağa kalkar**
-- **Given** `apps/mobile` dizini, **When** `pnpm --filter mobile start` (Expo) çalıştırılırsa, **Then** Expo geliştirme sunucusu başlar ve bir simülatör/Expo Go üzerinde "Trendus" yazan bir placeholder ekran görüntülenir.
+- **Given** `apps/mobile` dizini, **When** `pnpm --filter mobile start` (Expo) çalıştırılırsa, **Then** Expo geliştirme sunucusu başlar ve bir simülatör/Expo Go üzerinde "Boursea" yazan bir placeholder ekran görüntülenir.
 - **And** TypeScript tip kontrolü (`tsc --noEmit`) hatasız geçer.
 
 **AC4 — Backend API ayağa kalkar ve health-check verir**

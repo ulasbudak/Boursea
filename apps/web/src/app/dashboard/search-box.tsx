@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
-import type { Messages } from "@trendus/shared";
+import type { Messages } from "@boursea/shared";
 import { IconInput } from "@/components/ui/input";
 
 type SymbolResult = {

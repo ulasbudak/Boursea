@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
-import { messages } from "@trendus/shared";
+import { messages } from "@boursea/shared";
 import { Logo } from "@/components/ui/logo";
 
 export default async function Home() {

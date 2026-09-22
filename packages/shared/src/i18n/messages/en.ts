@@ -2,7 +2,7 @@ import type { Messages } from "../types";
 
 export const en: Messages = {
   common: {
-    appName: "Trendus",
+    appName: "Boursea",
     disclaimer: "The information on this page is not investment advice.",
     dataUnavailable: "Data is currently unavailable.",
     noData: "No data",

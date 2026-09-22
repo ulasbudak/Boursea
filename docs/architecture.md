@@ -1,5 +1,5 @@
 ---
-title: "Trendus (Borsa Takip Uygulaması) - Sistem Mimarisi"
+title: "Boursea (Borsa Takip Uygulaması) - Sistem Mimarisi"
 status: draft
 created: 2026-09-15
 updated: 2026-09-15
@@ -7,7 +7,7 @@ author: Winston (BMAD System Architect)
 based_on: docs/PRD.md
 ---
 
-# Trendus — Sistem Mimarisi
+# Boursea — Sistem Mimarisi
 
 *İngilizce versiyon: [`docs/architecture.en.md`](architecture.en.md).*
 
@@ -278,7 +278,7 @@ flowchart TB
 > Bağlayıcı bir kural değildir — kod yazılmaya başlandığında gerçek yapı burayı geçersiz kılar.
 
 ```
-trendus/
+boursea/
 ├── apps/
 │   ├── web/          # Next.js
 │   ├── mobile/        # React Native / Expo

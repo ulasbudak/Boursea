@@ -1,5 +1,5 @@
 import { Lock, Mail } from "lucide-react";
-import { messages } from "@trendus/shared";
+import { messages } from "@boursea/shared";
 import { getLocale } from "@/lib/i18n/locale";
 import { Card } from "@/components/ui/card";
 import { Field, IconInput, Label } from "@/components/ui/input";
