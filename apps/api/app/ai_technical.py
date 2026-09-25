@@ -24,26 +24,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import cv2
 import httpx
-import matplotlib
 import numpy as np
-import pandas as pd
 from pydantic import BaseModel
-
-# Must be set before mplfinance (which imports pyplot) is used: the default backend
-# needs a display and cannot run off the main thread (we render inside
-# asyncio.to_thread) or on a headless server (Railway has no display either).
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt  # noqa: E402
-import mplfinance as mpf  # noqa: E402
 
 from app.ai_reports import AIReportUnavailableError, get_cached_report, save_report
 from app.market_data import CandlePoint
 
 if TYPE_CHECKING:
     import onnxruntime
+    import pandas as pd
+
+# pandas, matplotlib/mplfinance and cv2 are imported inside the functions that use them:
+# at module level they were over half of the API's import time (slower Render cold
+# starts) and ~90 MB of idle memory, for an endpoint most requests never touch.
 
 # ONNX export of ChartScanAI's weights pinned at commit 58f71206 (see
 # docs/product-brief-epic9-ai.md), hosted as a release asset because it exceeds GitHub's
@@ -111,7 +105,9 @@ def _load_model() -> "onnxruntime.InferenceSession":
     return _model_cache
 
 
-def _candles_to_dataframe(candles: list[CandlePoint]) -> pd.DataFrame:
+def _candles_to_dataframe(candles: list[CandlePoint]) -> "pd.DataFrame":
+    import pandas as pd
+
     recent = candles[-MAX_CANDLES:]
     df = pd.DataFrame(
         {
@@ -129,6 +125,14 @@ def _candles_to_dataframe(candles: list[CandlePoint]) -> pd.DataFrame:
 def _render_chart_image(candles: list[CandlePoint]):
     from io import BytesIO
 
+    import matplotlib
+
+    # Must be set before mplfinance (which imports pyplot) is used: the default backend
+    # needs a display and cannot run off the main thread (we render inside
+    # asyncio.to_thread) or on a headless server.
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import mplfinance as mpf
     from PIL import Image
 
     df = _candles_to_dataframe(candles)
@@ -190,6 +194,8 @@ def _summarize_detections(detections: list[Detection]) -> str:
 def _letterbox(image) -> np.ndarray:
     """ultralytics' rect letterbox: scale the long side to MODEL_INPUT_SIZE, then pad each
     side only up to the next stride multiple (an 1800x650 chart becomes 640x256)."""
+    import cv2
+
     pixels = np.asarray(image.convert("RGB"))
     height, width = pixels.shape[:2]
     ratio = min(MODEL_INPUT_SIZE / height, MODEL_INPUT_SIZE / width)
