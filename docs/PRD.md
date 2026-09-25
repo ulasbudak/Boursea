@@ -2,7 +2,7 @@
 title: "Boursea (Borsa Takip Uygulaması) - Ürün Gereksinim Dokümanı"
 status: draft
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-26
 author: Mary (BMAD Business Analyst) — Serdar Ulaş Budak ile birlikte
 ---
 
@@ -31,6 +31,10 @@ Uygulama her iki segmente de aynı veri üzerinde farklı derinlik seviyeleriyle
 
 - **Faz 1 (MVP):** Yalnızca hisse senedi. ABD borsaları (NYSE, NASDAQ) ve Türkiye (BIST) — tüm işlem gören hisseler + başlıca endeksler (S&P 500, Nasdaq 100, Dow Jones, BIST 100, BIST 30 vb.) ve ETF'ler birinci sınıf varlık olarak desteklenir.
 - **Faz 2+ (kapsam dışı, mimari buna kapalı olmayacak şekilde tasarlanmalı):** Kripto para ve döviz (forex) varlık sınıfları.
+
+> **2026-09-26 güncellemeleri:**
+> - **BIST geçici olarak devre dışı.** Canlı bir BIST fiyat kaynağı bulunmadığından (bkz. FR-041) BIST sembolleri yalnızca boş sayfalara çıkıyordu. BIST, arama ve taramadan çıkarıldı ve uygulamada "şu an devre dışı" olarak belirtiliyor; tek bir bayrakla (`BIST_ENABLED`, API + `@boursea/shared`) yeniden açılabilir. Şimdilik yalnızca ABD borsaları destekleniyor.
+> - **Kripto para, Epic 11 olarak backlog'a alındı** (bkz. §5.13, FR-120 – FR-126). Döviz (forex) hâlâ Faz 2+.
 
 ## 4. Kullanıcı Senaryoları (User Journeys)
 
@@ -129,6 +133,18 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 - **FR-111** Sistem, simülasyon içinde bir sembol için alım/satım emri verildiğinde, emri **kullanıcının girdiği bir fiyattan değil, o anki gerçek piyasa fiyatından** yürütmelidir. Alım emri, emrin maliyeti simülasyonun nakit bakiyesini aşıyorsa reddedilmelidir; satım emri, elde tutulan miktarı aşıyorsa reddedilmelidir. Yalnızca ABD hisseleri desteklenir (BIST için canlı fiyat kaynağı yok, bkz. FR-041).
 - **FR-112** Sistem, her simülasyon için günlük toplam değer (nakit + pozisyon değeri) ve kâr/zarar geçmişini göstermelidir. Zamanlanmış bir arka plan işi (cron) kurulmadığından (bkz. mimari kısıt, Epic 9/Story 9.3'te de aynı yaklaşım), günün kaydı kullanıcı simülasyonu her açtığında veya her emirden sonra yeniden hesaplanır; geçmiş günlerin kayıtları bir daha değiştirilmez.
 
+### 5.13 Kripto Para Piyasası
+
+> **Analist notu (2026-09-26):** Kullanıcı isteği üzerine Epic 11 olarak backlog'a eklendi. Kapsam yalnızca veri, analiz ve **sanal** işlemdir — gerçek kripto alım-satımı, cüzdan veya borsa hesabı bağlantısı yoktur (bkz. Bölüm 10). Kripto, mevcut `symbol + exchange` modeline yeni bir borsa kodu (`CRYPTO`) olarak eklenir.
+
+- **FR-120** Sistem, kripto varlıklar için arama, anlık fiyat ve mum (OHLC) verisini hisse verisiyle aynı arayüzden sağlamalıdır. Veri kaynağı, hisse verisinin API kotasını tüketip hisse akışlarını bozmayacak şekilde seçilmeli ve önbelleğe alınmalıdır.
+- **FR-121** Sistem, bir kripto varlığın detay sayfasında fiyat, 24 saatlik değişim, piyasa değeri, dolaşımdaki arz ve 24 saatlik hacmi göstermelidir; hisseye özgü ve kriptoda anlamı olmayan bölümler (temel analiz, sektör, F/K tabanlı skor) gizlenmeli veya açıkça "geçerli değil" olarak belirtilmelidir.
+- **FR-122** Sistem, mevcut teknik göstergeleri ve sinyal kurallarını (FR-020 – FR-024) kripto mum serilerine de uygulamalı; sinyal alarmları 7/24 değerlendirilmelidir.
+- **FR-123** Sistem, kripto varlıkların izleme listesine, fiyat alarmlarına ve portföye eklenmesine izin vermeli; portföyde kesirli miktarları desteklemelidir.
+- **FR-124** Sistem, simülasyonlarda (FR-110 – FR-112) kripto alım-satımına izin vermeli; emirler o anki gerçek kripto fiyatından yürütülmeli ve kesirli miktar desteklenmelidir.
+- **FR-125** Sistem, kripto varlıkları piyasa değeri, hacim, fiyat değişimi ve RSI gibi kriptoya uygun kriterlerle taramaya ve karşılaştırmaya izin vermelidir.
+- **FR-126** AI raporlarının (FR-100, FR-101) kriptoya uygulanıp uygulanmayacağı ayrı bir kararla belirlenmeli; hisse varsayımlarıyla üretilmiş yanıltıcı bir kripto raporu sunulmamalıdır.
+
 ## 6. Fonksiyonel Olmayan Gereksinimler (NFR)
 
 | Kategori | Gereksinim |
@@ -158,8 +174,9 @@ Gereksinimler özellik alanlarına göre gruplanmış ve global olarak numaralan
 - **Faz 2 (öncelik sırasına göre):**
   1. **FR-100, FR-101** (AI destekli hisse yorumu + deterministik grafik örüntü tanıma) — kullanıcı tarafından MVP sonrası **ilk öncelik** olarak belirlendi (bkz. `docs/product-brief-epic9-ai.md`), Epic 9 olarak backlog'a eklendi.
   2. **FR-110, FR-111, FR-112** (Alım-satım simülasyonu/paper trading) — kullanıcı isteği (2026-09-19), Epic 9 ile eş zamanlı, Epic 10 olarak backlog'a eklendi.
-  3. **FR-102** (ML tabanlı örüntü tanıma — FR-025'in genişletilmiş hali), FR-012 (özelleştirilebilir skor ağırlıklandırma), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS) — sıralama arasında henüz kesin öncelik belirlenmedi.
-- **Kapsam dışı (şimdilik):** Kripto/döviz varlık sınıfları, sosyal/topluluk özellikleri, gerçek alım-satım emri iletimi (brokerage entegrasyonu).
+  3. **FR-120 – FR-126** (Kripto para piyasası — veri, analiz ve sanal işlem) — kullanıcı isteği (2026-09-26), Epic 11 olarak backlog'a eklendi.
+  4. **FR-102** (ML tabanlı örüntü tanıma — FR-025'in genişletilmiş hali), FR-012 (özelleştirilebilir skor ağırlıklandırma), FR-033 (tarama bildirimi), FR-053 (portföy risk analizi), FR-063 (gelişmiş kişiselleştirme), FR-071 (SMS) — sıralama arasında henüz kesin öncelik belirlenmedi.
+- **Kapsam dışı (şimdilik):** Döviz varlık sınıfı (kripto 2026-09-26'da Epic 11 olarak kapsama alındı — yalnızca veri/analiz/sanal işlem), sosyal/topluluk özellikleri, gerçek alım-satım emri iletimi (brokerage/kripto borsası entegrasyonu).
 
 ## 9. Açık Sorular ve Varsayımlar
 

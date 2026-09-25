@@ -2,7 +2,7 @@
 title: "Boursea (Borsa Takip Uygulaması) - Epic ve Story Backlog"
 status: draft
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-26
 author: Bob (BMAD Scrum Master)
 inputDocuments: ["docs/PRD.md", "docs/architecture.md"]
 ---
@@ -57,6 +57,9 @@ NFR-1 Performans (arama <1sn, gerçek-zamanlı veri birkaç sn içinde), NFR-2 G
 | FR-050, FR-051, FR-052 | Epic 6 |
 | FR-061, FR-062 | Epic 7 |
 | FR-080, FR-081, FR-082, FR-083 | Epic 8 |
+| FR-100, FR-101 | Epic 9 |
+| FR-110, FR-111, FR-112 | Epic 10 |
+| FR-120 – FR-126 | Epic 11 |
 
 ## 4. Epic Listesi
 
@@ -164,6 +167,10 @@ So that hisse hakkında hızlı bir ilk izlenim edinebileyim.
 - **Given** bir hisse detay sayfası, **When** sayfa yüklenirse, **Then** güncel fiyat, günlük değişim (% ve mutlak), piyasa değeri, sektör ve endüstri bilgisi gösterilir.
 - **Given** piyasa veri sağlayıcısı geçici olarak erişilemez, **When** veri çekilemezse, **Then** sessiz hata yerine "veri şu an güncellenemiyor" uyarısı gösterilir (NFR-2).
 - **And** sayfanın herhangi bir yerinde "yatırım tavsiyesi değildir" ibaresi sabit olarak yer alır (NFR-3, NFR-7).
+
+### Story 1.6: BIST'in Geçici Olarak Devre Dışı Bırakılması
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.6.md`**. Kullanıcı isteği (2026-09-26): canlı BIST fiyat kaynağı olmadığından BIST arama/taramadan çıkarıldı, seçim listelerinden gizlendi ve uygulamada "şu an devre dışı" olarak belirtiliyor. Tek bayrakla (`BIST_ENABLED`, API + `@boursea/shared`) geri açılabilir. Aynı çalışmada Finnhub aramasının yabancı kotasyonları (`AAPL.TO`, `GARAN.E.IS`…) "US" diye döndürmesi düzeltildi.
 
 ---
 
@@ -626,9 +633,134 @@ So that tam sembol kodunu ezbere bilmeden doğru sembolü ve borsayı seçebiley
 - **Given** öneri listesi açık, **When** kullanıcı bir sonuca tıklarsa, **Then** sembol ve borsa alanları birlikte doldurulur.
 - **And** yarışan aramalar (`AbortController`) iptal edilir, eski bir sonuç güncel yazıyı ezmez.
 
+### Story 10.3: Hisse Sayfasından Simülasyonda Alım
+
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-10.3.md`**. Kullanıcı isteği (2026-09-26). Hisse detay sayfasının başlığına "Simülasyonda al" butonu eklendi (web); simülasyon seçimi, kullanılabilir nakit, adet ve anlık fiyattan tahmini tutar gösterilir. Hiç simülasyonu olmayan kullanıcı sayfadan ayrılmadan tek tıkla simülasyon oluşturabilir. Backend değişikliği yok — Story 10.1'in `GET /simulations` ve `POST /simulations/{id}/orders` uç noktaları kullanıldı.
+
+As a **kullanıcı**,
+I want incelediğim bir hisseyi, sayfadan ayrılmadan simülasyonuma almak,
+So that bir fikri test etmek için simülasyon ekranına gidip sembolü yeniden aramak zorunda kalmayayım.
+
+**Acceptance Criteria:**
+
+- **Given** bir ABD hissesinin detay sayfası, **When** kullanıcı "Simülasyonda al"a tıklarsa, **Then** simülasyonlarından birini seçip adet girerek alım emri verebilir; emir Story 10.1'deki gibi o anki gerçek fiyattan yürütülür.
+- **Given** kullanıcının hiç simülasyonu yok, **When** paneli açarsa, **Then** tek tıkla bir simülasyon oluşturup aynı panelde alıma devam edebilir.
+- **Given** emir reddedilirse (yetersiz bakiye, fiyat alınamadı vb.), **When** sonuç dönerse, **Then** API'nin açıklayıcı mesajı panelde gösterilir; başarılı alımdan sonra nakit bakiyesi güncellenir ve simülasyona giden bir bağlantı sunulur.
+- **And** buton yalnızca ABD hisselerinde görünür (simülatör yalnızca canlı ABD fiyatlarıyla çalışır).
+
 ---
 
-## 15. Sonraki Adımlar
+## 15. Epic 11: Kripto Para Piyasası
+
+> Kullanıcı isteği (2026-09-26). PRD §3'te "Faz 2+ — mimari buna kapalı olmayacak şekilde tasarlanmalı" olarak ayrılan kripto varlık sınıfının ilk adımı. Kapsam **yalnızca veri, analiz ve sanal işlem**: gerçek kripto alım-satımı, cüzdan veya borsa hesabı bağlantısı **yok** (PRD §10 — aracı kurum/borsa entegrasyonu kapsam dışı). Kripto, mevcut hisse özelliklerine yeni bir borsa kodu (`CRYPTO`) olarak eklenir; böylece izleme listesi, alarmlar, portföy ve simülasyon mevcut `symbol + exchange` modelini değiştirmeden genişletilir.
+>
+> **Hisse senedinden farkları (her story'de dikkate alınmalı):** 7/24 işlem (seans/kapanış yok — "günlük" mum UTC gün sınırıyla kapanır); kesirli miktar (0.0025 BTC); temel analiz (F/K, ROE, bilanço) kavramları yok — yerine piyasa değeri, dolaşımdaki arz, 24s hacim; fiyatlar genellikle USD/USDT paritesi olarak (`BTC/USD`) ifade edilir.
+>
+> **Veri kaynağı — 2026-09-26'da mevcut anahtarlarla canlı denendi:**
+>
+> | Kaynak | Anlık fiyat | Mum (grafik/indikatör) | Piyasa değeri / arz | Not |
+> |---|---|---|---|---|
+> | Twelve Data (mevcut) | ✓ (`quote?symbol=ETH/USD`) | ✓ (`time_series?symbol=BTC/USD`) | ✗ | Hisselerle **aynı** dakikada 8 istek kotasını paylaşır — en büyük kısıt |
+> | Finnhub (mevcut) | ✓ (`quote?symbol=BINANCE:BTCUSDT`) | ✗ ücretsiz planda kapalı | ✗ | Anlık fiyat için yedek olabilir |
+> | CoinGecko (anahtarsız) | ✓ | ✓ (OHLC) | ✓ (sıralama, arz, FDV) | Anahtarsız erişim düşük hız sınırlı; ücretsiz "demo" anahtarı önerilir |
+>
+> Kesin seçim Story 11.1'in ilk görevi olarak verilir; varsayılan öneri: mumlar ve anlık fiyat için Twelve Data (mevcut adaptör deseni, `get_us_candles` ile aynı), piyasa değeri/arz/sıralama için CoinGecko — agresif önbellekle.
+
+### Story 11.1: Kripto Piyasa Verisi Adaptörü
+
+As a **geliştirici**,
+I want kripto varlıklar için arama, anlık fiyat ve mum verisini mevcut piyasa verisi arayüzüyle aynı şekilde sunan bir backend adaptörü,
+So that sonraki story'ler kriptoyu yeni bir borsa kodu olarak, hisse akışlarını kopyalamadan kullanabilsin.
+
+**Acceptance Criteria:**
+
+- **Given** tablodaki kaynaklar, **When** story başlarsa, **Then** ilk görev olarak veri kaynağı kesinleştirilir ve gerekçesi (kota, maliyet, lisans/ToS) story dokümanına yazılır (FR-120).
+- **Given** desteklenen bir kripto listesi (başlangıçta piyasa değerine göre ilk ~100 varlık, statik JSON — `bist_symbols.json` / `us_universe.json` deseni), **When** `GET /symbols/search` çağrılırsa, **Then** sonuçlar `exchange: "CRYPTO"` etiketiyle (örn. `BTC` — "Bitcoin") döner.
+- **Given** bir kripto sembolü, **When** `/symbols/overview` ve `/symbols/candles` çağrılırsa, **Then** mevcut hisse yanıt şekliyle aynı yapıda fiyat, 24 saatlik değişim ve mumlar döner; ek olarak piyasa değeri ve 24s hacim.
+- **And** kripto çağrıları hisse çağrılarının Twelve Data kotasını tüketip hisse sayfalarını yavaşlatmamalı: önbellek süreleri ve istek bütçesi tanımlanır, kota aşımında açıklayıcı bir uyarı döner (sessiz hata yok — NFR-2).
+
+### Story 11.2: Kripto Arama ve Detay Sayfası
+
+As a **kullanıcı**,
+I want bir kripto parayı arayıp detay sayfasında fiyatını, grafiğini ve temel piyasa bilgilerini görmek,
+So that hisseleri takip ettiğim uygulamada kripto varlıklarımı da takip edebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** arama kutusu, **When** kullanıcı "BTC" veya "Bitcoin" yazarsa, **Then** sonuçlarda `CRYPTO` rozetli varlık görünür ve tıklanınca `/stock/CRYPTO/BTC` detay sayfası açılır (FR-121).
+- **Given** bir kripto detay sayfası, **When** açılırsa, **Then** fiyat, 24s değişim, piyasa değeri, dolaşımdaki arz ve 24s hacim gösterilir; hisseye özgü olan ve kriptoda anlamı olmayan bölümler (Temel Analiz sekmesi, sektör, F/K skoru) gizlenir veya "kripto için geçerli değil" olarak açıkça belirtilir.
+- **Given** fiyat grafiği, **When** zaman dilimi değiştirilirse, **Then** hisselerdeki gibi mum grafiği çizilir; 7/24 işlem nedeniyle seans boşluğu yoktur.
+- **And** sayfada kripto varlıkların yüksek oynaklık taşıdığına dair bir not ve mevcut "yatırım tavsiyesi değildir" ibaresi yer alır; web ve mobilde aynı davranış (NFR-6).
+
+### Story 11.3: Kripto Teknik Göstergeler ve Sinyaller
+
+As a **aktif trader**,
+I want mevcut teknik gösterge ve sinyal motorunu kripto grafiklerinde de kullanmak,
+So that kripto için ayrı bir araca ihtiyaç duymadan RSI, MACD gibi göstergeleri ve otomatik sinyalleri görebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bir kripto mum serisi, **When** teknik sekmesi açılırsa, **Then** Epic 3'ün göstergeleri ve sinyal kuralları (`app/technical.py`) değişmeden uygulanır (FR-122).
+- **Given** bir kripto için sinyal alarmı, **When** koşul oluşursa, **Then** Story 5.3'teki gibi tetiklenir; 7/24 piyasa nedeniyle hafta sonu da değerlendirilir.
+- **And** hisselere özgü deterministik özet skor (Story 3.6 — F/K, ROE gibi temel metriklere dayanır) kriptoya uygulanmaz; kripto için skor gösterilmez ya da ayrı bir story'de yeniden tasarlanır.
+
+### Story 11.4: İzleme Listesi, Fiyat Alarmı ve Portföyde Kripto
+
+As a **kullanıcı**,
+I want kripto varlıkları izleme listeme ve portföyüme ekleyip onlar için fiyat alarmı kurmak,
+So that hisse ve kripto varlıklarımı tek yerden takip edebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bir kripto detay sayfası, **When** kullanıcı izleme listesine ekler veya fiyat alarmı kurarsa, **Then** Epic 5 akışları `exchange: "CRYPTO"` ile çalışır (FR-123).
+- **Given** portföye kripto pozisyonu eklenirken, **When** miktar kesirli girilirse (örn. 0.0025), **Then** kabul edilir ve değer/kâr-zarar hesaplamaları kesirli miktarla doğru yapılır.
+- **And** para birimi ve hassasiyet: kripto fiyatları USD olarak ve düşük fiyatlı varlıklar için yeterli ondalıkla (örn. 0,000012 USD) gösterilir.
+
+### Story 11.5: Simülasyonda Kripto Alım-Satım
+
+As a **kullanıcı**,
+I want simülasyonlarımda kripto varlık alıp satmak,
+So that kripto stratejilerimi de gerçek para riski olmadan deneyebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** bir simülasyon, **When** bir kripto için alım/satım emri verilirse, **Then** emir o anki gerçek kripto fiyatından yürütülür; kesirli miktar desteklenir (FR-124).
+- **Given** kripto detay sayfası, **When** kullanıcı "Simülasyonda al"a tıklarsa, **Then** Story 10.3'teki panel kripto için de çalışır.
+- **And** simülasyonun günlük kâr/zarar geçmişi (FR-112) kripto pozisyonlarını da içerir; 7/24 piyasa nedeniyle günlük kayıt UTC gün sınırına göre alınır.
+
+### Story 11.6: Kripto Tarama ve Karşılaştırma
+
+As a **kullanıcı**,
+I want kripto varlıkları piyasa değeri, hacim ve fiyat değişimine göre tarayıp karşılaştırmak,
+So that hangi varlıkların öne çıktığını hızlıca görebileyim.
+
+**Acceptance Criteria:**
+
+- **Given** tarama (screener) ekranı, **When** borsa olarak "Kripto" seçilirse, **Then** hisseye özgü kriterler (F/K, ROE, borç/özsermaye, sektör) gizlenir; piyasa değeri, 24s hacim, 24s/7g değişim ve RSI kriterleri sunulur (FR-125).
+- **Given** karşılaştırma ekranı, **When** kripto varlıklar seçilirse, **Then** kriptoya uygun metriklerle yan yana gösterilir.
+- **And** Story 4.1'deki iki aşamalı tasarım korunur: önce ücretsiz statik evrende ön filtre, sonra yalnızca daralan küme için canlı veri — API kotası korunur.
+
+### Story 11.7: Kripto için AI Raporları (Kapsam Kararı)
+
+As a **ürün sahibi**,
+I want Epic 9'un AI raporlarının kriptoya nasıl uyarlanacağına (veya uyarlanmayacağına) karar vermek,
+So that yanlış bağlamda (hisse varsayımlarıyla) üretilmiş yanıltıcı bir kripto raporu sunmayalım.
+
+**Acceptance Criteria:**
+
+- **Given** Story 9.1'in temel analiz raporu hisse temel verisine (RAG) dayanır, **When** kripto için değerlendirilirse, **Then** ya kriptoya özgü girdilerle (piyasa değeri, arz, hacim) yeni bir prompt tasarlanır ya da rapor kripto için "desteklenmiyor" olarak açıkça gösterilir (FR-126).
+- **Given** Story 9.2'nin CV modeli (ChartScanAI) hisse grafikleriyle eğitilmiştir, **When** kripto grafiğinde kullanılırsa, **Then** sonuç ancak "deneysel — hisse grafikleriyle eğitilmiş bir modelin okuması" etiketiyle sunulur ya da kripto için kapatılır.
+- **And** karar ve gerekçesi story dokümanına yazılır; mevcut "yatırım tavsiyesi değildir" çerçevesi (PRD §9) korunur.
+
+### Epic 11 — Açık Sorular
+
+1. **Veri kaynağı ve maliyet:** Twelve Data'nın dakikada 8 isteklik ücretsiz kotası hisse ve kripto arasında paylaşılacak. Kullanım arttıkça ücretli plana geçiş veya kripto için ayrı bir kaynak (CoinGecko) gerekebilir — Story 11.1'de netleşir.
+2. **Regülasyon:** Kripto varlık hizmet sağlayıcılarına yönelik Türkiye düzenlemeleri, bu uygulamanın yalnızca veri/analiz ve sanal işlem sunması nedeniyle doğrudan uygulanmayabilir; ancak pazarlama ve uygulama içi metinler yatırım tavsiyesi veya kripto alım-satım hizmeti izlenimi vermemelidir. Yayından önce hukuki görüş alınması önerilir.
+3. **Kapsam:** Başlangıç evreni (ilk ~100 varlık mı, yalnızca USD pariteleri mi, stablecoin'ler dahil mi) ve freemium sınırlarına kriptonun nasıl dahil edileceği (örn. izleme listesi sınırı hisse+kripto ortak mı) kullanıcıyla netleştirilmeli.
+
+---
+
+## 16. Sonraki Adımlar
 
 1. Bu backlog kullanıcı tarafından gözden geçirilip epik sıralaması/story kapsamı onaylanmalı.
 2. `docs/stories/story-1.md` (Epic 1, Story 1.1) ilk geliştirme adımı olarak hazır — geliştirme buradan başlayabilir.
