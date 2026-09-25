@@ -67,6 +67,7 @@ def patch_settings(monkeypatch):
 async def test_search_us_symbols_parses_finnhub_response():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.params["q"] == "AAPL"
+        assert request.url.params["exchange"] == "US"
         assert request.url.params["token"] == "test-key"
         return httpx.Response(
             200,
@@ -402,3 +403,35 @@ def test_candles_endpoint_rejects_unknown_timeframe():
     )
 
     assert response.status_code == 400
+
+
+def test_search_skips_bist_when_disabled(monkeypatch):
+    async def fake_search_us_symbols(query: str) -> list[SymbolResult]:
+        return [SymbolResult(symbol="GARAN", name="Some US match", exchange="US")]
+
+    monkeypatch.setattr(market_data, "BIST_ENABLED", False)
+    monkeypatch.setattr(main, "search_us_symbols", fake_search_us_symbols)
+
+    body = client.get("/symbols/search", params={"q": "GARAN", "exchange": "ALL"}).json()
+
+    assert [r["exchange"] for r in body["results"]] == ["US"]
+    assert body["warnings"] == []
+
+
+def test_search_explains_bist_is_disabled_when_asked_for_bist(monkeypatch):
+    monkeypatch.setattr(market_data, "BIST_ENABLED", False)
+
+    body = client.get("/symbols/search", params={"q": "GARAN", "exchange": "BIST"}).json()
+
+    assert body["results"] == []
+    assert body["warnings"] == [market_data.BIST_DISABLED_MESSAGE]
+
+
+def test_bist_overview_warns_that_bist_is_disabled(monkeypatch):
+    monkeypatch.setattr(market_data, "BIST_ENABLED", False)
+    monkeypatch.setattr(market_data, "load_bist_symbols", lambda: BIST_FIXTURE)
+
+    body = client.get("/symbols/overview", params={"symbol": "GARAN", "exchange": "BIST"}).json()
+
+    assert body["overview"]["name"] == "Garanti BBVA"
+    assert body["warnings"] == [market_data.BIST_DISABLED_MESSAGE]

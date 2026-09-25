@@ -13,6 +13,16 @@ from pydantic import BaseModel
 from app.config import get_settings
 
 BIST_SYMBOLS_PATH = Path(__file__).parent / "data" / "bist_symbols.json"
+
+# Product decision (2026-09-26): Borsa İstanbul is switched off until a live BIST price
+# source exists — without prices, charts, signals, screening, simulation and AI reports,
+# BIST symbols only led users to empty pages. While False, search and the screener skip
+# BIST, and BIST endpoints answer with BIST_DISABLED_MESSAGE. The frontends mirror this
+# with BIST_ENABLED in @boursea/shared; flip both to re-enable.
+BIST_ENABLED = False
+BIST_DISABLED_MESSAGE = (
+    "Borsa İstanbul (BIST) şu an devre dışı; şimdilik yalnızca ABD borsaları destekleniyor."
+)
 FINNHUB_SEARCH_URL = "https://finnhub.io/api/v1/search"
 FINNHUB_QUOTE_URL = "https://finnhub.io/api/v1/quote"
 FINNHUB_PROFILE_URL = "https://finnhub.io/api/v1/stock/profile2"
@@ -154,7 +164,9 @@ async def search_us_symbols(
     try:
         response = await http_client.get(
             FINNHUB_SEARCH_URL,
-            params={"q": query, "token": settings.finnhub_api_key},
+            # Without exchange=US, Finnhub also returns foreign listings (AAPL.TO, MSFT.L,
+            # GARAN.E.IS…) that we'd label "US" but have no data for.
+            params={"q": query, "exchange": "US", "token": settings.finnhub_api_key},
         )
         response.raise_for_status()
         payload = response.json()

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BIST_ENABLED } from "@boursea/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 
@@ -96,6 +97,7 @@ export function SearchBox({
         onChangeText={handleChange}
         autoCapitalize="characters"
       />
+      {!BIST_ENABLED && <Text style={styles.note}>{messages.search.bistDisabledNote}</Text>}
       {loading && <ActivityIndicator color={colors.accent} />}
       {error && <Text style={styles.error}>{error}</Text>}
       {warnings.map((warning) => (
@@ -135,6 +137,10 @@ function makeStyles(colors: ThemeColors) {
       paddingHorizontal: spacing[3],
       paddingVertical: spacing[3],
       color: colors.textPrimary,
+    },
+    note: {
+      fontSize: 12,
+      color: colors.textTertiary,
     },
     error: {
       color: colors.negative,

@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatCompactNumber, formatRatio } from "@boursea/shared";
+import { BIST_ENABLED, formatCompactNumber, formatRatio } from "@boursea/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import {
@@ -201,8 +201,9 @@ export function ScreenerScreen({
         <View style={styles.optionRow}>
           {renderExchangeOption("ALL", t.exchangeAll)}
           {renderExchangeOption("US", t.exchangeUs)}
-          {renderExchangeOption("BIST", t.exchangeBist)}
+          {BIST_ENABLED && renderExchangeOption("BIST", t.exchangeBist)}
         </View>
+        {!BIST_ENABLED && <Text style={styles.note}>{t.bistDisabledNote}</Text>}
 
         <Text style={styles.label}>{t.marketCapMinLabel}</Text>
         <TextInput

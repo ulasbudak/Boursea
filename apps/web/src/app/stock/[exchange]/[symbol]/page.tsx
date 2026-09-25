@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { formatChange, formatMarketCap, formatPrice, messages } from "@boursea/shared";
+import { BIST_ENABLED, formatChange, formatMarketCap, formatPrice, messages } from "@boursea/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,6 +10,7 @@ import { ScoreBadge } from "./score-badge";
 import { AddToWatchlistButton } from "./add-to-watchlist-button";
 import { CreatePriceAlertButton } from "./create-price-alert-button";
 import { CreateSignalAlertButton } from "./create-signal-alert-button";
+import { SimulateBuyButton } from "./simulate-buy-button";
 import { StockNoteCard } from "./stock-note-card";
 import { DataDelayDisclosure } from "./data-delay-disclosure";
 
@@ -45,6 +46,9 @@ export default async function StockDetailPage({
   }
 
   const locale = await getLocale();
+  // A disabled exchange (BIST) has no live data for alerts or the simulator to act on, so
+  // its page shows only the "disabled" warning and no actions.
+  const exchangeDisabled = exchange.toUpperCase() === "BIST" && !BIST_ENABLED;
   const t = messages[locale];
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -134,26 +138,40 @@ export default async function StockDetailPage({
           </span>
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <AddToWatchlistButton
-              symbol={symbol.toUpperCase()}
-              exchange={exchange.toUpperCase()}
-              name={overview?.name ?? null}
-              messages={t.watchlist}
-            />
-            <CreatePriceAlertButton
-              symbol={symbol.toUpperCase()}
-              exchange={exchange.toUpperCase()}
-              name={overview?.name ?? null}
-              messages={t.alerts}
-            />
-            <CreateSignalAlertButton
-              symbol={symbol.toUpperCase()}
-              exchange={exchange.toUpperCase()}
-              name={overview?.name ?? null}
-              messages={t.signalAlerts}
-            />
-          </div>
+          exchangeDisabled ? undefined : (
+            <div className="flex flex-wrap items-center gap-2">
+              <AddToWatchlistButton
+                symbol={symbol.toUpperCase()}
+                exchange={exchange.toUpperCase()}
+                name={overview?.name ?? null}
+                messages={t.watchlist}
+              />
+              <CreatePriceAlertButton
+                symbol={symbol.toUpperCase()}
+                exchange={exchange.toUpperCase()}
+                name={overview?.name ?? null}
+                messages={t.alerts}
+              />
+              <CreateSignalAlertButton
+                symbol={symbol.toUpperCase()}
+                exchange={exchange.toUpperCase()}
+                name={overview?.name ?? null}
+                messages={t.signalAlerts}
+              />
+              {/* The simulator only executes against live US prices (see app/simulations.py). */}
+              {exchange.toUpperCase() === "US" && (
+                <SimulateBuyButton
+                  symbol={symbol.toUpperCase()}
+                  exchange="US"
+                  name={overview?.name ?? null}
+                  price={overview?.price ?? null}
+                  currency={overview?.currency ?? null}
+                  locale={locale}
+                  messages={t.simulation}
+                />
+              )}
+            </div>
+          )
         }
       />
 

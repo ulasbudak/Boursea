@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { RotateCcw, Search } from "lucide-react";
-import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@boursea/shared";
+import { BIST_ENABLED, formatCompactNumber, formatRatio, type Locale, type Messages } from "@boursea/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Label, Select } from "@/components/ui/input";
@@ -194,8 +194,11 @@ export function ScreenerForm({ messages, locale }: { messages: Messages["screene
               >
                 <option value="ALL">{messages.exchangeAll}</option>
                 <option value="US">{messages.exchangeUs}</option>
-                <option value="BIST">{messages.exchangeBist}</option>
+                {BIST_ENABLED && <option value="BIST">{messages.exchangeBist}</option>}
               </Select>
+              {!BIST_ENABLED && (
+                <p className="mt-1.5 text-xs text-text-tertiary">{messages.bistDisabledNote}</p>
+              )}
             </Field>
             <Field>
               <Label htmlFor="sector">{messages.sectorLabel}</Label>

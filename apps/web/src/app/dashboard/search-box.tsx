@@ -1,5 +1,6 @@
 "use client";
 
+import { BIST_ENABLED } from "@boursea/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
@@ -84,6 +85,9 @@ export function SearchBox({ messages }: { messages: Messages["search"] }) {
         onChange={(e) => handleChange(e.target.value)}
         aria-label={messages.label}
       />
+      {!BIST_ENABLED && (
+        <p className="mt-2 text-xs text-text-tertiary">{messages.bistDisabledNote}</p>
+      )}
       {loading && <p className="mt-2 text-xs text-text-tertiary">{messages.searching}</p>}
       {error && (
         <p role="alert" className="mt-2 text-xs text-negative">

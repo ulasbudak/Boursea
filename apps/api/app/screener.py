@@ -7,6 +7,7 @@ from pathlib import Path
 import httpx
 from pydantic import BaseModel
 
+from app import market_data
 from app.config import get_settings
 from app.fundamentals import FundamentalsSnapshot, FundamentalsUnavailableError, get_us_fundamentals
 from app.market_data import FINNHUB_TIMEOUT_SECONDS, MarketDataUnavailableError, get_us_candles
@@ -226,7 +227,10 @@ async def run_screener(criteria: ScreenerCriteria) -> tuple[list[ScreenerResult]
     results: list[ScreenerResult] = []
     warnings: list[str] = []
 
-    if exchange_filter in ("ALL", "BIST"):
+    if not market_data.BIST_ENABLED:
+        if exchange_filter == "BIST":
+            return [], [market_data.BIST_DISABLED_MESSAGE]
+    elif exchange_filter in ("ALL", "BIST"):
         bist_results, bist_warnings = _run_bist_screener()
         results.extend(bist_results)
         warnings.extend(bist_warnings)

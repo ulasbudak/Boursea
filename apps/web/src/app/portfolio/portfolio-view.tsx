@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { formatPrice, formatSignedPercent, type Locale, type Messages } from "@boursea/shared";
+import { BIST_ENABLED, formatPrice, formatSignedPercent, type Locale, type Messages } from "@boursea/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Label, Select } from "@/components/ui/input";
@@ -360,7 +360,7 @@ function AddTransactionForm({
           <Label htmlFor="exchange">{t.exchangeLabel}</Label>
           <Select id="exchange" value={exchange} onChange={(e) => setExchange(e.target.value)}>
             <option value="US">{t.exchangeUs}</option>
-            <option value="BIST">{t.exchangeBist}</option>
+            {BIST_ENABLED && <option value="BIST">{t.exchangeBist}</option>}
           </Select>
         </Field>
         <Field>

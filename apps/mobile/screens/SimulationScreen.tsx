@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatPrice, formatSignedPercent, signColor } from "@boursea/shared";
+import { BIST_ENABLED, formatPrice, formatSignedPercent, signColor } from "@boursea/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import {
@@ -443,12 +443,14 @@ function PlaceOrderForm({
           label={t.exchangeUs}
           onPress={() => setExchange("US")}
         />
-        <ToggleOption
-          styles={styles}
-          active={exchange === "BIST"}
-          label={t.exchangeBist}
-          onPress={() => setExchange("BIST")}
-        />
+        {BIST_ENABLED && (
+          <ToggleOption
+            styles={styles}
+            active={exchange === "BIST"}
+            label={t.exchangeBist}
+            onPress={() => setExchange("BIST")}
+          />
+        )}
       </View>
       <View style={styles.toggleRow}>
         <ToggleOption

@@ -75,6 +75,7 @@ export interface Messages {
     quickAccess: string;
   };
   search: {
+    bistDisabledNote: string;
     label: string;
     placeholder: string;
     searching: string;
@@ -188,6 +189,7 @@ export interface Messages {
     off: string;
   };
   screener: {
+    bistDisabledNote: string;
     title: string;
     backToDashboard: string;
     exchangeLabel: string;
@@ -363,6 +365,18 @@ export interface Messages {
     columnPnl: string;
   };
   simulation: {
+    buyFromStockButton: string;
+    buyFromStockTitle: string;
+    selectSimulationLabel: string;
+    cashAvailable: string;
+    estimatedCost: string;
+    buyButton: string;
+    buying: string;
+    buySuccess: string;
+    goToSimulation: string;
+    quickCreateHint: string;
+    quickCreateButton: string;
+    defaultSimulationName: string;
     title: string;
     backToDashboard: string;
     newSimulationPlaceholder: string;

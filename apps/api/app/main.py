@@ -3,6 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app import market_data
 from app.ai_combined import CombinedAIReport, get_combined_report
 from app.ai_fundamental import AIReportUnavailableError, FundamentalAIReport, get_fundamental_report
 from app.ai_technical import TechnicalAIReport, get_technical_report
@@ -161,7 +162,10 @@ async def search_symbols(q: str, exchange: str = "ALL") -> SearchResponse:
         return {"results": results, "warnings": warnings}
 
     if exchange_filter in ("ALL", "BIST"):
-        results.extend(search_bist_symbols(query))
+        if market_data.BIST_ENABLED:
+            results.extend(search_bist_symbols(query))
+        elif exchange_filter == "BIST":
+            warnings.append(market_data.BIST_DISABLED_MESSAGE)
 
     if exchange_filter in ("ALL", "US"):
         try:
@@ -184,7 +188,11 @@ async def get_symbol_overview(symbol: str, exchange: str) -> OverviewResponse:
 
     if exchange_filter == "BIST":
         overview = get_bist_overview(symbol)
-        warnings.append("BIST hisseleri için gerçek zamanlı fiyat verisi bu sürümde sağlanmıyor.")
+        warnings.append(
+            "BIST hisseleri için gerçek zamanlı fiyat verisi bu sürümde sağlanmıyor."
+            if market_data.BIST_ENABLED
+            else market_data.BIST_DISABLED_MESSAGE
+        )
     elif exchange_filter == "US":
         try:
             overview = await get_us_overview(symbol)

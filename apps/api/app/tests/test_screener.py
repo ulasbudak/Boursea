@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from fastapi.testclient import TestClient
 
-from app import main, screener
+from app import main, market_data, screener
 from app.config import Settings
 from app.fundamentals import FundamentalsSnapshot, FundamentalsUnavailableError
 from app.market_data import CandlePoint, MarketDataUnavailableError
@@ -234,6 +234,30 @@ async def test_run_screener_all_includes_bist_warning_and_us_results(monkeypatch
 
     assert len(results) == len(FAKE_UNIVERSE)
     assert len(warnings) == 1
+
+
+@pytest.mark.anyio
+async def test_run_screener_all_skips_bist_when_disabled(monkeypatch):
+    async def fake_get_us_fundamentals(symbol, *, client=None):
+        return _snapshot(symbol, market_cap=1_000, pe_ratio=10.0)
+
+    monkeypatch.setattr(market_data, "BIST_ENABLED", False)
+    monkeypatch.setattr(screener, "get_us_fundamentals", fake_get_us_fundamentals)
+
+    results, warnings = await run_screener(ScreenerCriteria(exchange="ALL"))
+
+    assert len(results) == len(FAKE_UNIVERSE)
+    assert warnings == []
+
+
+@pytest.mark.anyio
+async def test_run_screener_bist_explains_it_is_disabled(monkeypatch):
+    monkeypatch.setattr(market_data, "BIST_ENABLED", False)
+
+    results, warnings = await run_screener(ScreenerCriteria(exchange="BIST"))
+
+    assert results == []
+    assert warnings == [market_data.BIST_DISABLED_MESSAGE]
 
 
 @pytest.mark.anyio
