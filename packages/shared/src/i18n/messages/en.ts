@@ -25,11 +25,54 @@ export const en: Messages = {
     continueWithApple: "Continue with Apple",
     redirecting: "Redirecting...",
     orDivider: "or",
+    forgotPassword: "Forgot password?",
+    forgotPasswordTitle: "Reset your password",
+    forgotPasswordSubtitle: "Enter your account's email and we'll send you a password reset link.",
+    sendResetLink: "Send reset link",
+    sendingResetLink: "Sending...",
+    resetLinkSentTitle: "Check your email",
+    resetLinkSentBody:
+      "If an account exists for this address, we've sent a password reset link. Check your inbox (and spam folder).",
+    backToLogin: "Back to login",
+    newPasswordTitle: "Set a new password",
+    newPasswordSubtitle: "Choose a new password for your account.",
+    newPassword: "New password",
+    confirmNewPassword: "New password (again)",
+    updatePassword: "Update password",
+    updatingPassword: "Updating...",
+    checkEmailTitle: "Verify your email",
+    checkEmailBody:
+      "To finish signing up, we've sent a verification link to {email}. Your account will be activated once you click it.",
+    checkEmailHint:
+      "Didn't get it? Check your spam folder. If you already have an account with this address, try logging in or resetting your password.",
+    emailConfirmed: "Your email is verified. You can log in now.",
+    passwordUpdated: "Your password has been updated. You can log in with your new password.",
+    errors: {
+      invalidCredentials: "Incorrect email or password.",
+      emailNotConfirmed:
+        "Your email isn't verified yet. Click the verification link in your inbox.",
+      weakPassword: "Password must be at least 6 characters.",
+      invalidEmail: "Enter a valid email address.",
+      userAlreadyExists: "An account with this email already exists. Try logging in.",
+      rateLimited: "Too many attempts. Please try again in a few minutes.",
+      samePassword: "Your new password must be different from the old one.",
+      passwordMismatch: "Passwords don't match.",
+      sessionMissing:
+        "Your password reset session is missing or has expired. Please request a new link.",
+      generic: "Something went wrong. Please try again.",
+    },
   },
   error: {
     title: "Something went wrong",
     message: "Sign in/sign up could not be completed. Please try again.",
     backToLogin: "Back to login",
+    linkExpiredTitle: "This link has expired",
+    linkExpiredMessage:
+      "This link is invalid or has expired. Links can only be used once and stop working after a while.",
+    otherBrowserTitle: "Open the link in the same browser",
+    otherBrowserMessage:
+      "This link must be opened in the browser where you started the request. If it was an email verification, your address may already be verified — try logging in; for a password reset, request a new link.",
+    requestNewLink: "Request a new reset link",
   },
   dashboard: {
     title: "Dashboard",

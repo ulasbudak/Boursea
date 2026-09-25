@@ -2,4 +2,4 @@ export * from "./locale";
 export * from "./format";
 export * from "./messages";
 export * from "./sectors";
-export type { Messages } from "./types";
+export type { AuthErrorMessages, Messages } from "./types";

@@ -25,11 +25,54 @@ export const tr: Messages = {
     continueWithApple: "Apple ile devam et",
     redirecting: "Yönlendiriliyor...",
     orDivider: "veya",
+    forgotPassword: "Şifremi unuttum",
+    forgotPasswordTitle: "Şifreni sıfırla",
+    forgotPasswordSubtitle: "Hesabının e-posta adresini gir, sana şifre sıfırlama bağlantısı gönderelim.",
+    sendResetLink: "Sıfırlama bağlantısı gönder",
+    sendingResetLink: "Gönderiliyor...",
+    resetLinkSentTitle: "E-postanı kontrol et",
+    resetLinkSentBody:
+      "Bu adrese kayıtlı bir hesap varsa, şifre sıfırlama bağlantısı gönderdik. Gelen kutunu (ve spam klasörünü) kontrol et.",
+    backToLogin: "Giriş sayfasına dön",
+    newPasswordTitle: "Yeni şifre belirle",
+    newPasswordSubtitle: "Hesabın için yeni bir şifre seç.",
+    newPassword: "Yeni şifre",
+    confirmNewPassword: "Yeni şifre (tekrar)",
+    updatePassword: "Şifreyi güncelle",
+    updatingPassword: "Güncelleniyor...",
+    checkEmailTitle: "E-postanı doğrula",
+    checkEmailBody:
+      "Kaydını tamamlamak için {email} adresine bir doğrulama bağlantısı gönderdik. Bağlantıya tıkladığında hesabın açılacak.",
+    checkEmailHint:
+      "E-posta gelmediyse spam klasörüne bak. Bu adresle zaten bir hesabın varsa giriş yapmayı ya da şifreni sıfırlamayı dene.",
+    emailConfirmed: "E-posta adresin doğrulandı. Şimdi giriş yapabilirsin.",
+    passwordUpdated: "Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.",
+    errors: {
+      invalidCredentials: "E-posta veya şifre hatalı.",
+      emailNotConfirmed:
+        "E-posta adresin henüz doğrulanmadı. Gelen kutundaki doğrulama bağlantısına tıkla.",
+      weakPassword: "Şifre en az 6 karakter olmalı.",
+      invalidEmail: "Geçerli bir e-posta adresi gir.",
+      userAlreadyExists: "Bu e-posta adresiyle zaten bir hesap var. Giriş yapmayı dene.",
+      rateLimited: "Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar dene.",
+      samePassword: "Yeni şifren eski şifrenden farklı olmalı.",
+      passwordMismatch: "Şifreler eşleşmiyor.",
+      sessionMissing:
+        "Şifre sıfırlama oturumun bulunamadı ya da süresi doldu. Lütfen yeni bir bağlantı iste.",
+      generic: "İşlem tamamlanamadı. Lütfen tekrar dene.",
+    },
   },
   error: {
     title: "Bir şeyler yanlış gitti",
     message: "Giriş/kayıt işlemi tamamlanamadı. Lütfen tekrar deneyin.",
     backToLogin: "Giriş sayfasına dön",
+    linkExpiredTitle: "Bağlantının süresi dolmuş",
+    linkExpiredMessage:
+      "Bu bağlantı geçersiz ya da süresi dolmuş. Bağlantılar tek kullanımlıktır ve bir süre sonra geçerliliğini yitirir.",
+    otherBrowserTitle: "Bağlantıyı aynı tarayıcıda aç",
+    otherBrowserMessage:
+      "Bu bağlantı, isteği başlattığın tarayıcıda açılmalı. E-posta doğrulamasıysa adresin doğrulanmış olabilir — giriş yapmayı dene; şifre sıfırlamaysa yeni bir bağlantı iste.",
+    requestNewLink: "Yeni sıfırlama bağlantısı iste",
   },
   dashboard: {
     title: "Panel",

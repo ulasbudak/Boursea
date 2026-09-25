@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { authErrorKey } from "@boursea/shared";
 import { supabase } from "../lib/supabase";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
@@ -19,23 +20,33 @@ export function AuthScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function signInWithEmail() {
     setLoading(true);
     setError(null);
+    setNotice(null);
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
-    if (error) setError(error.message);
+    if (error) setError(messages.auth.errors[authErrorKey(error.code)]);
     setLoading(false);
   }
 
   async function signUpWithEmail() {
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) setError(error.message);
+    setNotice(null);
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+    if (error) {
+      setError(messages.auth.errors[authErrorKey(error.code)]);
+    } else if (!data.session) {
+      // Email confirmation is on: the account activates from the emailed link.
+      setNotice(
+        `${messages.auth.checkEmailBody.replace("{email}", email.trim())} ${messages.auth.checkEmailHint}`
+      );
+    }
     setLoading(false);
   }
 
@@ -62,6 +73,7 @@ export function AuthScreen() {
           onChangeText={setPassword}
         />
         {error && <Text style={styles.error}>{error}</Text>}
+        {notice && <Text style={styles.notice}>{notice}</Text>}
         {loading ? (
           <ActivityIndicator color={colors.accent} />
         ) : (
@@ -142,6 +154,10 @@ function makeStyles(colors: ThemeColors) {
     },
     error: {
       color: colors.negative,
+      fontSize: 13,
+    },
+    notice: {
+      color: colors.positive,
       fontSize: 13,
     },
   });

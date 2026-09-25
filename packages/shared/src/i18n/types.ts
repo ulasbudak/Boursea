@@ -1,3 +1,16 @@
+export interface AuthErrorMessages {
+  invalidCredentials: string;
+  emailNotConfirmed: string;
+  weakPassword: string;
+  invalidEmail: string;
+  userAlreadyExists: string;
+  rateLimited: string;
+  samePassword: string;
+  passwordMismatch: string;
+  sessionMissing: string;
+  generic: string;
+}
+
 export interface Messages {
   common: {
     appName: string;
@@ -23,11 +36,36 @@ export interface Messages {
     continueWithApple: string;
     redirecting: string;
     orDivider: string;
+    forgotPassword: string;
+    forgotPasswordTitle: string;
+    forgotPasswordSubtitle: string;
+    sendResetLink: string;
+    sendingResetLink: string;
+    resetLinkSentTitle: string;
+    resetLinkSentBody: string;
+    backToLogin: string;
+    newPasswordTitle: string;
+    newPasswordSubtitle: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    updatePassword: string;
+    updatingPassword: string;
+    checkEmailTitle: string;
+    checkEmailBody: string;
+    checkEmailHint: string;
+    emailConfirmed: string;
+    passwordUpdated: string;
+    errors: AuthErrorMessages;
   };
   error: {
     title: string;
     message: string;
     backToLogin: string;
+    linkExpiredTitle: string;
+    linkExpiredMessage: string;
+    otherBrowserTitle: string;
+    otherBrowserMessage: string;
+    requestNewLink: string;
   };
   dashboard: {
     title: string;
