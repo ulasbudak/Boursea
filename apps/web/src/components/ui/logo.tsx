@@ -1,7 +1,8 @@
 /**
- * Boursea logomark: a wave dipping into a decisive uptrend breakout —
- * "-sea" (dalga) resolving into a clear market direction. See
- * docs/marketing/brand/ for the full asset set and usage guidelines.
+ * Boursea logomark: three ascending candlesticks, opacity-graded for depth —
+ * the app's own candlestick-chart language, and a quiet echo of its "three
+ * views" positioning (rule-based score, AI fundamentals, AI technical read).
+ * See docs/marketing/brand/ for the full asset set and usage guidelines.
  */
 function BourseaMark({ size }: { size: number }) {
   return (
@@ -13,16 +14,12 @@ function BourseaMark({ size }: { size: number }) {
       aria-label="Boursea logomark"
       className="text-accent"
     >
-      <path
-        d="M15,64 Q33,96 53,68 L86,22"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={11.5}
-        strokeLinecap="butt"
-        strokeLinejoin="round"
-      />
-      <polygon points="98.83,4.11 93.32,27.25 78.68,16.75" fill="currentColor" />
-      <circle cx={15} cy={64} r={7} fill="currentColor" />
+      <line x1={28} y1={46} x2={28} y2={88} stroke="currentColor" strokeWidth={4} strokeLinecap="round" opacity={0.35} />
+      <rect x={20} y={58} width={16} height={22} rx={6} fill="currentColor" opacity={0.35} />
+      <line x1={58} y1={26} x2={58} y2={92} stroke="currentColor" strokeWidth={4.5} strokeLinecap="round" opacity={0.68} />
+      <rect x={49} y={40} width={18} height={30} rx={7} fill="currentColor" opacity={0.68} />
+      <line x1={90} y1={8} x2={90} y2={96} stroke="currentColor" strokeWidth={5} strokeLinecap="round" />
+      <rect x={80} y={24} width={20} height={38} rx={8} fill="currentColor" />
     </svg>
   );
 }
