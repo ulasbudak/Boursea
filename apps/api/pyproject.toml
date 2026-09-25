@@ -12,9 +12,10 @@ dependencies = [
     "pyjwt[crypto]==2.14.0",
     "httpx==0.28.1",
     # Story 9.2 — technical analysis AI report (ChartScanAI/YOLOv8 chart-pattern model).
-    # First ML dependency in this API; opencv-python-headless (not opencv-python) avoids
-    # needing a system libGL install for a server with no display.
-    "ultralytics==8.4.155",
+    # Runs via ONNX Runtime, not ultralytics: torch alone blew the 512 MB Render instance
+    # (see app/ai_technical.py). opencv-python-headless (not opencv-python) avoids needing
+    # a system libGL install for a server with no display.
+    "onnxruntime==1.30.0",
     "mplfinance==0.12.10b0",
     "opencv-python-headless==5.0.0.93",
 ]

@@ -1,10 +1,16 @@
 from datetime import UTC, datetime
 
+import numpy as np
 import pytest
 
 from app import ai_technical
 from app.ai_reports import AIReportUnavailableError
-from app.ai_technical import Detection, _summarize_detections, get_technical_report
+from app.ai_technical import (
+    Detection,
+    _decode_detections,
+    _summarize_detections,
+    get_technical_report,
+)
 from app.market_data import CandlePoint, MarketDataUnavailableError
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
@@ -123,3 +129,39 @@ def test_summarize_detections_reports_counts_and_top_confidence():
 
     assert "1 Al ve 1 Sat" in text
     assert "Sell" in text
+
+
+def _yolo_output(rows: list[tuple[float, float, float, float, float, float]]) -> np.ndarray:
+    """rows: (cx, cy, w, h, buy_score, sell_score) -> YOLOv8 head shape (1, 6, anchors)."""
+    return np.array(rows, dtype=np.float32).T[None]
+
+
+def test_decode_detections_drops_low_confidence_and_overlapping_boxes():
+    output = _yolo_output(
+        [
+            (100, 100, 50, 50, 0.9, 0.1),  # kept: best Buy
+            (102, 101, 50, 50, 0.6, 0.1),  # suppressed: overlaps the better Buy box
+            (300, 100, 50, 50, 0.2, 0.25),  # dropped: below the confidence threshold
+            (500, 100, 50, 50, 0.1, 0.7),  # kept: separate Sell box
+        ]
+    )
+
+    detections = _decode_detections(output)
+
+    assert [(d.label, round(d.confidence, 2)) for d in detections] == [
+        ("Buy", 0.9),
+        ("Sell", 0.7),
+    ]
+
+
+def test_decode_detections_keeps_overlapping_boxes_of_different_classes():
+    output = _yolo_output(
+        [
+            (100, 100, 50, 50, 0.8, 0.1),
+            (100, 100, 50, 50, 0.1, 0.6),
+        ]
+    )
+
+    labels = sorted(d.label for d in _decode_detections(output))
+
+    assert labels == ["Buy", "Sell"]
