@@ -264,7 +264,7 @@ flowchart TB
 - **Error tracking:** Sentry (web + mobile + backend), with email alerts for critical errors.
 - **Logging:** Structured (JSON) logs via Railway's built-in log collector; no separate logging stack (ELK, etc.) at MVP.
 - **Metrics:** Provider API call volume/limits (critical for cost tracking — Finnhub/Polygon rate-limit breaches should be caught early), the number of connected WebSocket clients, Celery queue lag.
-- **Uptime monitoring:** A simple external healthcheck service (e.g. UptimeRobot's free tier) watches the `/health` endpoint.
+- **Uptime monitoring:** UptimeRobot (free tier) checks `https://trendus-api.onrender.com/health` every 5 minutes (since 2026-09-26). The same ping keeps the Render free-tier instance from spinning down after 15 idle minutes; the GitHub Actions cron previously used for this (`keep-api-warm.yml`) ran unreliably and was removed.
 
 ## 11. Deferred Decisions
 

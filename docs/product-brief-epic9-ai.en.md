@@ -2,7 +2,7 @@
 title: "Epic 9 — AI-Assisted Commentary and Pattern Detection: Decision Note"
 status: draft
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-09-26
 author: Mary (BMAD Business Analyst) — together with Serdar Ulaş Budak
 relatedDocs: ["docs/PRD.en.md §5.11, §8, §9", "docs/epics.en.md §13 (Epic 9)"]
 language: en
@@ -63,4 +63,49 @@ The existing open question in PRD §9 has become concrete and more urgent alongs
 
 ## 2026-09-18 Update: Scope Made Concrete
 
-After Epic 1-8 (Phase 1 MVP, except Story 8.2 — still waiting on the user's own payment-provider setup), the user made Epic 9 concrete as three separate, clearly labeled "opinions" shown together on the stock detail page: (a) a pretrained computer-vision model's chart reading, (b) an LLM-generated fundamental-analysis report, (c) the existing rule-based score's (Story 3.6/3.7) Buy/Neutral/Sell output. See `docs/product-brief-epic9-ai.md` §"2026-09-18 Güncellemesi" (Turkish, canonical) for the full detail: model selection (ChartScanAI, MIT-licensed YOLOv8, chosen over three other open-source candidates after live license/technical verification), LLM provider (Anthropic Claude API, a custom "financial analyst" system prompt — no separate "Claude finance skill" product could be confirmed to exist), and architecture decisions (no Celery, global per-symbol cache, lazy-loaded CV dependency, backend-enforced entitlement gate). Detailed plans: `docs/stories/story-9.1.md` (now "Fundamental Analysis AI Report") and `docs/stories/story-9.2.md` (now "Technical Analysis AI Report — CV Model").
+After Epic 1–8 (Phase 1 MVP, except Story 8.2 — see the note below) was complete, the user made Epic 9's scope concrete as three separate, clearly labeled "views": (a) a technical/chart reading from an image-based (pretrained CV) model, (b) a fundamental-analysis commentary from an LLM API, (c) the Buy/Neutral/Sell output of the existing rule-based score (Story 3.6/3.7, already in production) — all three shown in the same panel, separate from each other and comparable. **Story 8.2 (the real premium purchase flow) is still waiting on the user setting up their own payment-provider account** — Epic 9 builds on Story 8.1 (the entitlement infrastructure) and does not depend on the purchase flow.
+
+### (a) Technical Analysis AI — Model Selection
+
+The user brought a comparison report named `hisse_ai_repo_karsilastirma_raporu.pdf` (4 candidates: huseinzol05/Stock-Prediction-Models, Omar-Karimov/ChartScanAI, foduucom/stockmarket-pattern-detection-yolov8, pecu/FinancialVision) and asked for the most usable one to be chosen and integrated. After live research (license + technical verification, via WebFetch):
+
+| Candidate | License | Decision |
+|---|---|---|
+| huseinzol05/Stock-Prediction-Models | unclear, archived in July 2023 | Rejected — dependency incompatibilities, not "install and run" |
+| foduucom/stockmarket-pattern-detection-yolov8 (Hugging Face) | **unspecified** ("contact the developers for licensing") | Rejected — embedding a model of unclear license in a commercial, investor-facing product is a legal risk; it is also trained on one specific screenshot region (683×768), mAP@0.5 = 0.614 (moderate accuracy) |
+| **Omar-Karimov/ChartScanAI** | **MIT** | **Chosen** — free for commercial use, ready-made weights in the repo, training data is candlestick images **generated with mplfinance** (exactly the library we use to render images from our own OHLC data — low risk of distribution mismatch) |
+| pecu/FinancialVision | research-oriented | Rejected — not a single integrable application |
+
+**Known limitation:** ChartScanAI is backed by a relatively small community (157 stars) and no official accuracy metric has been published; its output is only a binary "Buy"/"Sell" classification (not named formations). The model will be positioned as "experimental/indicative" — subject to the existing "not investment advice" language policy, and shown as a second view that is separate from and clearly labeled apart from the deterministic score (Story 3.6/3.7) (whether the two views agree or disagree is shown transparently to the user).
+
+### (b) Fundamental Analysis AI — Provider Selection
+
+The user first mentioned an API called "Claude's finance skill"; no separately callable Anthropic product by that name could be confirmed. Instead, the **Anthropic Claude API** (console.anthropic.com, which requires a separate account and pay-as-you-go billing — a claude.ai Pro subscription does not include API access) will be used with a "financial analyst" system prompt we write ourselves; the RAG grounding will be the fundamental data the app computes itself (P/E, ROE, debt-to-equity, sector comparison, historical financial performance — the output of Epic 2).
+
+> **2026-09-19 update:** The provider was switched to the **Google Gemini API** (commit `b868efb`, model `gemini-3.6-flash`) — the code now runs through `app/ai_reports.py::call_gemini()` with `GOOGLE_API_KEY`. The Anthropic rationale in this section is left as-is to document the decision date; for the current integration see `docs/stories/story-9.1.md` Context. The RAG grounding (Epic 2's fundamental data) and the cost-controlled caching pattern did not change.
+
+### (c) Deterministic Analysis
+
+No new development needed — `compute_score()` in `app/scoring.py` (Story 3.6/3.7) already produces a 0–100 score + a Buy/Neutral/Sell label + the "not investment advice" notice. It will be re-presented as the third panel next to (a) and (b).
+
+### Architecture Decisions
+
+- **No Celery/Redis** — although planned in the architecture (AD-8), no story has set it up so far; everything is computed at request time, and that consistency is kept.
+- **Global cache** (`ai_reports` table, keyed by symbol + exchange + report type, with a TTL) — not per user, to control LLM/CV cost.
+- **The heavy CV dependency (ultralytics/torch/mplfinance) is lazy-loaded** — only when the first request hits the technical AI endpoint, as a process-level singleton.
+  - **2026-09-25 update (commit `d114072`):** Because Render's 512 MB memory limit was exceeded (ultralytics + torch pushed the process to ~800 MB), the model now runs on **ONNX Runtime**; torch and ultralytics were dropped from the dependencies. ultralytics' letterbox and class-aware NMS steps were reproduced exactly (detections verified identical on 8 charts). The ONNX file (>100 MB) is downloaded from the `chartscan-yolov8-onnx-v1` release asset and pinned by SHA-256. The lazy-loading, process-level singleton pattern is kept.
+- **Entitlement extension**: `Entitlement.ai_reports: bool`, enforced on the backend (403) — unlike Story 8.1's advanced-indicator lock, client-side hiding alone is not enough here because there is a real money/CPU cost.
+
+Detailed implementation plan: see Story 9.1 (`docs/stories/story-9.1.md`, now "Fundamental Analysis AI Report") and Story 9.2 (`docs/stories/story-9.2.md`, now "Technical Analysis AI Report — CV Model").
+
+## 2026-09-19 Update: Story 9.3 — Daily Sector Bulletin
+
+The user asked for an AI sector bulletin on the dashboard, with a new one added on top every day and none ever deleted (one sector + an analysis of the relatively strong stocks in that sector, premium-only). This is a fourth AI feature within Epic 9's scope.
+
+**Scheduling decision:** The user was asked explicitly — no scheduled-job (Celery/cron) infrastructure has been set up anywhere in the project; everything is computed at request time. Instead of setting up a new cron/Railway job, the user approved a **generate-on-request + permanent archive** approach: the bulletin is generated on the day's first request and appended permanently; when a request comes in the next day, that day's bulletin is generated **in addition** and added on top of the older ones (never deleted or overwritten).
+
+**Data pattern:** Since Story 9.1/9.2's `ai_reports` table was designed for a single-row-overwrite cache pattern, a separate `sector_bulletins` table was created for the bulletin (append-only, `bulletin_date unique`).
+
+**Sector/stock selection:** The sector is chosen from `ALL_SECTORS` (11 sectors) by a deterministic `day_of_year % 11` rotation (zero extra API cost). The stocks in the sector are scored with the existing rule-based scoring engine (Story 3.6/3.7) and the top 5 are selected — no new selection algorithm was invented; the existing infrastructure was reused.
+
+Detailed plan: `docs/stories/story-9.3.md`.

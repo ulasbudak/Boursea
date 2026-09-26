@@ -2,7 +2,7 @@
 title: "Epic 9 — AI Destekli Yorum ve Örüntü Tanıma: Karar Notu"
 status: draft
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-09-26
 author: Mary (BMAD Business Analyst) — Serdar Ulaş Budak ile birlikte
 relatedDocs: ["docs/PRD.md §5.11, §8, §9", "docs/epics.md §13 (Epic 9)"]
 ---
@@ -91,6 +91,7 @@ Yeni geliştirme gerekmiyor — `app/scoring.py`'deki `compute_score()` (Story 3
 - **Celery/Redis kullanılmayacak** — mimaride planlanmış olsa da (AD-8) hiçbir story bugüne kadar bunu kurmadı, her şey istek-anında hesaplanıyor; bu tutarlılık korunuyor.
 - **Global önbellek** (`ai_reports` tablosu, sembol+borsa+rapor-türü bazlı, TTL'li) — kullanıcı bazlı değil, LLM/CV maliyetini kontrol etmek için.
 - **Ağır CV bağımlılığı (ultralytics/torch/mplfinance) tembel yüklenecek** — yalnızca teknik AI uç noktasına ilk istek geldiğinde, process-level singleton olarak.
+  - **2026-09-25 güncellemesi (commit `d114072`):** Render'ın 512 MB bellek sınırı aşıldığı için (ultralytics + torch süreci ~800 MB'a çıkarıyordu) model artık **ONNX Runtime** ile çalışıyor; torch ve ultralytics bağımlılıklardan çıkarıldı. ultralytics'in letterbox ve sınıf-duyarlı NMS adımları birebir yeniden yazıldı (8 grafikte tespitlerin aynı olduğu doğrulandı). ONNX dosyası (>100 MB) `chartscan-yolov8-onnx-v1` release asset'inden indirilip SHA-256 ile sabitleniyor. Tembel yükleme ve process-level singleton deseni korundu.
 - **Entitlement genişletmesi**: `Entitlement.ai_reports: bool`, backend'de zorlanıyor (403) — Story 8.1'in gelişmiş-indikatör kilidinden farklı olarak, burada gerçek para/CPU maliyeti olduğu için yalnızca istemci tarafı gizleme yeterli değil.
 
 Detaylı uygulama planı: bkz. Story 9.1 (`docs/stories/story-9.1.md`, artık "Temel Analiz AI Raporu") ve Story 9.2 (`docs/stories/story-9.2.md`, artık "Teknik Analiz AI Raporu — CV Modeli").

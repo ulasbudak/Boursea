@@ -4,7 +4,7 @@ epic: "Epic 1 — Kimlik Doğrulama, Hisse Keşfi ve Temel Altyapı"
 story_id: "1.1"
 status: done
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-09-26
 author: Bob (BMAD Scrum Master)
 based_on: ["docs/PRD.md", "docs/architecture.md"]
 depends_on: []
@@ -73,11 +73,11 @@ Bu, backlog'daki **ilk geliştirme adımıdır** — hiçbir story buna bağlı 
 
 ## Definition of Done
 
-- [ ] Tüm kabul kriterleri (AC1–AC8) sağlanıyor ve manuel olarak doğrulandı.
-- [ ] CI pipeline'ı main branch'te yeşil.
-- [ ] Hiçbir gizli anahtar repo'ya commit edilmedi.
-- [ ] `docs/architecture.md` §12'deki repo yapısıyla tutarlı.
-- [ ] Sonraki story (1.2 — Kullanıcı Kaydı ve Girişi) bu iskelet üzerine doğrudan başlayabilir durumda.
+- [x] Tüm kabul kriterleri (AC1–AC8) sağlanıyor ve doğrulandı — *geriye dönük kapanış, 2026-09-26:* AC1 (`pnpm-workspace.yaml` + `turbo.json`, `apps/{web,mobile,api}` + `packages/shared`), AC2/AC4/AC5 (web ve API canlıda: Vercel + Render, `/health` ve `/health/db` üretimde çalışıyor), AC6 (üç uygulamada `.env.example` var, `.env`/`.env.local` `.gitignore`'da), AC7 (aşağıya bkz.), AC8 (`README.md` ve `README.en.md` üç uygulamanın kurulum/çalıştırma adımlarını içeriyor). **İstisna:** AC3'ün "simülatör/Expo Go üzerinde ekran" kısmı bu ortamda doğrulanamıyor (simülatör yok); mobil `tsc --noEmit` ve lint CI'da yeşil.
+- [x] CI pipeline'ı main branch'te yeşil — iskeletten beri kırmızıydı (`LayoutProps` bulunamıyordu), 2026-09-26'da `next typegen && tsc` ile düzeltildi; `aac404f` dahil son koşular başarılı. Adımlar AC7 ile birebir: web lint+typecheck+build, mobil lint+typecheck, API ruff+pytest.
+- [x] Hiçbir gizli anahtar repo'ya commit edilmedi — 2026-09-26'da tüm git geçmişi tarandı (Anthropic/Gemini/Resend/GitHub anahtar kalıpları, parolalı `postgresql://` URI'leri, Supabase JWT/secret anahtarları): eşleşme yok; hiçbir `.env`/`.env.local` dosyası geçmişte izlenmemiş.
+- [x] `docs/architecture.md` §12'deki repo yapısıyla tutarlı (`apps/web`, `apps/mobile`, `apps/api`, `packages/shared`, `docs/`).
+- [x] Sonraki story (1.2 — Kullanıcı Kaydı ve Girişi) bu iskelet üzerine doğrudan başlayabilir durumda — 1.2 ve sonrası bu iskelet üzerine tamamlandı.
 
 ## Teknik Notlar (Mimariden)
 

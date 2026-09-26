@@ -4,7 +4,7 @@ epic: "Epic 5 — İzleme Listesi, Alarmlar ve Bildirimler"
 story_id: "5.2"
 status: done
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-09-26
 author: Bob (BMAD Scrum Master) & Amelia (BMAD Developer)
 based_on: ["docs/PRD.md", "docs/architecture.md", "docs/epics.md §9"]
 depends_on: ["1.5", "5.1"]
@@ -34,10 +34,13 @@ Story 5.1'in kimlik doğrulamalı yazma deseni (`Authorization: Bearer`, `user_i
 - **DB:** `apps/api/migrations/0002_price_alerts.sql` — `price_alerts` tablosu (canlı Supabase projesine uygulandı).
 - **Backend:** `app/alerts.py` (CRUD + `evaluate_and_persist`), `main.py`'de `/alerts` uç noktaları (GET liste+değerlendirme, POST oluştur, DELETE sil).
 
-**Kapsam dışı (takip görevleri — bu story'nin özgün kapsamındaydı ama uygulanmadı):**
 - **Web:** `lib/alerts-client.ts`, `/alerts` sayfası, hisse detayında "Fiyat Alarmı Kur" butonu/popover'ı, dashboard nav kartı.
 - **Mobil:** `lib/alerts-client.ts`, `AlertsScreen.tsx`, hisse detayında `CreatePriceAlertButton.tsx`, `HomeScreen` nav girişi.
-- **i18n:** `Messages.alerts` bölümü (tr/en) — henüz eklenmedi.
+- **i18n:** `Messages.alerts` bölümü (tr/en).
+
+> **Not (2026-09-26 doküman düzeltmesi):** Bu bölüm önceden web/mobil/i18n işlerini "kapsam dışı — uygulanmadı" olarak listeliyordu ve 5–7. görevler ☐ duruyordu. Gerçekte hepsi aynı commit'te (`0746b13`) yayımlandı; DoD'deki canlı web doğrulaması (2026-09-21) da bunları kullanıyor. Doküman koda göre düzeltildi.
+
+**Kapsam dışı (takip görevleri):**
 - Story 5.3 (indikatör/sinyal bazlı alarm) — ayrı story.
 - Story 5.4 (push/e-posta bildirimi, arka planda sürekli değerlendirme) — ayrı story; bu story yalnızca "durumu göster", proaktif bildirim göndermez.
 - BIST alarmlarının tetiklenme değerlendirmesi — BIST canlı fiyat sağlayıcısı kararı netleşmeden mümkün değil (bkz. Bağlam).
@@ -49,9 +52,9 @@ Story 5.1'in kimlik doğrulamalı yazma deseni (`Authorization: Bearer`, `user_i
 2. **[Backend]** `app/alerts.py`: veri katmanı (list/create/delete) + `evaluate_and_persist(user_id)` (ABD alarmlarını `get_us_overview` ile kontrol edip `status`'u günceller). ✅
 3. **[Backend]** `/alerts` REST uç noktaları; hata haritalama (404, 503, 400 — geçersiz `direction`/borsa/eşik). ✅
 4. **[Backend]** Testler: veri katmanı (fake psycopg connection, Story 5.1 deseniyle aynı) + değerlendirme mantığı (mock `get_us_overview`) + uç nokta testleri. ✅
-5. **[Web]** `lib/alerts-client.ts`; `/alerts` sayfası; hisse detayında `CreatePriceAlertButton`. ☐
-6. **[Mobil]** `lib/alerts-client.ts`; `AlertsScreen.tsx`; hisse detayında `CreatePriceAlertButton.tsx`. ☐
-7. **[Hepsi]** `Messages.alerts` i18n bölümü (tr/en), dashboard nav kartları. ☐
+5. **[Web]** `lib/alerts-client.ts`; `/alerts` sayfası; hisse detayında `CreatePriceAlertButton`. ✅
+6. **[Mobil]** `lib/alerts-client.ts`; `AlertsScreen.tsx`; hisse detayında `CreatePriceAlertButton.tsx`. ✅
+7. **[Hepsi]** `Messages.alerts` i18n bölümü (tr/en), dashboard nav kartları. ✅
 
 ## Kabul Kriterleri
 

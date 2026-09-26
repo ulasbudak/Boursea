@@ -262,7 +262,7 @@ flowchart TB
 - **Hata izleme:** Sentry (web + mobil + backend), kritik hata için e-posta uyarısı.
 - **Loglama:** Yapılandırılmış (JSON) loglar, Railway'in yerleşik log toplayıcısı; MVP'de ayrı bir log altyapısı (ELK vb.) kurulmaz.
 - **Metrikler:** Sağlayıcı API çağrı hacmi/limitleri (maliyet takibi için kritik — Finnhub/Polygon rate limit aşımı erken tespit edilmeli), WebSocket bağlı istemci sayısı, Celery kuyruk gecikmesi.
-- **Uptime izleme:** Basit bir dış healthcheck servisi (örn. UptimeRobot ücretsiz katman) `/health` endpoint'ini izler.
+- **Uptime izleme:** UptimeRobot (ücretsiz katman) `https://trendus-api.onrender.com/health` endpoint'ini 5 dakikada bir izler (2026-09-26'dan beri). Bu ping aynı zamanda Render ücretsiz katmanının 15 dakikalık boşta kalma sonrası uykuya geçmesini de engeller; daha önce bu iş için kullanılan GitHub Actions cron'u (`keep-api-warm.yml`) güvenilmez çalıştığı için kaldırıldı.
 
 ## 11. Ertelenen Kararlar (Deferred)
 

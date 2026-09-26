@@ -1,6 +1,6 @@
 ---
 title: "Borocean (Borsa Takip Uygulaması) - Epic ve Story Backlog"
-status: draft
+status: active
 created: 2026-09-15
 updated: 2026-09-26
 author: Bob (BMAD Scrum Master)
@@ -99,6 +99,14 @@ Kullanıcı ücretsiz katmanın sınırlarını görebilir ve premium katmana y�
 Kullanıcı, hisse detay sayfasında güncel haberlere dayanan serbest formatlı bir AI yorumu okuyabilir ve fiyat grafiğinde otomatik tespit edilmiş trend/destek-direnç/formasyon bulgularını görebilir. Epic 1-8 (Faz 1 MVP) tamamlanmadan başlanmaz.
 **FRs covered:** FR-100, FR-101 (FR-102/FR-025 bu epic'in ilerleyen bir alt-fazı, ayrı ele alınacak)
 
+### Epic 10: Alım-Satım Simülasyonu (Paper Trading)
+Kullanıcı sanal bir bütçeyle simülasyon oluşturup ABD hisselerini o anki gerçek fiyattan alıp satabilir, simülasyonun günlük değer ve kâr/zarar geçmişini görebilir. Gerçek para veya aracı kurum bağlantısı yoktur (PRD §10).
+**FRs covered:** FR-110, FR-111, FR-112
+
+### Epic 11: Kripto Para Piyasası (Backlog — başlamadı)
+Kullanıcı kripto varlıkları arayıp detay sayfasında fiyat, grafik ve piyasa bilgilerini görebilir; bunları izleme listesi, alarm, portföy, simülasyon ve taramada hisselerle aynı akışlarla kullanabilir. Yalnızca veri, analiz ve sanal işlem — gerçek kripto alım-satımı veya cüzdan bağlantısı yok.
+**FRs covered:** FR-120, FR-121, FR-122, FR-123, FR-124, FR-125, FR-126
+
 **Epic bağımsızlığı notu:** Her epic bir öncekinin çıktısını kullanabilir (örn. Epic 3, Epic 2'nin ürettiği temel veri modelini kullanır) ama hiçbir epic sonraki bir epiğin tamamlanmasını beklemez. Epic 8 (Abonelik), Epic 1-7'de üretilen özellik sınırlarını freemium kapıları arkasına yerleştirir ama bu epiklerin fonksiyonelliğini değiştirmez.
 
 ---
@@ -171,6 +179,10 @@ So that hisse hakkında hızlı bir ilk izlenim edinebileyim.
 ### Story 1.6: BIST'in Geçici Olarak Devre Dışı Bırakılması
 
 - [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.6.md`**. Kullanıcı isteği (2026-09-26): canlı BIST fiyat kaynağı olmadığından BIST arama/taramadan çıkarıldı, seçim listelerinden gizlendi ve uygulamada "şu an devre dışı" olarak belirtiliyor. Tek bayrakla (`BIST_ENABLED`, API + `@borocean/shared`) geri açılabilir. Aynı çalışmada Finnhub aramasının yabancı kotasyonları (`AAPL.TO`, `GARAN.E.IS`…) "US" diye döndürmesi düzeltildi.
+
+### Story 1.7: Satır İçi Giriş Hataları, E-posta Onay Bildirimi ve Şifre Sıfırlama
+
+- [x] **Tamamlandı (geriye dönük dokümante edildi)** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.7.md`**. Kod 2026-09-26'da story dokümanı olmadan `5e29760` commit'iyle yayımlandı. Giriş/kayıt hataları formda satır içi ve çevrilmiş olarak gösterilir (`authErrorKey`, web + mobil); canlıda "Confirm email" açık olduğundan kayıt sonrası "e-postanı doğrula" ekranı gösterilir; web'e `/forgot-password` → `/reset-password` akışı ve tasarlanmış `/error` sayfası eklendi. **Açık kalan:** mobilde şifre sıfırlama ve doğrulama ekranı yok.
 
 ---
 
@@ -762,8 +774,13 @@ So that yanlış bağlamda (hisse varsayımlarıyla) üretilmiş yanıltıcı bi
 
 ## 16. Sonraki Adımlar
 
-1. Bu backlog kullanıcı tarafından gözden geçirilip epik sıralaması/story kapsamı onaylanmalı.
-2. `docs/stories/story-1.md` (Epic 1, Story 1.1) ilk geliştirme adımı olarak hazır — geliştirme buradan başlayabilir.
-3. Her story tamamlandıkça bu dokümandaki durum güncellenmeli veya `bmad-sprint-planning` ile bir `sprint-status.yaml` takip dosyası oluşturulmalı.
-4. UX tasarımı (`bmad-ux`) yapıldığında ilgili epiklere UX-DR satırları eklenmeli.
-5. Epic 9 (AI Yorum) için: Finnhub `company-news` endpoint'inin mevcut abonelik planında dahil olup olmadığı doğrulanmalı; LLM sağlayıcı/maliyet seçimi ve regülasyon açık sorusu (PRD §9) Epic 9 geliştirmesi başlamadan önce netleştirilmeli.
+*(2026-09-26'da güncellendi — önceki sürüm projenin başlangıç durumunu, "Story 1.1'den başla"yı anlatıyordu.)*
+
+**Durum:** Epic 1–7, 9 ve 10 tamamlandı; Story 8.1 tamamlandı. Web ve API 2026-09-21'den beri canlıda. Story 8.2 bilinçli olarak ertelendi (`ALL_FEATURES_FREE`). Sıradaki geliştirme epiği Epic 11'dir.
+
+1. **Epic 11'e başlamadan önce §15'teki açık sorular kullanıcıyla netleştirilmeli:** veri kaynağı (Twelve Data kotası mı, CoinGecko mu), başlangıç evreni (ilk ~100 varlık, USD pariteleri, stablecoin'ler) ve freemium sınırlarının hisse+kripto için ortak olup olmadığı.
+2. **Önerilen Epic 11 sırası:** Sprint 1 — 11.1 (veri adaptörü) + 11.2 (arama ve detay); Sprint 2 — 11.3 (göstergeler/sinyaller) + 11.4 (izleme listesi, alarm, portföy; kesirli miktar); Sprint 3 — 11.5 (simülasyon) + 11.6 (tarama/karşılaştırma) + 11.7 (AI raporları kapsam kararı).
+3. **Mobil eşitlik (küçük, paralel):** mobilde şifre sıfırlama ve doğrulama ekranı (Story 1.7'nin açık maddesi), mobilde "Simülasyonda al" (Story 10.3'ün mobil karşılığı).
+4. **Özel alan adı alındığında birlikte açılacaklar:** Google OAuth (consent ekranı `vercel.app`'i kabul etmiyor), Apple Sign-In (ayrıca Apple Developer Program üyeliği gerekiyor), Supabase özel SMTP'si (Brevo) ve e-posta alarm bildirimleri için Render'da `RESEND_API_KEY`/`NOTIFICATION_FROM_EMAIL`.
+5. **Hukuki teyit:** Story 9.1'deki regülasyon riski (bkz. `docs/product-brief-epic9-ai.md`) yatırımcı sunumundan önce kapatılmalı; Epic 11'in kripto metinleri için de aynı görüş alınmalı (§15, açık soru 2).
+6. **Mobil cihaz doğrulaması:** Çoğu story'nin DoD'sinde açık kalan "mobil cihaz/simülatör doğrulaması" maddeleri bu geliştirme ortamında yapılamıyor; kullanıcının gerçek cihazda (veya EAS development build ile) toplu bir tur yapması gerekiyor. Cihazda push bildirimi (Story 5.4) de `eas init` + development build bekliyor.

@@ -2,7 +2,7 @@
 title: "Borocean (Stock Tracking App) - Product Requirements Document"
 status: draft
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-26
 author: Mary (BMAD Business Analyst) — together with Serdar Ulaş Budak
 language: en
 translationOf: docs/PRD.md
@@ -33,6 +33,10 @@ The app serves both segments off the same underlying data, at different depths (
 
 - **Phase 1 (MVP):** Stocks only. US exchanges (NYSE, NASDAQ) and Turkey (BIST) — all traded stocks, plus major indices (S&P 500, Nasdaq 100, Dow Jones, BIST 100, BIST 30, etc.) and ETFs are supported as first-class assets.
 - **Phase 2+ (out of scope, but the architecture must not be closed to it):** Cryptocurrency and foreign-exchange (forex) asset classes.
+
+> **2026-09-26 updates:**
+> - **BIST temporarily disabled.** Since there is no live BIST price source (see FR-041), BIST symbols only led to empty pages. BIST was removed from search and screening and the app labels it "currently disabled"; it can be turned back on with a single flag (`BIST_ENABLED`, API + `@borocean/shared`). For now only US exchanges are supported.
+> - **Cryptocurrency was added to the backlog as Epic 11** (see §5.13, FR-120 – FR-126). Forex remains Phase 2+.
 
 ## 4. User Journeys
 
@@ -117,11 +121,31 @@ Requirements are grouped by feature area and numbered globally. The **[MVP]** ta
 
 ### 5.11 AI-Assisted Commentary and Pattern Detection
 
-> **Analyst note (2026-09-16):** This section covers an expansion the user marked as **first priority** after the MVP (Phase 1, Epic 1–8) is complete (see `docs/product-brief-epic9-ai.md` for the decision rationale and the alternatives evaluated and rejected). This section's scope overlaps FR-025; FR-102 is its concretized/expanded form.
+> **Analyst note (2026-09-16, updated 2026-09-18):** This section covers an expansion the user marked as **first priority** after the MVP (Phase 1, Epic 1–8) is complete (see `docs/product-brief-epic9-ai.md` for the decision rationale and the alternatives evaluated and rejected). **On 2026-09-18 the scope was made concrete:** the user asked for **three separate, clearly labeled views** on the stock detail page — (a) a technical/chart reading from an image-based (pretrained CV) model, (b) a fundamental-analysis commentary from an LLM API, (c) the Buy/Neutral/Sell output of the existing rule-based score (FR-003/FR-024, already in the MVP). FR-100 is no longer a general "news-based free-form commentary" but is specifically **fundamental-analysis** focused; FR-101 is no longer a purely geometric/deterministic rule set but uses a **pretrained CV model** (for the rationale and model choice see `docs/product-brief-epic9-ai.md` §"2026-09-18 Update"). The third view (deterministic Buy/Sell) needs no new FR — it re-presents the existing FR-003/FR-024 output in the same panel.
 
-- **FR-100** [F2 — first priority post-MVP] The system must generate a **free-form AI commentary** for the selected stock on the stock detail page. The commentary must be grounded (RAG) in Finnhub company news (`company-news`) and the app's own fundamental/technical data — it must not rely on raw LLM training data alone. This feature is gated behind the premium tier (see FR-080–083).
-- **FR-101** [F2 — first priority post-MVP] The system must perform **deterministic (rule-based) chart pattern recognition** on the price chart: trend lines, support/resistance levels, and classic formations (triangle, head-and-shoulders, etc.) must be automatically detected and marked on the chart. The output must be framed under the same legal posture as the existing signal engine (FR-024) — as a **"pattern/signal finding,"** never in advice-like language such as "AI trading strategy" (see Section 9, the investment-advice boundary).
-- **FR-102** [F2 — the expanded form of FR-025] Building on FR-101's rule-based foundation, pattern recognition/probabilistic signal scoring must be performed with an **ML model** trained on historical market data. This is a concrete implementation of the work already defined under FR-025; since it requires a separate data/ML pipeline (training, evaluation, retraining loop), it must be tackled in a later sub-phase of Phase 2, after FR-100/FR-101 have shipped.
+- **FR-100** [F2 — first priority post-MVP] The system must generate a **fundamental-analysis-focused AI report** for the selected stock on the stock detail page. The report must be grounded (RAG) in the fundamental data the app computes itself (P/E, ROE, debt-to-equity, sector comparison, historical financial performance — the output of Epic 2); it must not rely on raw LLM training data alone. LLM provider: Google Gemini API (decided as Anthropic Claude on 2026-09-18, switched to Gemini on 2026-09-19 — see `docs/stories/story-9.1.md` Context). This feature is gated behind the premium tier (see FR-080–083) and cached per symbol (not per user) for cost control.
+- **FR-101** [F2 — first priority post-MVP] The system must perform a chart reading with a **pretrained image-recognition (CV) model** on a candlestick image rendered from the price chart (model choice and rationale: `docs/product-brief-epic9-ai.md` §"2026-09-18 Update" — an MIT-licensed YOLOv8 model with ready-made weights). The output must be framed under the same legal posture as the existing signal engine (FR-024) — as a **"model's reading," separate from and clearly labeled apart from** the deterministic score — and never positioned in advice-like language such as "AI trading strategy" (see Section 9, the investment-advice boundary). This feature is gated behind the premium tier and cached per symbol.
+- **FR-102** [F2 — the expanded form of FR-025] Beyond the off-the-shelf (third-party) model used in FR-101, pattern recognition/probabilistic signal scoring must be performed with an ML model **trained/fine-tuned on the app's own data**. This is a concrete implementation of the work already defined under FR-025; since it requires a separate data/ML pipeline (labeling, training, evaluation, retraining loop), it must be tackled in a later sub-phase of Phase 2, after FR-100/FR-101 have shipped.
+
+### 5.12 Trading Simulation (Paper Trading)
+
+> **Analyst note (2026-09-19):** A new scope added to the backlog at the user's request, never planned anywhere before — being built as Epic 10 **right after** the MVP (in parallel with Epic 9). There is **no** real money/brokerage connection (see Section 10, out of scope); it is a sandbox run on an entirely virtual budget at real market prices. Deliberately separate from the existing Portfolio feature (FR-050/051/052): Portfolio records positions the user actually owns at manually entered prices (no budget constraint); this feature is budget-constrained and orders execute automatically at the real live price.
+
+- **FR-110** The system must let the user create a trading simulation by setting a starting budget (virtual cash). Following the same pattern as the existing freemium limits (see FR-080–083), this is limited on the free tier (1 simulation) and unlimited on premium.
+- **FR-111** When a buy/sell order is placed for a symbol in a simulation, the system must execute it **at the current real market price, not at a price the user enters**. A buy order must be rejected if its cost exceeds the simulation's cash balance; a sell order must be rejected if it exceeds the quantity held. Only US stocks are supported (there is no live price source for BIST, see FR-041).
+- **FR-112** The system must show each simulation's daily total value (cash + position value) and profit/loss history. Since no scheduled background job (cron) is set up (see the architecture constraint; Epic 9/Story 9.3 takes the same approach), the current day's record is recomputed whenever the user opens the simulation or after every order; records for past days are never changed again.
+
+### 5.13 Cryptocurrency Market
+
+> **Analyst note (2026-09-26):** Added to the backlog as Epic 11 at the user's request. Scope is data, analysis and **virtual** trading only — there is no real crypto trading, wallet or exchange-account connection (see Section 10). Crypto is added to the existing `symbol + exchange` model as a new exchange code (`CRYPTO`).
+
+- **FR-120** The system must provide search, live price and candle (OHLC) data for crypto assets through the same interface as stock data. The data source must be chosen and cached so that it does not consume the stock data's API quota and disrupt stock flows.
+- **FR-121** The system must show price, 24-hour change, market cap, circulating supply and 24-hour volume on a crypto asset's detail page; stock-specific sections that are meaningless for crypto (fundamental analysis, sector, P/E-based score) must be hidden or clearly marked "not applicable."
+- **FR-122** The system must apply the existing technical indicators and signal rules (FR-020 – FR-024) to crypto candle series as well; signal alerts must be evaluated 24/7.
+- **FR-123** The system must allow crypto assets to be added to watchlists, price alerts and portfolios; portfolios must support fractional quantities.
+- **FR-124** The system must allow crypto trading in simulations (FR-110 – FR-112); orders must execute at the current real crypto price and fractional quantities must be supported.
+- **FR-125** The system must allow crypto assets to be screened and compared by crypto-appropriate criteria such as market cap, volume, price change and RSI.
+- **FR-126** Whether the AI reports (FR-100, FR-101) apply to crypto must be settled by a separate decision; a misleading crypto report generated under stock assumptions must not be shown.
 
 ## 6. Non-Functional Requirements (NFR)
 
@@ -151,8 +175,10 @@ Requirements are grouped by feature area and numbered globally. The **[MVP]** ta
 - **Phase 1 (MVP):** FR-001, 002, 003, 010, 011, 013, 020–024, 030–032, 040–043, 050–052, 060–062, 070, 080–083, 090–091.
 - **Phase 2 (in priority order):**
   1. **FR-100, FR-101** (AI-assisted stock commentary + deterministic chart pattern recognition) — marked by the user as the **first priority** after MVP (see `docs/product-brief-epic9-ai.md`), added to the backlog as Epic 9.
-  2. **FR-102** (ML-based pattern recognition — the expanded form of FR-025), FR-012 (customizable score weighting), FR-033 (screen notifications), FR-053 (portfolio risk analysis), FR-063 (advanced personalization), FR-071 (SMS) — no firm priority order has been set among these yet.
-- **Out of scope (for now):** Crypto/forex asset classes, social/community features, actual order routing (brokerage integration).
+  2. **FR-110, FR-111, FR-112** (Trading simulation / paper trading) — user request (2026-09-19), in parallel with Epic 9, added to the backlog as Epic 10.
+  3. **FR-120 – FR-126** (Cryptocurrency market — data, analysis and virtual trading) — user request (2026-09-26), added to the backlog as Epic 11.
+  4. **FR-102** (ML-based pattern recognition — the expanded form of FR-025), FR-012 (customizable score weighting), FR-033 (screen notifications), FR-053 (portfolio risk analysis), FR-063 (advanced personalization), FR-071 (SMS) — no firm priority order has been set among these yet.
+- **Out of scope (for now):** The forex asset class (crypto was brought into scope as Epic 11 on 2026-09-26 — data/analysis/virtual trading only), social/community features, actual order routing (brokerage/crypto-exchange integration).
 
 ## 9. Open Questions and Assumptions
 
@@ -163,9 +189,10 @@ Requirements are grouped by feature area and numbered globally. The **[MVP]** ta
 - **[ASSUMPTION]** The user journeys (UJ-1, UJ-2) are written as drafts and have not been validated against a real user account.
 - **[OPEN QUESTION]** The exact formula for the summary score/rating (FR-003) algorithm (which metrics combine at what weight) needs to be defined.
 - **[OPEN QUESTION — must be settled before any investor pitch]** The boundary that keeps the app outside investment-advisory regulation in the US/Turkey has become more concrete alongside FR-100/FR-101/FR-102 (AI commentary + pattern recognition/strategy): whether "pattern/signal finding" language (as opposed to "advice") is a legally sufficient framing should be confirmed with legal counsel. See `docs/product-brief-epic9-ai.md`.
+- **[OPEN QUESTION — code review recommended]** The third-party model chosen for FR-101 (see `docs/product-brief-epic9-ai.md` §"2026-09-18 Update") is MIT-licensed and suitable for commercial use; still, before any investor pitch it is recommended to re-confirm the source/integrity of the weights file (`best.pt`) and the copyright status of the model's own training data (it is a third-party open-source model, not trained in-house).
 
 ## 10. Explicit Out of Scope
 
-- Actual order routing / brokerage integration.
+- Actual order routing / brokerage integration. (The simulation in FR-110/111/112 is not an exception to this — it is an entirely virtual budget/cash; no real order is ever routed to any brokerage.)
 - Non-equity asset classes such as crypto, forex, commodities (Phase 1).
 - Social features between users (comments, sharing, following).

@@ -49,7 +49,7 @@ Bu, projenin **ilk kalıcı, kullanıcıya özel yazma işlemi** — şimdiye ka
 5. **[Web]** `lib/api-client.ts` + `lib/watchlists-client.ts` (kimlik doğrulamalı istemci). ✅
 6. **[Web]** `/watchlist` sayfası, hisse detay sayfasında ekle/çıkar popover'ı, dashboard nav kartı. ✅
 7. **[Mobil]** `lib/watchlists-client.ts`, `WatchlistScreen.tsx`, hisse detayında `AddToWatchlistButton.tsx` (modal ile çoklu liste ekle/çıkar), `HomeScreen`'e nav girişi. ✅
-8. **[Backend]** Story 5.2–5.4 (alarmlar, bildirimler) — ayrı story'ler olarak planlanmalı. ☐
+8. **[Planlama]** Story 5.2–5.4 (alarmlar, bildirimler) — ayrı story'ler olarak planlanmalı. ✅ (`story-5.2.md`, `story-5.3.md`, `story-5.4.md` açıldı ve tamamlandı.)
 
 ## Kabul Kriterleri
 
