@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
-import type { Messages } from "@boursea/shared";
+import type { Messages } from "@borocean/shared";
 import { Field, IconInput, Label } from "@/components/ui/input";
 import {
   primaryButtonClass,

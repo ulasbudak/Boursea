@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { authErrorKey } from "@boursea/shared";
+import { authErrorKey } from "@borocean/shared";
 import { supabase } from "../lib/supabase";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";

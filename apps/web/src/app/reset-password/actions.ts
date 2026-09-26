@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { authErrorKey, type AuthErrorMessages } from "@boursea/shared";
+import { authErrorKey, type AuthErrorMessages } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResetPasswordState = {

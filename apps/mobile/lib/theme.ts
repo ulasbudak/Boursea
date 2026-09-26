@@ -6,7 +6,7 @@ import {
   typeScale,
   type ColorPalette,
   type ThemeMode,
-} from "@boursea/shared";
+} from "@borocean/shared";
 
 export { spacing, radius, typeScale };
 export type { ThemeMode };

@@ -7,7 +7,7 @@ import {
   formatSignedPercent,
   type Locale,
   type Messages,
-} from "@boursea/shared";
+} from "@borocean/shared";
 import { Card } from "@/components/ui/card";
 import { ChangeValue } from "@/components/ui/change-value";
 import { StatTable, type StatRow } from "@/components/ui/stat-table";

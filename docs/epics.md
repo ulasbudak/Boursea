@@ -1,5 +1,5 @@
 ---
-title: "Boursea (Borsa Takip Uygulaması) - Epic ve Story Backlog"
+title: "Borocean (Borsa Takip Uygulaması) - Epic ve Story Backlog"
 status: draft
 created: 2026-09-15
 updated: 2026-09-26
@@ -7,7 +7,7 @@ author: Bob (BMAD Scrum Master)
 inputDocuments: ["docs/PRD.md", "docs/architecture.md"]
 ---
 
-# Boursea — Epic & Story Backlog
+# Borocean — Epic & Story Backlog
 
 *İngilizce versiyon: [`docs/epics.en.md`](epics.en.md).*
 
@@ -170,7 +170,7 @@ So that hisse hakkında hızlı bir ilk izlenim edinebileyim.
 
 ### Story 1.6: BIST'in Geçici Olarak Devre Dışı Bırakılması
 
-- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.6.md`**. Kullanıcı isteği (2026-09-26): canlı BIST fiyat kaynağı olmadığından BIST arama/taramadan çıkarıldı, seçim listelerinden gizlendi ve uygulamada "şu an devre dışı" olarak belirtiliyor. Tek bayrakla (`BIST_ENABLED`, API + `@boursea/shared`) geri açılabilir. Aynı çalışmada Finnhub aramasının yabancı kotasyonları (`AAPL.TO`, `GARAN.E.IS`…) "US" diye döndürmesi düzeltildi.
+- [x] **Tamamlandı** — Detaylı kabul kriterleri ve görev tanımı için bkz. **`docs/stories/story-1.6.md`**. Kullanıcı isteği (2026-09-26): canlı BIST fiyat kaynağı olmadığından BIST arama/taramadan çıkarıldı, seçim listelerinden gizlendi ve uygulamada "şu an devre dışı" olarak belirtiliyor. Tek bayrakla (`BIST_ENABLED`, API + `@borocean/shared`) geri açılabilir. Aynı çalışmada Finnhub aramasının yabancı kotasyonları (`AAPL.TO`, `GARAN.E.IS`…) "US" diye döndürmesi düzeltildi.
 
 ---
 

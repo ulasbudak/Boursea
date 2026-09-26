@@ -1,8 +1,8 @@
 import { cookies, headers } from "next/headers";
-import { resolveLocale, resolveLocaleFromAcceptLanguage, type Locale } from "@boursea/shared";
+import { resolveLocale, resolveLocaleFromAcceptLanguage, type Locale } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 
-export const LOCALE_COOKIE = "boursea_locale";
+export const LOCALE_COOKIE = "borocean_locale";
 
 export async function getLocale(): Promise<Locale> {
   const supabase = await createClient();

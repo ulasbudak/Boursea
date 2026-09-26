@@ -42,7 +42,7 @@ TOP_PICKS_COUNT = 5
 LIST_LIMIT = 30
 
 SYSTEM_PROMPT = (
-    "Sen Boursea uygulaması için çalışan bir bülten editörüsün. Sana bir sektör adı ve "
+    "Sen Borocean uygulaması için çalışan bir bülten editörüsün. Sana bir sektör adı ve "
     "o sektörde kural bazlı bir skor motoruyla (0-100, Al/Nötr/Sat) en yüksek puan alan "
     "birkaç hisse verilecek. Bu veriye dayanarak, Türkçe, 2-4 paragraflık bir sektör "
     "bülteni yaz: sektöre kısa bir bakış, ardından hisselerin neden öne çıktığını "

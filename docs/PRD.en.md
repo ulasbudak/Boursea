@@ -1,5 +1,5 @@
 ---
-title: "Boursea (Stock Tracking App) - Product Requirements Document"
+title: "Borocean (Stock Tracking App) - Product Requirements Document"
 status: draft
 created: 2026-09-15
 updated: 2026-09-16
@@ -8,13 +8,13 @@ language: en
 translationOf: docs/PRD.md
 ---
 
-# Boursea — PRD
+# Borocean — PRD
 
 *This is the English translation of [`docs/PRD.md`](PRD.md), which remains the source of truth. If the two ever disagree, the Turkish version wins until this file is re-synced.*
 
 ## 1. Summary and Vision
 
-**Boursea** is an investment research app — for web and mobile — that evaluates stocks on the American (NYSE/NASDAQ) and Turkish (BIST) exchanges using the world's most widely used **fundamental analysis** parameters, plus a comprehensive **technical analysis** experience.
+**Borocean** is an investment research app — for web and mobile — that evaluates stocks on the American (NYSE/NASDAQ) and Turkish (BIST) exchanges using the world's most widely used **fundamental analysis** parameters, plus a comprehensive **technical analysis** experience.
 
 The product targets a layered experience that serves both the beginner individual investor (summary scores, plain-language metrics) and the active trader (a broad indicator library, screening/signal tools). The app is **not a brokerage** — it does not route buy/sell orders; it positions itself purely as a research and decision-support tool.
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { BIST_ENABLED, formatChange, formatMarketCap, formatPrice, messages } from "@boursea/shared";
+import { BIST_ENABLED, formatChange, formatMarketCap, formatPrice, messages } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { PageHeader } from "@/components/ui/page-header";

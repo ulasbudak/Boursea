@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Localization from "expo-localization";
-import { DEFAULT_LOCALE, messages, resolveLocale, type Locale } from "@boursea/shared";
+import { DEFAULT_LOCALE, messages, resolveLocale, type Locale } from "@borocean/shared";
 import { supabase } from "./supabase";
 import { LocaleContext } from "./locale-context";
 
-const LOCALE_STORAGE_KEY = "boursea_locale";
+const LOCALE_STORAGE_KEY = "borocean_locale";
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);

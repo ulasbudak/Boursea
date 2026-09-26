@@ -154,7 +154,7 @@ async def evaluate_and_persist(
                 await notify_trigger(
                     user_id,
                     email,
-                    "Boursea Fiyat Alarmı",
+                    "Borocean Fiyat Alarmı",
                     f"{label} ({alert.symbol}) {alert.threshold} seviyesinin "
                     f"{'üstüne' if alert.direction == 'above' else 'altına'} {verb}.",
                 )

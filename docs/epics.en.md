@@ -1,5 +1,5 @@
 ---
-title: "Boursea (Stock Tracking App) - Epic & Story Backlog"
+title: "Borocean (Stock Tracking App) - Epic & Story Backlog"
 status: draft
 created: 2026-09-15
 updated: 2026-09-16
@@ -9,7 +9,7 @@ language: en
 translationOf: docs/epics.md
 ---
 
-# Boursea — Epic & Story Backlog
+# Borocean — Epic & Story Backlog
 
 *This is the English translation of [`docs/epics.md`](epics.md), which remains the source of truth. If the two ever disagree, the Turkish version wins until this file is re-synced.*
 

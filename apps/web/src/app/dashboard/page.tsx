@@ -11,7 +11,7 @@ import {
   SlidersHorizontal,
   Wallet,
 } from "lucide-react";
-import { messages } from "@boursea/shared";
+import { messages } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { Card } from "@/components/ui/card";

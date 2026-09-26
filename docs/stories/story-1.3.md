@@ -31,7 +31,7 @@ So that uygulamayı kendi dilimde rahatça kullanabileyim.
 ## Kapsam
 
 - **`packages/shared`:** `tr`/`en` mesaj sözlükleri, `resolveLocale`/`resolveLocaleFromAcceptLanguage` (cihaz/tarayıcı dili tespiti), `formatPrice`/`formatChange`/`formatMarketCap` (locale'e göre `Intl.NumberFormat`).
-- **Web:** İlk açılışta `Accept-Language` header'ından dil tespiti (SSR, `next/headers`); `boursea_locale` cookie'siyle kalıcılık; oturum açıksa `user_metadata.locale` önceliklidir; `/settings` sayfasında dil değiştirme; mevcut tüm sayfalar (`/`, `/login`, `/error`, `/dashboard`, `/stock/[exchange]/[symbol]`) çeviriye taşındı; hisse genel bakış sayfasındaki sabit `"tr-TR"` biçimlendirmesi `locale`'e duyarlı hale getirildi.
+- **Web:** İlk açılışta `Accept-Language` header'ından dil tespiti (SSR, `next/headers`); `borocean_locale` cookie'siyle kalıcılık; oturum açıksa `user_metadata.locale` önceliklidir; `/settings` sayfasında dil değiştirme; mevcut tüm sayfalar (`/`, `/login`, `/error`, `/dashboard`, `/stock/[exchange]/[symbol]`) çeviriye taşındı; hisse genel bakış sayfasındaki sabit `"tr-TR"` biçimlendirmesi `locale`'e duyarlı hale getirildi.
 - **Mobil:** İlk açılışta `expo-localization` ile cihaz dili tespiti; `AsyncStorage` ile kalıcılık; oturum açıksa `user_metadata.locale` senkronize edilir; yeni bir `SettingsScreen` (mevcut ekranlar arası geçiş deseniyle, ayrı bir navigasyon kütüphanesi eklenmeden); tüm mevcut ekranlar (`AuthScreen`, `HomeScreen`, `SearchBox`, `StockOverviewScreen`) çeviriye taşındı.
 
 **Kapsam dışı:**
@@ -42,10 +42,10 @@ So that uygulamayı kendi dilimde rahatça kullanabileyim.
 ## Görevler
 
 1. **[Shared]** `packages/shared/src/i18n/`: `types.ts` (`Messages` arayüzü), `locale.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `resolveLocale`, `resolveLocaleFromAcceptLanguage`), `format.ts` (`formatPrice`, `formatChange`, `formatMarketCap`), `messages/en.ts`, `messages/tr.ts`.
-2. **[Web]** `next.config.ts`'e `transpilePackages: ["@boursea/shared"]`; `src/lib/i18n/locale.ts`: `getLocale()` (öncelik: `user_metadata.locale` → `boursea_locale` cookie → `Accept-Language`).
+2. **[Web]** `next.config.ts`'e `transpilePackages: ["@borocean/shared"]`; `src/lib/i18n/locale.ts`: `getLocale()` (öncelik: `user_metadata.locale` → `borocean_locale` cookie → `Accept-Language`).
 3. **[Web]** `/settings` sayfası + `LanguageSwitcher` (client) + `setLocale` server action (cookie + `updateUser` + `revalidatePath`).
 4. **[Web]** `layout.tsx`, `page.tsx`, `login/page.tsx`, `login/social-buttons.tsx`, `error/page.tsx`, `dashboard/page.tsx`, `dashboard/search-box.tsx`, `stock/[exchange]/[symbol]/page.tsx` çeviriye taşındı.
-5. **[Mobil]** `expo-localization` eklendi; `apps/mobile/metro.config.js` (pnpm monorepo'da `@boursea/shared`'ı çözebilmesi için `watchFolders`/`nodeModulesPaths`).
+5. **[Mobil]** `expo-localization` eklendi; `apps/mobile/metro.config.js` (pnpm monorepo'da `@borocean/shared`'ı çözebilmesi için `watchFolders`/`nodeModulesPaths`).
 6. **[Mobil]** `lib/locale-context.tsx`, `lib/locale-provider.tsx` (AsyncStorage kalıcılığı + `user_metadata` senkronizasyonu + cihaz dili tespiti); `App.tsx`'e `LocaleProvider` sarmalayıcısı.
 7. **[Mobil]** `SettingsScreen.tsx` (yeni); `AuthScreen`, `HomeScreen`, `SearchBox`, `StockOverviewScreen` çeviriye taşındı.
 
@@ -65,7 +65,7 @@ So that uygulamayı kendi dilimde rahatça kullanabileyim.
 - [x] AC1–AC3 karşılanıyor.
 - [x] Backend: pytest 30/30 yeşil (bu story backend'e dokunmadı, regresyon kontrolü için çalıştırıldı).
 - [x] Web: typecheck/lint/build temiz (`/settings` rotası dahil tüm sayfalar derleniyor).
-- [x] Mobil: typecheck/lint temiz; Metro bundle testi hem iOS hem Android platformları için başarılı (yeni `@boursea/shared`/`expo-localization` bağımlılıkları pnpm monorepo'sunda doğru çözümleniyor).
+- [x] Mobil: typecheck/lint temiz; Metro bundle testi hem iOS hem Android platformları için başarılı (yeni `@borocean/shared`/`expo-localization` bağımlılıkları pnpm monorepo'sunda doğru çözümleniyor).
 
 ## Teknik Notlar
 

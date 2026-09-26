@@ -26,7 +26,7 @@ Doğrulama sırasında ayrı ama ilişkili bir sorun bulundu: Finnhub'ın sembol
 
 ## Kapsam
 
-- **Tek bayrak:** `BIST_ENABLED = False` — API'de `app/market_data.py`, frontend'lerde `@boursea/shared` (`packages/shared/src/exchanges.ts`). İkisi birlikte `True` yapılarak geri açılır.
+- **Tek bayrak:** `BIST_ENABLED = False` — API'de `app/market_data.py`, frontend'lerde `@borocean/shared` (`packages/shared/src/exchanges.ts`). İkisi birlikte `True` yapılarak geri açılır.
 - **API:** `/symbols/search` BIST sonuçlarını döndürmez (`exchange=BIST` istenirse açıklayıcı uyarı döner); `/symbols/overview` BIST için "devre dışı" uyarısı döner; screener `ALL`'da BIST'i atlar, `BIST`'te uyarı döner. Finnhub aramasına `exchange=US` eklendi (yabancı kotasyonlar artık "US" diye görünmüyor).
 - **Web:** Screener, simülasyon ve portföy formlarındaki BIST seçeneği gizlendi; arama kutusunun ve screener'ın altında "Borsa İstanbul (BIST) şu an devre dışı — şimdilik yalnızca ABD hisseleri destekleniyor." notu; BIST hisse sayfasında (eski linkler/izleme listeleri) uyarı gösterilir ve aksiyon butonları (izleme listesi, alarmlar, simülasyon) gizlenir. Arama örneği "GARAN" → "AAPL" oldu.
 - **Mobil:** Aynı seçenek gizleme ve notlar (`ScreenerScreen`, `SimulationScreen`, `PortfolioScreen`, `SearchBox`).

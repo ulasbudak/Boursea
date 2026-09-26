@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Messages } from "@boursea/shared";
+import type { Messages } from "@borocean/shared";
 import { ToggleChip } from "./toggle-chip";
 
 type ThemePreference = "system" | "light" | "dark";
 
-const STORAGE_KEY = "boursea-theme";
+const STORAGE_KEY = "borocean-theme";
 
 function applyTheme(preference: ThemePreference) {
   const root = document.documentElement;

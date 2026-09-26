@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatCompactNumber, formatRatio } from "@boursea/shared";
+import { formatCompactNumber, formatRatio } from "@borocean/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 

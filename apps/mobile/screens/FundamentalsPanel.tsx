@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { formatCompactNumber, formatRatio, formatSignedPercent, signColor } from "@boursea/shared";
+import { formatCompactNumber, formatRatio, formatSignedPercent, signColor } from "@borocean/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { HistoricalPerformanceChart } from "./HistoricalPerformanceChart";

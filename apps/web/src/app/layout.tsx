@@ -5,7 +5,7 @@ import { getLocale } from "@/lib/i18n/locale";
 import "./globals.css";
 
 // Applies a stored manual theme choice before hydration so there is no flash of the wrong theme.
-const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('boursea-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('borocean-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Boursea",
-  description: "Boursea — hisse senedi ve portföy analiz uygulaması",
+  title: "Borocean",
+  description: "Borocean — hisse senedi ve portföy analiz uygulaması",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

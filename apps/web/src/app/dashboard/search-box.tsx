@@ -1,10 +1,10 @@
 "use client";
 
-import { BIST_ENABLED } from "@boursea/shared";
+import { BIST_ENABLED } from "@borocean/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
-import type { Messages } from "@boursea/shared";
+import type { Messages } from "@borocean/shared";
 import { IconInput } from "@/components/ui/input";
 
 type SymbolResult = {

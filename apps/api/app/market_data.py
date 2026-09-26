@@ -18,7 +18,7 @@ BIST_SYMBOLS_PATH = Path(__file__).parent / "data" / "bist_symbols.json"
 # source exists — without prices, charts, signals, screening, simulation and AI reports,
 # BIST symbols only led users to empty pages. While False, search and the screener skip
 # BIST, and BIST endpoints answer with BIST_DISABLED_MESSAGE. The frontends mirror this
-# with BIST_ENABLED in @boursea/shared; flip both to re-enable.
+# with BIST_ENABLED in @borocean/shared; flip both to re-enable.
 BIST_ENABLED = False
 BIST_DISABLED_MESSAGE = (
     "Borsa İstanbul (BIST) şu an devre dışı; şimdilik yalnızca ABD borsaları destekleniyor."

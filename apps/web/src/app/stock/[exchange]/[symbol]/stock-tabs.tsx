@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import type { Locale, Messages } from "@boursea/shared";
+import type { Locale, Messages } from "@borocean/shared";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import { AIAnalysisPanel } from "./ai-analysis-panel";
 import { FundamentalsPanel } from "./fundamentals-panel";

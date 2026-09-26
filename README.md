@@ -1,4 +1,4 @@
-# Boursea
+# Borocean
 
 Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri temel ve teknik analiz parametreleriyle değerlendiren bir borsa takip uygulaması.
 

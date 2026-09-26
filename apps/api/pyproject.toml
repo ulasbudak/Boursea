@@ -1,7 +1,7 @@
 [project]
-name = "boursea-api"
+name = "borocean-api"
 version = "0.1.0"
-description = "Boursea backend API"
+description = "Borocean backend API"
 license = { text = "Proprietary" }
 requires-python = ">=3.11"
 dependencies = [

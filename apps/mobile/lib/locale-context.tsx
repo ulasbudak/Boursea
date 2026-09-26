@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { DEFAULT_LOCALE, messages, type Locale, type Messages } from "@boursea/shared";
+import { DEFAULT_LOCALE, messages, type Locale, type Messages } from "@borocean/shared";
 
 export type LocaleContextValue = {
   locale: Locale;

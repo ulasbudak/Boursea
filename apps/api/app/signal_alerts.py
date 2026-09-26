@@ -161,7 +161,7 @@ async def evaluate_and_persist(
                 await notify_trigger(
                     user_id,
                     email,
-                    "Boursea Sinyal Alarmı",
+                    "Borocean Sinyal Alarmı",
                     f"{label} ({alert.symbol}) için '{alert.rule_name}' sinyali tetiklendi.",
                 )
         else:

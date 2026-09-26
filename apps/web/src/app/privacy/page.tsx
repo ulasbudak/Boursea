@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata = {
-  title: "Gizlilik Politikası — Boursea",
+  title: "Gizlilik Politikası — Borocean",
 };
 
 export default function PrivacyPage() {
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
       <Card>
         <div className="prose prose-sm max-w-none">
           <p>
-            Boursea (&quot;biz&quot;), hisse senedi ve portföy analiz hizmeti
+            Borocean (&quot;biz&quot;), hisse senedi ve portföy analiz hizmeti
             sunan bir web ve mobil uygulamasıdır. Bu sayfa, hizmeti kullanırken
             hangi verileri topladığımızı, neden topladığımızı ve nasıl
             kullandığımızı açıklar.
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
 
           <h2>Verileri nasıl kullanıyoruz</h2>
           <p>
-            Topladığımız veriler yalnızca Boursea hizmetini sağlamak için
+            Topladığımız veriler yalnızca Borocean hizmetini sağlamak için
             kullanılır: hesabınıza giriş yapmanızı sağlamak, takip listelerinizi
             ve portföyünüzü göstermek, fiyat/sinyal uyarıları göndermek ve talep
             ettiğiniz AI destekli analiz raporlarını oluşturmak. Verileriniz

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
-import { formatPrice, type Locale, type Messages } from "@boursea/shared";
+import { formatPrice, type Locale, type Messages } from "@borocean/shared";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Label, Select } from "@/components/ui/input";
 import {

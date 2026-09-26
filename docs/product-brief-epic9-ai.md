@@ -13,7 +13,7 @@ relatedDocs: ["docs/PRD.md §5.11, §8, §9", "docs/epics.md §13 (Epic 9)"]
 
 ## Bağlam
 
-Bu doküman, mevcut Faz 1 MVP backlog'u (Epic 1-8) tamamlandıktan sonra eklenecek bir genişleme için yapılan keşif görüşmesinin gerekçesini kayıt altına alır. Boursea **yatırımcıya açılacak** bir proje olduğundan, burada alınan kararlar — özellikle regülasyon riski — yatırımcı sunumundan önce netleştirilmelidir.
+Bu doküman, mevcut Faz 1 MVP backlog'u (Epic 1-8) tamamlandıktan sonra eklenecek bir genişleme için yapılan keşif görüşmesinin gerekçesini kayıt altına alır. Borocean **yatırımcıya açılacak** bir proje olduğundan, burada alınan kararlar — özellikle regülasyon riski — yatırımcı sunumundan önce netleştirilmelidir.
 
 ## Öncelik Kararı
 

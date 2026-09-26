@@ -1,6 +1,6 @@
 "use server";
 
-import { authErrorKey, type AuthErrorMessages } from "@boursea/shared";
+import { authErrorKey, type AuthErrorMessages } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteOrigin } from "@/lib/site-origin";
 

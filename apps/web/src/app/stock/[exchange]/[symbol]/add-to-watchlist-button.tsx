@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bookmark, Check, Plus } from "lucide-react";
-import type { Messages } from "@boursea/shared";
+import type { Messages } from "@borocean/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

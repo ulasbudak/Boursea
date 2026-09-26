@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import type { Messages } from "@boursea/shared";
+import type { Messages } from "@borocean/shared";
 import { Card } from "@/components/ui/card";
 
 type SignalRecord = {

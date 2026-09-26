@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { BIST_ENABLED, formatPrice, formatSignedPercent, type Locale, type Messages } from "@boursea/shared";
+import { BIST_ENABLED, formatPrice, formatSignedPercent, type Locale, type Messages } from "@borocean/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Label, Select } from "@/components/ui/input";

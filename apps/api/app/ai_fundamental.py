@@ -17,7 +17,7 @@ from app.fundamentals import (
 CACHE_TTL_HOURS = 24.0
 
 SYSTEM_PROMPT = (
-    "Sen Boursea uygulaması için çalışan bir finansal analistsin. Sana verilen sayısal "
+    "Sen Borocean uygulaması için çalışan bir finansal analistsin. Sana verilen sayısal "
     "temel analiz verisine (F/K, ROE, borç/özsermaye, sektör kıyaslaması, geçmiş finansal "
     "performans) dayanarak, Türkçe, 3-5 paragraflık kısa bir temel analiz raporu yaz. "
     "Yalnızca sana verilen veriyi yorumla — verilmeyen bir sayıyı uydurma, dışarıdan "

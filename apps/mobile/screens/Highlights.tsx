@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { formatPrice, formatSignedPercent, signColor } from "@boursea/shared";
+import { formatPrice, formatSignedPercent, signColor } from "@borocean/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { fetchHighlights, type Highlight } from "../lib/highlights-client";

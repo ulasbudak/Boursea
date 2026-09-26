@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { messages } from "@boursea/shared";
+import { messages } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/locale";
 import { AuthShell } from "@/components/auth/auth-shell";

@@ -172,7 +172,7 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@boursea/shared':
+      '@borocean/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@react-native-async-storage/async-storage':
@@ -227,7 +227,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@boursea/shared':
+      '@borocean/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@supabase/ssr':

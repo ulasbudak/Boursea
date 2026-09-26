@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { SUPPORTED_LOCALES, type Locale } from "@boursea/shared";
+import { SUPPORTED_LOCALES, type Locale } from "@borocean/shared";
 import { createClient } from "@/lib/supabase/server";
 import { LOCALE_COOKIE } from "@/lib/i18n/locale";
 

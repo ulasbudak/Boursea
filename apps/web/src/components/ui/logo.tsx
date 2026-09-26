@@ -1,17 +1,17 @@
 /**
- * Boursea logomark: three ascending candlesticks, opacity-graded for depth —
+ * Borocean logomark: three ascending candlesticks, opacity-graded for depth —
  * the app's own candlestick-chart language, and a quiet echo of its "three
  * views" positioning (rule-based score, AI fundamentals, AI technical read).
  * See docs/marketing/brand/ for the full asset set and usage guidelines.
  */
-function BourseaMark({ size }: { size: number }) {
+function BoroceanMark({ size }: { size: number }) {
   return (
     <svg
       viewBox="0 0 120 120"
       width={size}
       height={size}
       role="img"
-      aria-label="Boursea logomark"
+      aria-label="Borocean logomark"
       className="text-accent"
     >
       <line x1={28} y1={46} x2={28} y2={88} stroke="currentColor" strokeWidth={4} strokeLinecap="round" opacity={0.35} />
@@ -30,8 +30,8 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" }) {
 
   return (
     <div className="flex items-center gap-2">
-      <BourseaMark size={icon} />
-      <span className={`${text} font-semibold tracking-tight text-text-primary`}>Boursea</span>
+      <BoroceanMark size={icon} />
+      <span className={`${text} font-semibold tracking-tight text-text-primary`}>Borocean</span>
     </div>
   );
 }

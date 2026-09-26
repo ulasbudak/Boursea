@@ -118,7 +118,7 @@ from app.watchlists import (
     remove_item,
 )
 
-app = FastAPI(title="Boursea API")
+app = FastAPI(title="Borocean API")
 
 _settings = get_settings()
 _cors_origins = [origin.strip() for origin in _settings.cors_origins.split(",") if origin.strip()]

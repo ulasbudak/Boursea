@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
-import { ALL_INDICATORS, drawingsStorageKey, findIndicator, type Drawing } from "@boursea/shared";
+import { ALL_INDICATORS, drawingsStorageKey, findIndicator, type Drawing } from "@borocean/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { fetchEntitlement } from "../lib/entitlements-client";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { translateSector, type Locale, type Messages } from "@boursea/shared";
+import { translateSector, type Locale, type Messages } from "@borocean/shared";
 import { useLocale } from "../lib/locale-context";
 import { useTheme, radius, spacing, type ThemeColors } from "../lib/theme";
 import { fetchEntitlement } from "../lib/entitlements-client";

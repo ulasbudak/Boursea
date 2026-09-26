@@ -22,7 +22,7 @@ import {
   findIndicator,
   type Drawing,
   type Messages,
-} from "@boursea/shared";
+} from "@borocean/shared";
 import { Card } from "@/components/ui/card";
 import { IconInput, Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";

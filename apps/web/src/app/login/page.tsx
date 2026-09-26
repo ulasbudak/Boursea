@@ -1,4 +1,4 @@
-import { messages } from "@boursea/shared";
+import { messages } from "@borocean/shared";
 import { getLocale } from "@/lib/i18n/locale";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Notice } from "@/components/auth/notice";

@@ -1,18 +1,18 @@
 ---
-title: "Boursea (Borsa Takip Uygulaması) - Ürün Gereksinim Dokümanı"
+title: "Borocean (Borsa Takip Uygulaması) - Ürün Gereksinim Dokümanı"
 status: draft
 created: 2026-09-15
 updated: 2026-09-26
 author: Mary (BMAD Business Analyst) — Serdar Ulaş Budak ile birlikte
 ---
 
-# Boursea — PRD
+# Borocean — PRD
 
 *English version: [`docs/PRD.en.md`](PRD.en.md).*
 
 ## 1. Özet ve Vizyon
 
-**Boursea**, Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri, dünyada en yaygın kullanılan **temel analiz (fundamental)** parametreleriyle değerlendiren ve buna ek olarak kapsamlı bir **teknik analiz** deneyimi sunan; web ve mobil platformlarda çalışan bir yatırım araştırma uygulamasıdır.
+**Borocean**, Amerikan (NYSE/NASDAQ) ve Türkiye (BIST) borsalarındaki hisseleri, dünyada en yaygın kullanılan **temel analiz (fundamental)** parametreleriyle değerlendiren ve buna ek olarak kapsamlı bir **teknik analiz** deneyimi sunan; web ve mobil platformlarda çalışan bir yatırım araştırma uygulamasıdır.
 
 Ürün, hem yeni başlayan bireysel yatırımcıya (özet skorlar, anlaşılır metrikler) hem de aktif tradera (geniş indikatör kütüphanesi, tarama/sinyal araçları) hitap eden katmanlı bir deneyim hedefler. Uygulama bir **aracı kurum / brokerage değildir** — alım-satım emri iletmez, sadece araştırma ve karar destek aracı olarak konumlanır.
 
@@ -33,7 +33,7 @@ Uygulama her iki segmente de aynı veri üzerinde farklı derinlik seviyeleriyle
 - **Faz 2+ (kapsam dışı, mimari buna kapalı olmayacak şekilde tasarlanmalı):** Kripto para ve döviz (forex) varlık sınıfları.
 
 > **2026-09-26 güncellemeleri:**
-> - **BIST geçici olarak devre dışı.** Canlı bir BIST fiyat kaynağı bulunmadığından (bkz. FR-041) BIST sembolleri yalnızca boş sayfalara çıkıyordu. BIST, arama ve taramadan çıkarıldı ve uygulamada "şu an devre dışı" olarak belirtiliyor; tek bir bayrakla (`BIST_ENABLED`, API + `@boursea/shared`) yeniden açılabilir. Şimdilik yalnızca ABD borsaları destekleniyor.
+> - **BIST geçici olarak devre dışı.** Canlı bir BIST fiyat kaynağı bulunmadığından (bkz. FR-041) BIST sembolleri yalnızca boş sayfalara çıkıyordu. BIST, arama ve taramadan çıkarıldı ve uygulamada "şu an devre dışı" olarak belirtiliyor; tek bir bayrakla (`BIST_ENABLED`, API + `@borocean/shared`) yeniden açılabilir. Şimdilik yalnızca ABD borsaları destekleniyor.
 > - **Kripto para, Epic 11 olarak backlog'a alındı** (bkz. §5.13, FR-120 – FR-126). Döviz (forex) hâlâ Faz 2+.
 
 ## 4. Kullanıcı Senaryoları (User Journeys)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
-import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@boursea/shared";
+import { formatCompactNumber, formatRatio, type Locale, type Messages } from "@borocean/shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconInput } from "@/components/ui/input";

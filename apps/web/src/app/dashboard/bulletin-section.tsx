@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { translateSector, type Locale, type Messages } from "@boursea/shared";
+import { translateSector, type Locale, type Messages } from "@borocean/shared";
 import { Card } from "@/components/ui/card";
 import { ProseText } from "@/components/ui/prose-text";
 import { fetchEntitlement } from "@/lib/entitlements-client";
